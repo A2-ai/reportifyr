@@ -4,6 +4,8 @@
 # reportifyr <a href="https://github.com/a2-ai/reportifyr/"><img src="man/figures/logo.png" align="right" height="139" alt="reportifyr website" /></a>
 
 <!-- badges: start -->
+
+[![R-CMD-check](https://github.com/A2-ai/reportifyr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/A2-ai/reportifyr/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 The goal of `reportifyr` is to assist with semi-automatic report
@@ -19,7 +21,7 @@ polished and consistent reports.
 You can install the development version of `reportifyr` like so:
 
 ``` r
-# FILL THIS IN! HOW CAN PEOPLE INSTALL YOUR DEV PACKAGE?
+pak::pkg_install("a2-ai/reportifyr")
 ```
 
 ## Interacting with reportifyr
