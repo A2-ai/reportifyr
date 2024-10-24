@@ -42,6 +42,8 @@ jobs:
         with:
           extra-packages: any::rcmdcheck
           needs: check
+      - run: git config --global user.email "r-cmd-check@github.com"
+      - run: git config --global user.name "r-cmd-check"
 
       - uses: r-lib/actions/check-r-package@v2
         with:
