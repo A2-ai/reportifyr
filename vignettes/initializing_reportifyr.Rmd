@@ -1,0 +1,88 @@
+---
+title: "Initializing reportifyr"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Initializing reportifyr}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# reportifyr
+
+```{r setup}
+library(reportifyr)
+```
+
+`reportifyr` loads with a message specifying some options that are used
+to set various values for python setup. You can choose to leave these
+options unset and default values will be used instead. Or, if you are
+comfortable setting these values, you can alter where the python virtual
+environment (.venv) is created and which versions of python,
+`python-docx`, and `PyYAML` are used.
+
+## Initializing report project and reportifyr
+
+The first thing to do when using `reportifyr` is to call the
+`initialize_report_project` function. This does several things - it
+creates all needed directories for saving output figures and tables,
+sets up the 'report' directory, and copies a `standard_footnotes.yaml`
+file into the 'report' directory that can be used to save footnote
+definitions. Additionally, it sets up the needed python dependencies in
+a virtual environment so that the python portion of the `reportifyr`
+package can properly function.
+
+You'll need to provide a directory (typically the project root
+directory) where `reportifyr` will look for a few other directories. If
+the directories are not found, the `initialize_report_project` function
+will create them. Specifically, the 'report' directory, as well as
+several sub directories, will be created if not found. The 'OUTPUTS'
+directory, containing 'tables', 'figures', and 'listings' sub
+directories, will be created if they do not exist. A '.venv' directory
+will be created, if it doesn't exist, and `python-docx` and `PyYAML`
+will be saved to this directory.
+
+```{r initialize}
+options("venv_dir" = file.path(here::here(), "vignettes"))
+initialize_report_project(file.path(here::here(), "vignettes"))
+```
+
+When the virtual environment is initially created (i.e., the first time
+you call `initialize_report_project`), `reportifyr` will notify you of
+which versions python, `python-docx`, and `PyYAML` are being used and
+where the virtual environment is created. These versions can be set with
+options before running this function and are displayed when `reportifyr`
+is loaded.
+
+Here are all the directories and files that exist after running
+`initialize_report_project`:
+
+```{r file_outputs, echo = FALSE}
+for (dir in list.dirs(file.path(here::here(), "vignettes"), recursive = FALSE)) {
+  if (basename(dir) != ".venv") {
+    for (subdir in list.files(dir)) {
+      cat(paste0(gsub(".*reportifyr/", "reportifyr/", dir), "/", subdir))
+      cat("\n")
+    }
+  } else {
+    cat(gsub(".*reportifyr/", "reportifyr/", dir))
+    cat("\n")
+  }
+}
+```
+
+```{r remove directories, include = FALSE}
+unlink(file.path(here::here(), "vignettes", ".venv"), recursive = TRUE)
+unlink(file.path(here::here(), "vignettes", "OUTPUTS"), recursive = TRUE)
+unlink(file.path(here::here(), "vignettes", "report"), recursive = TRUE)
+unlink(file.path(here::here(), "vignettes", "logfile.log"))
+```

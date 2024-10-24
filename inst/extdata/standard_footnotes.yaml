@@ -1,0 +1,88 @@
+abbreviations:
+ AUC: Area under the curve
+ AGEBL: Baseline age
+ ALBBL: Baseline albumin
+ ALTBL: Baseline alanine aminotransferase
+ ASTBL: Baseline aspartate aminotransferase
+ B2MBL: Baseline β2 microglobulin
+ BSABL: Baseline body surface area
+ BSTGBGE2: Baseline stage at screening flag ≥ 2
+ BSTGEQ3: Baseline stage at screening flag = 3
+ CADC_21D: ADC concentration at 21 days
+ CADC_28D: ADC concentration at 28 days
+ CADC_42D: ADC concentration at 42 days
+ CADC_56D: ADC concentration at 56 days
+ CATABL: Presence of cataracts at baseline
+ CAVGA_21D: ADC Average concentration over 21 days
+ CAVGA_28D: ADC Average concentration over 28 days
+ CAVGA_42D: ADC Average concentration over 42 days
+ CAVGA_56D: ADC Average concentration over 56 days
+ CAVGM_21D: MMAF Average concentration over 21 days
+ CAVGM_28D: MMAF Average concentration over 28 days
+ CMAXA: Cycle 1 ADC maximum concentration
+ CMAXM: Cycle 1 MMAF maximum concentration
+ CNCEURO: European country flag
+ CRPBL: Baseline Creactive protein
+ CYTORSK: Cytogenetic risk
+ ECOGBEQ2: Baseline ECOG = 2 flag
+ ECOGBGE1: Baseline ECOG ≥ 1 flag
+ GLAUCBL: History of glaucoma at baseline
+ HEPFCH: Hepatic function
+ HISTDIAB: History of diabetes
+ HSDRYEYE: Know history of dry eye
+ HSIOSURG: History of intraocular surgery
+ IBMIBL: Baseline body mass index
+ IGGBL: Baseline IgG
+ IGGFLG: Multiple myeloma IgG type flag
+ KERABL: Presence of keratopathy at baseline
+ LDHBL: Baseline Lactate Dehydrogenase
+ LENSTABL: Lens status at baseline
+ MEDFL: Extramedullary disease flag
+ MMIGTY: Myeloma immunoglobulin
+ MMLCTY: Myeloma light chain
+ MMTY: Type of mutiple myeloma
+ MPROTBL: Baseline M-protein
+ PCD38: Prior CD38 exposure flag
+ PRXGT3: Prior Number of Therapy >3 Flag
+ PRXGT4: Prior Number of Therapy >4 Flag
+ RACEBFLG: Black race flag
+ RACEWFLG: White race flag
+ RENALFCH: Renal function
+ SBCMABL: soluble baseline BCMA
+ SCH: Planned schedule
+ SCHCH: Planned schedule
+ SEXN: Sex
+ SPLITB: Split flag
+ STAGEBL: Stage at screening
+ STRETCHB: Stretch flag
+ TBILBL: Baseline total bilirubin
+ WTBL: Baseline weight
+
+figure_footnotes:
+ logistic_plot: The independent variable was divided into quartiles. The summary statistics for each quartile are reported in the footnote as median (minimum, maximum). Black points and error bars represent the observed proportions and 95% CIs for each quartile (plotted at the median exposure within each quartile), respectively. The blue curve represents the prediction of the univariate logistic regression model, and the blue shaded region represents the 95% CI of the prediction. The displayed p-value is for the logistic regression slope.
+ boxplot: Boxplots show the distribution of the exposure parameter. The lower and upper hinges correspond to the first and third quartiles (25th and 75th percentiles). The horizontal line inside each box represents the median. The whiskers extend from the hinge to ±1.5 x inter-quartile range (IQR). The circles represent each individual exposure parameter.
+ TTE_plot: The summary statistics for each quartile are reported in the legend as median (minimum, maximum).
+ correlation_plot: R is the coefficient of correlation and p is the p-value for the correlation coefficient
+ GOF_plot: Dots are individual data points, and solid red lines are LOESS lines. In the 2 plots in the top row, solid black lines are lines of identity, while in the right bottom corner plot, solid black line are at y=0.
+ ETA_histogram: The histograms show the post hoc ETAs for each parameter. Dashed red vertical lines are medians. Solid black lines are at x=0; dashed black lines are the density curves.
+ VPC: The black dots are observed data points, the black solid line is the observed median, and the black dashed lines are the observed p5 and p95. The blue solid line is the predicted median, and the red solid lines are the predicted p5 and p95. The blue area is the 95% CI of the simulated median, and the red areas are the 95% CI of the simulated p5 and p95
+ kaplan-meier-plot: This Kaplan-Meier survival curve illustrates the probability of survival over time for patients in the study. The x-axis represents time in months, while the y-axis shows the estimated survival probability. Each step down on the curve indicates an event (e.g., death, relapse) among the cohort. Censored observations, where patients were lost to follow-up or withdrew from the study before an event occurred, are marked with vertical ticks on the curve. The shaded area around the curve represents the 95% confidence interval, providing an estimate of the uncertainty around the survival probability at each time point. Differences between groups (e.g., treatment vs. control) are compared using the log-rank test, with a p-value < 0.05 indicating statistical significance
+ conc-time-trajectories: This plot shows individual concentration-time trajectories for subjects in the study. The x-axis represents time (hours) and the y-axis shows drug concentration (ng/mL). Each line corresponds to a subject's concentration profile, illustrating variability in pharmacokinetics across the population. Key points like peak concentration (Cmax) and time to peak (Tmax) can be identified visually. No aggregation or smoothing has been applied, preserving the raw individual data
+ linear-regression-plot: The plot shows a linear regression model, where the dots represent the observed data points and the line represents the fitted linear regression line
+ probit-regression-plot: The plot shows a probit regression model, where the dots represent the observed data points and the line represents the fitted probit regression curve
+
+table_footnotes:
+ univariate: The p-value is from the likelihood ratio test.
+ final: Delta represents the change in the covariate value used to calculate the odds ratios. For categorical covariates, the odds ratio corresponding to the flag being true (i.e., Delta=1) is reported.
+ full: Covariates are listed in the order in which they were added to the model. Delta represents the change in the covariate value used to calculate the odds ratios. For categorical covariates, the odds ratio corresponding to the flag being true (i.e., Delta=1) is reported.
+ alternative: alternative_testingFootnote
+ univariate_TTE: The p-value is from the likelihood ratio test.
+ final_TTE: Covariates are listed in the order in which they were added to the model. Delta represents the change in the covariate value used to calculate the odds ratios. For categorical covariates, the odds ratio corresponding to the flag being true (i.e., Delta=1) is reported.
+ full_TTE: Delta represents the change in the covariate value used to calculate the hazard ratios. For categorical covariates, the odds ratio corresponding to the flag being true (i.e., Delta=1) is reported.
+ alternative_TTE: alternative_TTE_testingFootnote
+ ER_summary: 'For the univariate analyses, the top 3 covariates resulting in ΔOFV >6.63 relative to the null model were included. Additionally, any covariates resulting in a ΔOFV > 10.83 were included. Only the strongest exposure covariate was included; if LNCTAUA was not the strongest exposure covariate, it was also included for reference. For the final model hazard and odds ratios, the following values of Delta were used for the continuous covariates: LNCTAUA: 0.3, SBCMABLN: 0.4'
+ covariate_descriptive: covariate_descriptive_testingFootnote
+ frequency: frequency_testingFootnote
+ probit-regression-fit: The table presents the results of a probit regression model. Coefficients, standard errors (SE), z-values, and p-values are reported for each predictor variable, indicating their relationship with the binary dependent variable.
+ linear-regression-fit: The table presents the results of a linear regression model. Coefficients, standard errors (SE), t-values, and p-values are reported for each predictor variable, indicating their relationship with the dependent variable
+ cox-regression-fit: The table presents the results of a Cox proportional hazards regression model, which analyzes the relationship between multiple predictor variables and the time to a specified event. Hazard ratios (HR) and 95% confidence intervals (CI) are reported for each predictor.

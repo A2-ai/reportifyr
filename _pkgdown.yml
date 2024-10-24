@@ -1,0 +1,79 @@
+url: https://a2-ai.github.io/reportifyr/
+
+template:
+  bootstrap: 5
+  bslib:
+    bg: "#FFFFFF"
+    fg: "#63666A"
+    primary: "#1E63AF"
+
+navbar:
+  title: reportifyr
+  bg: primary
+  structure:
+    left:
+    - intro
+    - reference
+    - articles
+    right:
+    - search
+    - github
+    - lightswitch
+  components:
+    reference:
+      text: Reference
+      href: reference/index.html
+    articles:
+      text: Articles
+      menu:
+      - text: Initializing reportifyr
+        href: articles/initializing_reportifyr.html
+      - text: Integrating reportifyr into analyses
+        href: articles/Integrating_reportifyr_into_analyses.html
+      - text: Integrating reportifyr into report writing
+        href: articles/Integrating_reportifyr_into_report_writing.html
+      - text: Simplfied workflow for report generation
+        href: articles/streamlined_reportifyr_workflow.html
+      - text: Updating a reportifyr report
+        href: articles/update_report.html
+    github:
+      icon: fa-github fa-lg
+      href: https://github.com/a2-ai/reportifyr
+
+reference:
+- title: Set-up Functions
+  contents:
+  - initialize_report_project
+  - initialize_python
+- title: Analysis Output Saving Functions
+  contents:
+  - ggsave_with_metadata
+  - save_rds_with_metadata
+  - write_csv_with_metadata
+  - format_flextable
+- title: Metadata Interaction Functions
+  contents:
+  - write_object_metadata
+  - update_object_footnotes
+  - preview_metadata_files
+  - preview_metadata
+  - get_meta_type
+  - get_meta_abbrevs
+- title: Document Interaction Functions
+  contents:
+  - add_tables
+  - add_footnotes
+  - add_plots
+  - remove_tables_figures_footnotes
+- title: Report building functions
+  contents:
+  - build_report
+  - finalize_document
+- title: Utility functions
+  contents:
+  - make_doc_dirs
+  - validate_object
+  - toggle_logger
+- title: Reportifyr Summary
+  contents:
+  - reportifyr

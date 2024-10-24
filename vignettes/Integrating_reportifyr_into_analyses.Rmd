@@ -1,0 +1,245 @@
+---
+title: "Integrating reportifyr into analyses"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Integrating reportifyr into analyses}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+# Initializing reportifyr
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(reportifyr)
+
+options("venv_dir" = file.path(here::here(), "vignettes"))
+initialize_report_project(file.path(here::here(), "vignettes"))
+```
+
+If you'd like more detail on the initialization of `reportifyr`, please
+see the [vignette on initializing
+reportifyr](initializing_reportifyr.html).
+
+# Generating a figure for use with reportifyr
+
+Let's first create a concentration-time plot of the Theophylline
+dataset:
+
+```{r theophylline, message=FALSE}
+library(ggplot2)
+library(dplyr)
+
+data <- Theoph
+p <- ggplot(data, aes(x = Time, y = conc, group = Subject)) +
+  geom_point() + 
+  geom_line() +
+  theme_bw() +
+  labs(x = "Time (hr)", y = "Theophylline concentration (mg/L)")
+
+p
+```
+
+## Saving the figure and creating metadata
+
+If we want to include this plot into the report we'll need to save this
+figure to the 'OUTPUTS/figures' directory. There are two separate
+processes to accomplish this - the easiest way is to call the wrapper
+function `ggsave_with_metadata`:
+
+```{r saving plots with metadata}
+figures_path <- file.path(here::here(), "vignettes", "OUTPUTS", "figures")
+plot_file_name <- "theoph-pk-plot.png"
+
+ggsave_with_metadata(
+  filename = file.path(figures_path, plot_file_name), 
+  plot = p,
+  width = 6,
+  height = 4
+)
+```
+
+Alternatively you could call `ggplot2::ggsave` and then call
+`write_object_metadata`:
+
+```{r saving plots}
+ggplot2::ggsave(filename = file.path(figures_path, plot_file_name), 
+                plot = p, 
+                width = 6,
+                heigh = 4)
+write_object_metadata(object_file = file.path(figures_path, plot_file_name))
+```
+
+Both processes give the same final result, however, severing the tie
+between saving an object and writing its metadata may lead to the
+these objects becoming out of sync.
+
+This brings us to metadata. `reportifyr` uses metadata to create a
+record of the object being inserted into the word document to aid in
+reproducibility.
+
+`reportifyr` also uses a meta_type parameter to inject standard
+footnotes into the word document (more on that in the [vignette on
+integrating reportifyr into report
+writing](Integrating_reportifyr_into_report_writing.html)). We can use
+the function `get_meta_type` to see what figure and/or table meta types
+are currently saved in the `standard_footnotes.yaml` within the 'report'
+directory upon initialization. We just need to provide the path to the
+`standard_footnotes.yaml` we want to pull meta_types from.
+
+```{r meta types}
+meta_types = get_meta_type(file.path(here::here(), "vignettes", "report", "standard_footnotes.yaml"))
+names(meta_types)
+```
+
+Now, let's re-save the plot object with the `conc-time-trajectories`
+meta_type:
+
+```{r meta type update}
+figures_path <- file.path(here::here(), "vignettes", "OUTPUTS", "figures")
+meta_plot_file_name <- "theoph-pk-plot-mt.png"
+
+ggsave_with_metadata(
+  filename = file.path(figures_path, meta_plot_file_name), 
+  meta_type = meta_types$`conc-time-trajectories`,
+  width = 6,
+  height = 4
+)
+```
+
+Using meta_types also allows for tab-completion to help you get the
+meta_type correct! Let's use the `preview_metadata_files` to see the
+difference when using a meta type:
+
+```{r}
+metadata <- preview_metadata_files(file_dir = figures_path)
+knitr::kable(metadata)
+```
+
+There is also the `get_meta_abbrevs` function to see standard
+abbreviations that can be added:
+
+```{r}
+meta_abbrevs <- get_meta_abbrevs(
+  file.path(here::here(), "vignettes", "report", "standard_footnotes.yaml")
+)
+names(meta_abbrevs)
+```
+
+Let's perform a simple analysis computing subject level pharmacokinetic
+parameters and then study level statistics of the data set to generate
+an additional plot. We'll compute maximum drug concentration (Cmax),
+time to peak drug concentration (Tmax), and area under the
+concentration-time curve (AUC) for the Theophylline data set before
+performing a linear regression between weight and AUC.
+
+```{r}
+calc_auc_linear_log <- function(time, conc) {
+  auc <- 0
+  
+  cmax_index <- which.max(conc)
+  
+  for (i in 1:(length(time) - 1)) {
+    delta_t <- time[i + 1] - time[i]
+    
+    if (i < cmax_index) {
+      
+      auc <- auc + delta_t * (conc[i + 1] + conc[i]) / 2
+    } else if (i >= cmax_index && conc[i + 1] > 0 && conc[i] > 0) {
+      
+      auc <- auc + delta_t * (conc[i] - conc[i + 1]) / log(conc[i] / conc[i + 1])
+    } else {
+      
+      auc <- auc + delta_t * (conc[i + 1] + conc[i]) / 2
+    }
+  }
+  
+  return(auc)
+}
+
+pk_params <- data %>%
+  mutate(Subject = as.numeric(Subject)) %>% 
+  group_by(Subject) %>%
+  summarise(
+    cmax = max(conc, na.rm = TRUE), 
+    tmax = Time[which.max(conc)], 
+    auc = calc_auc_linear_log(Time, conc),
+    wt = Wt %>% unique()
+  )
+
+knitr::kable(pk_params)
+```
+
+```{r}
+lr <- pk_params %>% 
+  ggplot(aes(x = wt, y = auc)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y ~ x, se = TRUE, color = "blue") +
+  theme_bw() +
+  labs(x = "Subject weight (kg)", y = "AUC (hr mg/L)")
+
+lr
+```
+
+Let's save this plot with the logistic-regression-plot meta type:
+
+```{r save linear regression}
+plot_file_name <- "theoph-pk-exposure.png"
+ggsave_with_metadata(filename = file.path(figures_path, plot_file_name), 
+                     meta_type = meta_types$`linear-regression-plot`,
+                     plot = lr,
+                     width = 6,
+                     height = 4)
+```
+
+And let's view all the metadata files again:
+
+```{r metadata preview}
+new_meta <- preview_metadata_files(figures_path)
+knitr::kable(new_meta)
+```
+
+# Generating a table for use with reportifyr
+
+Now, let's save out the pk_params data frame to .csv so we can include
+it in the report. We can pass in any argument that would be used in
+`write.csv` as well. Let's use `row.names = FALSE`:
+
+```{r, table saving, message=FALSE}
+tables_path <- file.path(here::here(), "vignettes", "OUTPUTS", "tables")
+outfile_name <- "theoph-pk-parameters.csv"
+
+write_csv_with_metadata(
+  pk_params, 
+  file = file.path(tables_path, outfile_name),
+  row.names = FALSE
+)
+```
+
+Let's also save out the Theophylline data set to include in the report.
+We can save this as an .RDS file, just to highlight the functionality:
+
+```{r}
+data_outfile_name <- "theoph-pk-data.RDS"
+save_rds_with_metadata(data, file = file.path(tables_path, data_outfile_name))
+```
+
+At the end, we’ve generated two figures and two tables and saved them
+alongside their metadata using `reportifyr`, allowing us to easily
+incorporate them into our upcoming report writing!
+
+```{r remove directories, include = FALSE}
+unlink(file.path(here::here(), "vignettes", ".venv"), recursive = TRUE)
+unlink(file.path(here::here(), "vignettes", "OUTPUTS"), recursive = TRUE)
+unlink(file.path(here::here(), "vignettes", "report"), recursive = TRUE)
+unlink(file.path(here::here(), "vignettes", "logfile.log"))
+```
