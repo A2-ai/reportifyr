@@ -26,7 +26,7 @@ def add_table_footnotes(docx_in, docx_out, table_dir, footnotes_yaml):
         if matches:
             for match in matches:
                 # Generalized extraction of the figure name
-                table_name = match.replace("{rpfy}:", "")
+                table_name = match.replace("{rpfy}:", "").strip()
                 if table_name in os.listdir(table_dir):
                     object_name, extension = os.path.splitext(table_name)
                     metadata_file = os.path.join(table_dir, f"{object_name}_{extension[1::]}_metadata.json")

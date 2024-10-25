@@ -26,7 +26,7 @@ def add_figure_footnotes(docx_in, docx_out, figure_dir, footnotes_yaml):
         if matches:
             for match in matches:
                 # Generalized extraction of the figure name
-                figure_name = match.replace("{rpfy}:", "")
+                figure_name = match.replace("{rpfy}:", "").strip()
                 if figure_name in os.listdir(figure_dir):
 
                     object_name, extension = os.path.splitext(figure_name)

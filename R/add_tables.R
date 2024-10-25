@@ -28,7 +28,7 @@
 #' )
 #' }
 add_tables <- function(docx_in, docx_out, tables_path, debug = F) {
-  log4r::debug(.le$logger, "Starting add_tables_by_magic_string function")
+  log4r::debug(.le$logger, "Starting add_tables function")
   tictoc::tic()
 
   if (!file.exists(docx_in)) {
@@ -69,7 +69,7 @@ add_tables <- function(docx_in, docx_out, tables_path, debug = F) {
 
     if (length(matches) > 0) {
       log4r::info(.le$logger, paste0("Found magic string: ", matches[1], " in paragraph ", i))
-      table_name <- gsub("\\{rpfy\\}:", "", matches[1]) # Remove "{rpfy}:"
+      table_name <- gsub("\\{rpfy\\}:", "", matches[1]) |> trimws() # Remove "{rpfy}:"
       table_file <- file.path(tables_path, table_name)
       #if (tools::file_ext(table_file) %in% c("RDS", "csv")) {
 
