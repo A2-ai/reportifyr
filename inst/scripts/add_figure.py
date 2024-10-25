@@ -20,7 +20,7 @@ def add_figure(docx_in, docx_out, figure_dir, fig_width, fig_height):
                 print(f"Duplicate figure names found in paragraph {i+1}.")
             for match in matches:
                 # Extract the image directory from the match
-                figure_name = match.replace("{rpfy}:", "") 
+                figure_name = match.replace("{rpfy}:", "").strip()
                 found_magic_strings.append(figure_name)
 
                 image_path = os.path.join(figure_dir, figure_name)
