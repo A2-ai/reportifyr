@@ -5,7 +5,8 @@
 #' @param docx_out Path to output .docx to save to
 #' @param figures_path Path to images file directory
 #' @param tables_path Path to tables file directory
-#' @param standard_footnotes_yaml Path to standard_footnotes.yaml in report/
+#' @param standard_footnotes_yaml Path to standard_footnotes.yaml in report
+#' @param include_object_path boolean for including object path in footnotes
 #'
 #' @export
 #'
@@ -36,7 +37,8 @@ build_report <- function(docx_in,
                          docx_out,
                          figures_path,
                          tables_path,
-                         standard_footnotes_yaml = NULL) {
+                         standard_footnotes_yaml = NULL,
+                         include_object_path = FALSE) {
   log4r::debug(.le$logger, "Starting build_report function")
 
   if (!file.exists(docx_in)) {
@@ -82,7 +84,8 @@ build_report <- function(docx_in,
     docx_out = docx_out,
     figures_path = figures_path,
     tables_path = tables_path,
-    footnotes = standard_footnotes_yaml
+    footnotes = standard_footnotes_yaml,
+    include_object_path = include_object_path
   )
 
   output_dir <- dirname(docx_out)

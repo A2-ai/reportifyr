@@ -8,7 +8,7 @@ from docx.shared import Pt
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
-def add_figure_footnotes(docx_in, docx_out, figure_dir, footnotes_yaml):
+def add_figure_footnotes(docx_in, docx_out, figure_dir, footnotes_yaml, include_object_path = False):
     # Load standard footnotes from a yaml file
     with open(footnotes_yaml, 'r') as y:
         footnotes = yaml.safe_load(y)
@@ -43,7 +43,15 @@ def add_figure_footnotes(docx_in, docx_out, figure_dir, footnotes_yaml):
                     if source and creation_time:
                         source_text = f"[Source: {source} {creation_time}]"
                     meta_text_lines.append(source_text)
-
+                    
+                    if include_object_path:
+                      object_source = ""
+                      obj_path = metadata.get("object_meta").get("path")
+                      obj_creation_time = metadata.get("object_meta").get("creation_time")
+                      if obj_path and obj_creation_time:
+                        object_source += f"[Object: {obj_path} {obj_creation_time}]"
+                        meta_text_lines.append(object_source)       
+                    
                     # Add notes metadata
                     notes_text = ""
                     meta_type = metadata.get("object_meta").get("meta_type")
@@ -136,6 +144,7 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output", type = str, required = True, help = "Ouptu docx file")
     parser.add_argument("-d", "--figure_dir", type = str, required = True, help = "Path to figures directory")
     parser.add_argument("-f", "--footnotes", type = str, required = True, help = "path to standard footnotes yaml")
+    parser.add_argument("-b", "--object", type=lambda x: x.lower() in ['true', 't'], help="include object path")
     args = parser.parse_args()
 
-    add_figure_footnotes(args.input, args.output, args.figure_dir, args.footnotes)
+    add_figure_footnotes(args.input, args.output, args.figure_dir, args.footnotes, args.object)

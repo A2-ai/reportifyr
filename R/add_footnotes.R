@@ -6,6 +6,7 @@
 #' @param figures_path Path to images and associated metadata directory
 #' @param tables_path Path to tables and associated metadata directory
 #' @param footnotes Path to standard_footnotes.yaml
+#' @param include_object_path Boolean for including object path path in footnotes
 #' @param debug Debug
 #'
 #' @export
@@ -50,7 +51,8 @@
 #'   docx_out = doc_dirs$doc_draft,
 #'   figures_path = figures_path,
 #'   tables_path = tables_path,
-#'   footnotes = footnotes
+#'   footnotes = footnotes,
+#'   include_object_path = TRUE
 #' )
 #' }
 add_footnotes <- function(docx_in,
@@ -58,6 +60,7 @@ add_footnotes <- function(docx_in,
                           figures_path,
                           tables_path,
                           footnotes = NULL,
+                          include_object_path = FALSE,
                           debug = F) {
   log4r::debug(.le$logger, "Starting add_footnotes function")
 
@@ -85,11 +88,11 @@ add_footnotes <- function(docx_in,
   }
 
   fig_script <- system.file("scripts/add_figure_footnotes.py", package = "reportifyr")
-  fig_args <- c("run", fig_script, "-i", docx_in, "-o", docx_out, "-d", figures_path)
+  fig_args <- c("run", fig_script, "-i", docx_in, "-o", docx_out, "-d", figures_path, "-b", include_object_path)
 
   # input file should be output file from call above
   tab_script <- system.file("scripts/add_table_footnotes.py", package = "reportifyr")
-  tab_args <- c("run", tab_script, "-i", docx_out, "-o", docx_out, "-d", tables_path)
+  tab_args <- c("run", tab_script, "-i", docx_out, "-o", docx_out, "-d", tables_path, "-b", include_object_path)
 
   if (!is.null(footnotes)) {
     log4r::info(.le$logger, paste0("Using provided footnotes file: ", footnotes))
