@@ -126,7 +126,8 @@ build_report(docx_in = docx_shell,
              docx_out = docx_out,
              figures_path = figures_path,
              tables_path = tables_path,
-             standard_footnotes_yaml = footnotes)
+             standard_footnotes_yaml = footnotes,
+             fail_on_missing_metadata = FALSE)
 ```
 
 We'll start with a `reportifyr` document that has figures, tables, and footnotes

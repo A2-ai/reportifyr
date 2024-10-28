@@ -7,6 +7,7 @@
 #' @param tables_path Path to tables file directory
 #' @param standard_footnotes_yaml Path to standard_footnotes.yaml in report
 #' @param include_object_path boolean for including object path in footnotes
+#' @param fail_on_missing_metadata Boolean for allowing objects to lack metadata and thus have no footnotes
 #'
 #' @export
 #'
@@ -38,7 +39,8 @@ build_report <- function(docx_in,
                          figures_path,
                          tables_path,
                          standard_footnotes_yaml = NULL,
-                         include_object_path = FALSE) {
+                         include_object_path = FALSE,
+                         fail_on_missing_metadata = TRUE) {
   log4r::debug(.le$logger, "Starting build_report function")
 
   if (!file.exists(docx_in)) {
@@ -85,7 +87,8 @@ build_report <- function(docx_in,
     figures_path = figures_path,
     tables_path = tables_path,
     footnotes = standard_footnotes_yaml,
-    include_object_path = include_object_path
+    include_object_path = include_object_path,
+    fail_on_missing_metadata = fail_on_missing_metadata
   )
 
   output_dir <- dirname(docx_out)
