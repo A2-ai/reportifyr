@@ -94,6 +94,13 @@ strings and bookmarks from document.
 }
 }
 
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://a2-ai.github.io/reportifyr/}
+}
+
+}
 \author{
 \strong{Maintainer}: Jacob Dumbleton \email{jacob@a2-ai.com}
 
