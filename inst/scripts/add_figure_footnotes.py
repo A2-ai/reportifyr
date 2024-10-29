@@ -21,7 +21,8 @@ def add_figure_footnotes(docx_in, docx_out, figure_dir, footnotes_yaml, include_
     end_pattern = r'\.[^.]+$'
     magic_pattern = re.compile(start_pattern + '.*?' + end_pattern)
     paragraphs = document.paragraphs
-
+    missing_metadata = False
+    
     for i, par in enumerate(paragraphs):
         matches = magic_pattern.findall(par.text)
         if matches:
@@ -41,8 +42,7 @@ def add_figure_footnotes(docx_in, docx_out, figure_dir, footnotes_yaml, include_
 
                     except FileNotFoundError:
                         print(f"Metadata file not found: {metadata_file}", file=sys.stderr)
-                        if fail_on_missing_metadata:
-                            sys.exit(1)
+                        missing_metadata = True
 
                     if add_footnote:
                         meta_text_lines = create_meta_text_lines(footnotes, metadata)
@@ -94,8 +94,13 @@ def add_figure_footnotes(docx_in, docx_out, figure_dir, footnotes_yaml, include_
                                     footnote_inserted = True
 
     # Save the processed document
-    document.save(docx_out)
-    print(f"Processed file saved at '{docx_out}'.")
+    if missing_metadata and fail_on_missing_metadata:
+      print("Output not created due to missing metadata. Please check logs for missing metadata files.")
+      sys.exit(1)
+    else:
+      document.save(docx_out)
+      print(f"Processed file saved at '{docx_out}'.")
+    
 
 def create_meta_text_lines(footnotes, metadata):
     meta_text_lines = []
