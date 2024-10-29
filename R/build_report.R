@@ -7,7 +7,7 @@
 #' @param tables_path Path to tables file directory
 #' @param standard_footnotes_yaml Path to standard_footnotes.yaml in report
 #' @param include_object_path boolean for including object path in footnotes
-#' @param fail_on_missing_metadata Boolean for allowing objects to lack metadata and thus have no footnotes
+#' @param footnotes_fail_on_missing_metadata Boolean for allowing objects to lack metadata and thus have no footnotes
 #'
 #' @export
 #'
@@ -40,7 +40,7 @@ build_report <- function(docx_in,
                          tables_path,
                          standard_footnotes_yaml = NULL,
                          include_object_path = FALSE,
-                         fail_on_missing_metadata = TRUE) {
+                         footnotes_fail_on_missing_metadata = TRUE) {
   log4r::debug(.le$logger, "Starting build_report function")
 
   if (!file.exists(docx_in)) {
@@ -81,15 +81,23 @@ build_report <- function(docx_in,
     figures_path = figures_path
   )
 
-  add_footnotes(
-    docx_in = doc_dirs$doc_tabs_figs,
-    docx_out = docx_out,
-    figures_path = figures_path,
-    tables_path = tables_path,
-    footnotes = standard_footnotes_yaml,
-    include_object_path = include_object_path,
-    fail_on_missing_metadata = fail_on_missing_metadata
-  )
+
+  tryCatch({
+    suppressWarnings({
+      add_footnotes(
+        docx_in = doc_dirs$doc_tabs_figs,
+        docx_out = docx_out,
+        figures_path = figures_path,
+        tables_path = tables_path,
+        footnotes = standard_footnotes_yaml,
+        include_object_path = include_object_path,
+        footnotes_fail_on_missing_metadata = footnotes_fail_on_missing_metadata
+      )
+    })
+  }, error = function(e) {
+    log4r::error(.le$logger, paste("Figure footnotes script failed:", e$message))
+    stop("build_report stopped: Failed to add footnotes due to an error in add_footnotes.", call. = FALSE)
+  })
 
   output_dir <- dirname(docx_out)
   intermediate_dir <- file.path(output_dir, "intermediate_files")

@@ -11,7 +11,7 @@ build_report(
   tables_path,
   standard_footnotes_yaml = NULL,
   include_object_path = FALSE,
-  fail_on_missing_metadata = TRUE
+  footnotes_fail_on_missing_metadata = TRUE
 )
 }
 \arguments{
@@ -27,7 +27,7 @@ build_report(
 
 \item{include_object_path}{boolean for including object path in footnotes}
 
-\item{fail_on_missing_metadata}{Boolean for allowing objects to lack metadata and thus have no footnotes}
+\item{footnotes_fail_on_missing_metadata}{Boolean for allowing objects to lack metadata and thus have no footnotes}
 }
 \description{
 Reads in a .docx file and returns an updated version with plots, tables, and footnotes replaced.

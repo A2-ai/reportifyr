@@ -11,7 +11,7 @@ add_footnotes(
   tables_path,
   footnotes = NULL,
   include_object_path = FALSE,
-  fail_on_missing_metadata = TRUE,
+  footnotes_fail_on_missing_metadata = TRUE,
   debug = F
 )
 }
@@ -28,7 +28,7 @@ add_footnotes(
 
 \item{include_object_path}{Boolean for including object path path in footnotes}
 
-\item{fail_on_missing_metadata}{Boolean for allowing objects to lack metadata and thus have no footnotes}
+\item{footnotes_fail_on_missing_metadata}{Boolean for allowing objects to lack metadata and thus have no footnotes}
 
 \item{debug}{Debug}
 }
@@ -78,6 +78,7 @@ add_footnotes(
   tables_path = tables_path,
   footnotes = footnotes,
   include_object_path = TRUE
+  footnotes_fail_on_missing_metadata
 )
 }
 }
