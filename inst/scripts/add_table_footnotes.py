@@ -44,7 +44,7 @@ def add_table_footnotes(docx_in, docx_out, table_dir, footnotes_yaml, include_ob
                         missing_metadata = True
 
                     if add_footnote:
-                        meta_text_lines = create_meta_text_lines(footnotes, metadata)
+                        meta_text_lines = create_meta_text_lines(footnotes, metadata, include_object_path)
 
                         # Find the table and insert the meta_text after it
                         found_magic_string = False
@@ -107,7 +107,7 @@ def add_table_footnotes(docx_in, docx_out, table_dir, footnotes_yaml, include_ob
       print(f"Processed file saved at '{docx_out}'.")
 
 
-def create_meta_text_lines(footnotes, metadata):
+def create_meta_text_lines(footnotes, metadata, include_object_path):
     meta_text_lines = []
     source_text = ""
     # Add source metadata
@@ -117,6 +117,14 @@ def create_meta_text_lines(footnotes, metadata):
         source_text += f"[Source: {source} {creation_time}]"
     meta_text_lines.append(source_text)
 
+    if include_object_path:
+      object_source = ""
+      obj_path = metadata.get("object_meta").get("path")
+      obj_creation_time = metadata.get("object_meta").get("creation_time")
+      if obj_path and obj_creation_time:
+        object_source += f"[Object: {obj_path} {obj_creation_time}]"
+        meta_text_lines.append(object_source)     
+    
     # Add notes metadata
     notes_text = ""
     meta_type = metadata.get("object_meta").get("meta_type")
