@@ -134,10 +134,10 @@ build_report(docx_in = docx_shell,
 ```
 
 This produces a report without footnotes in the entire document.
-<img src="data/images/fig2_no_fn_ef.png" style="width: 100%; height: auto;">
-<img src="data/images/fig3_no_fn_ef.png" style="width: 100%; height: auto;">
-<img src="data/images/tab1_no_fn_ef.png" style="width: 100%; height: auto;">
-<img src="data/images/tab2_no_fn_ef.png" style="width: 100%; height: auto;">
+![fig2 no fn](data/images/fig2_no_fn_ef.png){width=100%}
+![fig3 no fn](data/images/fig3_no_fn_ef.png){width=100%}
+![tab1 no fn](data/images/tab1_no_fn_ef.png){width=100%}
+![tab2 no fn](data/images/tab2_no_fn_ef.png){width=100%}
 
 If we instead want to include an appendix figure and table without footnotes, 
 but want footnotes within the rest of the report we can use the 
@@ -206,8 +206,9 @@ result <- file.copy(from = system.file("extdata/template-ef.docx", package = "re
                     to = file.path(here::here(), "vignettes", "report", "shell", "template-ef.docx"))
 ```
 
-<img src="data/images/fig4_no_fn_template.png" style="width: 100%; height: auto;">
-<img src="data/images/tab4_no_fn_template.png" style="width: 100%; height: auto;">
+![fig4 no fn template](data/images/fig4_no_fn_template.png){width=100%}
+![tab4 no fn template](data/images/tab4_no_fn_template.png){width=100%}
+
 
 ```{r}
 # Specify input and output .docx files
@@ -229,12 +230,12 @@ build_report(docx_in = docx_shell,
              )
 ```
 
-<img src="data/images/fig2_fn_ef_draft.png" style="width: 100%; height: auto;">
-<img src="data/images/fig3_fn_ef_draft.png" style="width: 100%; height: auto;">
-<img src="data/images/fig4_no_fn_ef_draft.png" style="width: 100%; height: auto;">
-<img src="data/images/tab1_fn_ef_draft.png" style="width: 100%; height: auto;">
-<img src="data/images/tab2_fn_ef_draft.png" style="width: 100%; height: auto;">
-<img src="data/images/tab4_no_fn_ef_draft.png" style="width: 100%; height: auto;">
+![](data/images/fig2_fn_ef_draft.png){width=100%}
+![](data/images/fig3_fn_ef_draft.png){width=100%}
+![](data/images/fig4_no_fn_ef_draft.png){width=100%}
+![](data/images/tab1_fn_ef_draft.png){width=100%}
+![](data/images/tab2_fn_ef_draft.png){width=100%}
+![](data/images/tab4_no_fn_ef_draft.png){width=100%}
 
 We can see in the logs that theoph-pk-demographics.csv was missing metadata and 
 that default formatting was applied. We additionally see warnings about missing 
@@ -266,12 +267,12 @@ build_report(docx_in = docx_shell,
              )
 ```
 
-<img src="data/images/fig2_op_fn_ef_draft.png" style="width: 100%; height: auto;">
-<img src="data/images/fig3_op_fn_ef_draft.png" style="width: 100%; height: auto;">
-<img src="data/images/fig4_op_no_fn_ef_draft.png" style="width: 100%; height: auto;">
-<img src="data/images/tab1_op_fn_ef_draft.png" style="width: 100%; height: auto;">
-<img src="data/images/tab2_op_fn_ef_draft.png" style="width: 100%; height: auto;">
-<img src="data/images/tab4_op_no_fn_ef_draft.png" style="width: 100%; height: auto;">
+![](data/images/fig2_op_fn_ef_draft.png){width=100%}
+![](data/images/fig3_op_fn_ef_draft.png){width=100%}
+![](data/images/fig4_op_no_fn_ef_draft.png){width=100%}
+![](data/images/tab1_op_fn_ef_draft.png){width=100%}
+![](data/images/tab2_op_fn_ef_draft.png){width=100%}
+![](data/images/tab4_op_no_fn_ef_draft.png){width=100%}
 
 
 ```{r remove directories, include = FALSE}
