@@ -130,9 +130,12 @@ add_footnotes <- function(docx_in,
 
   log4r::debug(.le$logger, "Running figure footnotes script")
   fig_results <- tryCatch({
-    processx::run(
+    result <- processx::run(
       command = uv_path, args = fig_args, env = c("current", VIRTUAL_ENV = venv_path), error_on_status = TRUE
       )
+    if (length(result$stderr) != 0) {
+      log4r::warn(.le$logger, paste0("Figure footnotes script stderr: ", result$stderr))
+    }
   }, error = function(e) {
     log4r::error(.le$logger, paste0("Figure footnotes script failed. Status: ", e$status))
     log4r::error(.le$logger, paste0("Figure footnotes script failed. Stderr: ", e$stderr))
@@ -146,9 +149,12 @@ add_footnotes <- function(docx_in,
 
   log4r::debug(.le$logger, "Running table footnotes script")
   tab_results <- tryCatch({
-    processx::run(
+    result <- processx::run(
       command = uv_path, args = tab_args, env = c("current", VIRTUAL_ENV = venv_path), error_on_status = TRUE
     )
+    if (length(result$stderr) != 0) {
+      log4r::warn(.le$logger, paste0("Table footnotes script stderr: ", result$stderr))
+    }
   }, error = function(e) {
     log4r::error(.le$logger, paste0("Table footnotes script failed. Status: ", e$status))
     log4r::error(.le$logger, paste0("Table footnotes script failed. Stderr: ", e$stderr))

@@ -10,6 +10,7 @@ build_report(
   figures_path,
   tables_path,
   standard_footnotes_yaml = NULL,
+  add_footnotes = TRUE,
   include_object_path = FALSE,
   footnotes_fail_on_missing_metadata = TRUE
 )
@@ -24,6 +25,8 @@ build_report(
 \item{tables_path}{Path to tables file directory}
 
 \item{standard_footnotes_yaml}{Path to standard_footnotes.yaml in report}
+
+\item{add_footnotes}{boolean for including footnotes in the document or not}
 
 \item{include_object_path}{boolean for including object path in footnotes}
 

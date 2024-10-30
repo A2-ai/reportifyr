@@ -88,10 +88,12 @@ add_tables <- function(docx_in, docx_out, tables_path, debug = F) {
         # Correct metadata file naming
         metadata_file <- paste0(tools::file_path_sans_ext(table_file), "_", tools::file_ext(table_file), "_metadata.json")
         if (!file.exists(metadata_file)) {
-          log4r::warn(.le$logger, paste0("Metadata file missing for table: ", table_file, ". Default formatting will be applied."))
+          log4r::warn(.le$logger, paste0("Metadata file missing for table: ", table_file))
           if (!inherits(data_in, "flextable")) {
+            log4r::warn(.le$logger, paste0("Default formatting will be applied for ", table_file, "."))
             flextable <- format_flextable(data_in)
           } else {
+            log4r::warn(.le$logger, paste0("Data is already a flextable so no formatting will be applied for ", table_file, "."))
             flextable <- data_in
           }
         } else {
