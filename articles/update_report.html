@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">reportifyr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,6 +44,7 @@
     <li><a class="dropdown-item" href="../articles/Integrating_reportifyr_into_report_writing.html">Integrating reportifyr into report writing</a></li>
     <li><a class="dropdown-item" href="../articles/streamlined_reportifyr_workflow.html">Simplfied workflow for report generation</a></li>
     <li><a class="dropdown-item" href="../articles/update_report.html">Updating a reportifyr report</a></li>
+    <li><a class="dropdown-item" href="../articles/elective_footnotes.html">Elective footnotes</a></li>
   </ul>
 </li>
       </ul>
@@ -201,9 +202,9 @@ include in the report:</p>
 <span>             figures_path <span class="op">=</span> <span class="va">figures_path</span>,</span>
 <span>             tables_path <span class="op">=</span> <span class="va">tables_path</span>,</span>
 <span>             standard_footnotes_yaml <span class="op">=</span> <span class="va">footnotes</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.573 sec elapsed</span></span>
-<span><span class="co">#&gt; 0.204 sec elapsed</span></span>
-<span><span class="co">#&gt; 0.504 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.608 sec elapsed</span></span>
+<span><span class="co">#&gt; 0.214 sec elapsed</span></span>
+<span><span class="co">#&gt; 0.515 sec elapsed</span></span></code></pre></div>
 <p>We’ll start with a <code>reportifyr</code> document that has figures,
 tables, and footnotes that need to be updated. Let’s run another
 analysis where we update figures 2 and 3, and table 2:</p>
@@ -315,29 +316,29 @@ analysis where we update figures 2 and 3, and table 2:</p>
 <span>             figures_path <span class="op">=</span> <span class="va">figures_path</span>,</span>
 <span>             tables_path <span class="op">=</span> <span class="va">tables_path</span>,</span>
 <span>             standard_footnotes_yaml <span class="op">=</span> <span class="va">footnotes</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.552 sec elapsed</span></span>
-<span><span class="co">#&gt; 0.227 sec elapsed</span></span>
-<span><span class="co">#&gt; 0.504 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.564 sec elapsed</span></span>
+<span><span class="co">#&gt; 0.232 sec elapsed</span></span>
+<span><span class="co">#&gt; 0.505 sec elapsed</span></span></code></pre></div>
 <p>We can see that figures 2 and 3 were updated, and table 2 was
 updated, while table 1 and the non-<code>reportifyr</code> content were
 unaltered:</p>
 <div class="float">
-<img src="data%2Fimages%2Ffig1_update.png" style="width:100.0%" alt="Figure 1 is unaltered"><div class="figcaption">Figure 1 is unaltered</div>
+<img src="data%2Fimages%2Ffig1_update.avif" style="width:100.0%" alt="Figure 1 is unaltered"><div class="figcaption">Figure 1 is unaltered</div>
 </div>
 <div class="float">
-<img src="data%2Fimages%2Ffig2_update.png" style="width:100.0%" alt="Figure 2 is updated"><div class="figcaption">Figure 2 is updated</div>
+<img src="data%2Fimages%2Ffig2_update.avif" style="width:100.0%" alt="Figure 2 is updated"><div class="figcaption">Figure 2 is updated</div>
 </div>
 <div class="float">
-<img src="data%2Fimages%2Ffig3_update.png" style="width:100.0%" alt="Figure 3 is updated"><div class="figcaption">Figure 3 is updated</div>
+<img src="data%2Fimages%2Ffig3_update.avif" style="width:100.0%" alt="Figure 3 is updated"><div class="figcaption">Figure 3 is updated</div>
 </div>
 <div class="float">
-<img src="data%2Fimages%2Ftab1_update.png" style="width:100.0%" alt="Table 1 is unaltered"><div class="figcaption">Table 1 is unaltered</div>
+<img src="data%2Fimages%2Ftab1_update.avif" style="width:100.0%" alt="Table 1 is unaltered"><div class="figcaption">Table 1 is unaltered</div>
 </div>
 <div class="float">
-<img src="data%2Fimages%2Ftab2_update.png" style="width:100.0%" alt="Table 2 is updated"><div class="figcaption">Table 2 is updated</div>
+<img src="data%2Fimages%2Ftab2_update.avif" style="width:100.0%" alt="Table 2 is updated"><div class="figcaption">Table 2 is updated</div>
 </div>
 <div class="float">
-<img src="data%2Fimages%2Ftab3_update.png" style="width:100.0%" alt="Table 3 is unaltered"><div class="figcaption">Table 3 is unaltered</div>
+<img src="data%2Fimages%2Ftab3_update.avif" style="width:100.0%" alt="Table 3 is unaltered"><div class="figcaption">Table 3 is unaltered</div>
 </div>
   </main>
 </div>

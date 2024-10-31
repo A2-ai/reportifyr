@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">reportifyr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -23,6 +23,7 @@
     <li><a class="dropdown-item" href="../articles/Integrating_reportifyr_into_report_writing.html">Integrating reportifyr into report writing</a></li>
     <li><a class="dropdown-item" href="../articles/streamlined_reportifyr_workflow.html">Simplfied workflow for report generation</a></li>
     <li><a class="dropdown-item" href="../articles/update_report.html">Updating a reportifyr report</a></li>
+    <li><a class="dropdown-item" href="../articles/elective_footnotes.html">Elective footnotes</a></li>
   </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -50,7 +51,10 @@
 <span>  <span class="va">docx_out</span>,</span>
 <span>  <span class="va">figures_path</span>,</span>
 <span>  <span class="va">tables_path</span>,</span>
-<span>  standard_footnotes_yaml <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  standard_footnotes_yaml <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  add_footnotes <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  include_object_path <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  footnotes_fail_on_missing_metadata <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -75,7 +79,19 @@
 
 
 <dt id="arg-standard-footnotes-yaml">standard_footnotes_yaml<a class="anchor" aria-label="anchor" href="#arg-standard-footnotes-yaml"></a></dt>
-<dd><p>Path to standard_footnotes.yaml in report/</p></dd>
+<dd><p>Path to standard_footnotes.yaml in report</p></dd>
+
+
+<dt id="arg-add-footnotes">add_footnotes<a class="anchor" aria-label="anchor" href="#arg-add-footnotes"></a></dt>
+<dd><p>boolean for including footnotes in the document or not</p></dd>
+
+
+<dt id="arg-include-object-path">include_object_path<a class="anchor" aria-label="anchor" href="#arg-include-object-path"></a></dt>
+<dd><p>boolean for including object path in footnotes</p></dd>
+
+
+<dt id="arg-footnotes-fail-on-missing-metadata">footnotes_fail_on_missing_metadata<a class="anchor" aria-label="anchor" href="#arg-footnotes-fail-on-missing-metadata"></a></dt>
+<dd><p>Boolean for allowing objects to lack metadata and thus have no footnotes</p></dd>
 
 </dl></div>
 

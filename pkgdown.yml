@@ -2,12 +2,13 @@ pandoc: 3.1.11
 pkgdown: 2.1.1
 pkgdown_sha: ~
 articles:
+  elective_footnotes: elective_footnotes.html
   initializing_reportifyr: initializing_reportifyr.html
   Integrating_reportifyr_into_analyses: Integrating_reportifyr_into_analyses.html
   Integrating_reportifyr_into_report_writing: Integrating_reportifyr_into_report_writing.html
   streamlined_reportifyr_workflow: streamlined_reportifyr_workflow.html
   update_report: update_report.html
-last_built: 2024-10-28T15:23Z
+last_built: 2024-10-31T19:42Z
 urls:
   reference: https://a2-ai.github.io/reportifyr/reference
   article: https://a2-ai.github.io/reportifyr/articles

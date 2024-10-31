@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">reportifyr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,6 +44,7 @@
     <li><a class="dropdown-item" href="../articles/Integrating_reportifyr_into_report_writing.html">Integrating reportifyr into report writing</a></li>
     <li><a class="dropdown-item" href="../articles/streamlined_reportifyr_workflow.html">Simplfied workflow for report generation</a></li>
     <li><a class="dropdown-item" href="../articles/update_report.html">Updating a reportifyr report</a></li>
+    <li><a class="dropdown-item" href="../articles/elective_footnotes.html">Elective footnotes</a></li>
   </ul>
 </li>
       </ul>
@@ -113,12 +114,12 @@ those objects before updating to prevent duplication.</p>
 <span>             figures_path <span class="op">=</span> <span class="va">figures_path</span>,</span>
 <span>             tables_path <span class="op">=</span> <span class="va">tables_path</span>,</span>
 <span>             standard_footnotes_yaml <span class="op">=</span> <span class="va">footnotes</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.569 sec elapsed</span></span>
-<span><span class="co">#&gt; 0.203 sec elapsed</span></span>
-<span><span class="co">#&gt; 0.498 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.621 sec elapsed</span></span>
+<span><span class="co">#&gt; 0.211 sec elapsed</span></span>
+<span><span class="co">#&gt; 0.505 sec elapsed</span></span></code></pre></div>
 <p>This produces the same <code>reportifyr</code> draft as does the
 step-wise process, but with only a single function call.</p>
-<p><img src="data%2Fimages%2Ftfn_wrapper.png"></p>
+<p><img src="data%2Fimages%2Ftfn_wrapper.avif"></p>
 <p>And we can remove the magic strings and bookmarks with the same
 <code>finalize_document</code> function:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">

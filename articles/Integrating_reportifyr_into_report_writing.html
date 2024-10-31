@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">reportifyr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,6 +44,7 @@
     <li><a class="dropdown-item" href="../articles/Integrating_reportifyr_into_report_writing.html">Integrating reportifyr into report writing</a></li>
     <li><a class="dropdown-item" href="../articles/streamlined_reportifyr_workflow.html">Simplfied workflow for report generation</a></li>
     <li><a class="dropdown-item" href="../articles/update_report.html">Updating a reportifyr report</a></li>
+    <li><a class="dropdown-item" href="../articles/elective_footnotes.html">Elective footnotes</a></li>
   </ul>
 </li>
       </ul>
@@ -97,7 +98,7 @@ reportifyr</a>.</p>
 <p>To build reports with <code>reportifyr</code> you need to insert a
 figure or table caption using the ‘Insert Caption’ button under the
 ‘References’ ribbon.</p>
-<p><img src="data%2Fimages%2Finsert_caption.png" style="width:100.0%"></p>
+<p><img src="data%2Fimages%2Finsert_caption.avif" style="width:100.0%"></p>
 <p>This will insert a caption (either figure or table) into the
 Microsoft Word document. Underneath that caption, you need to add:</p>
 <p>{rpfy}:file_name_of_figure/table</p>
@@ -112,7 +113,7 @@ two tables. In the template Microsoft Word document packaged with
 magic strings to allow insertion of figures/tables and footnotes, have
 already been inserted. Below is an image of the caption and magic string
 for the concentration time profile figure we generated:</p>
-<p><img src="data%2Fimages%2Ffigure-2_caption_and_magic_string.png" style="width:100.0%"></p>
+<p><img src="data%2Fimages%2Ffigure-2_caption_and_magic_string.avif" style="width:100.0%"></p>
 <p>We can now perform some setup and start filling in the template! The
 first thing we’ll do is assign the input and output document names. We
 will be populating the <code>template.docx</code> which contains no
@@ -155,9 +156,9 @@ for the next processing steps.</p>
 <span><span class="fu"><a href="../reference/add_tables.html">add_tables</a></span><span class="op">(</span>docx_in <span class="op">=</span> <span class="va">doc_dirs</span><span class="op">$</span><span class="va">doc_clean</span>,</span>
 <span>           docx_out <span class="op">=</span> <span class="va">doc_dirs</span><span class="op">$</span><span class="va">doc_tables</span>,</span>
 <span>           tables_path <span class="op">=</span> <span class="va">tables_path</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.601 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.66 sec elapsed</span></span></code></pre></div>
 <p>We can see the tables were successfully inserted:</p>
-<p><img src="data%2Fimages%2Ftable_2_in_doc.png" style="width:100.0%"></p>
+<p><img src="data%2Fimages%2Ftable_2_in_doc.avif" style="width:100.0%"></p>
 <p>Now that the tables are inserted, we can insert the figures:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">figures_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"vignettes"</span>, <span class="st">"OUTPUTS"</span>, <span class="st">"figures"</span><span class="op">)</span></span>
@@ -165,9 +166,9 @@ for the next processing steps.</p>
 <span><span class="fu"><a href="../reference/add_plots.html">add_plots</a></span><span class="op">(</span>docx_in <span class="op">=</span> <span class="va">doc_dirs</span><span class="op">$</span><span class="va">doc_tables</span>,</span>
 <span>          docx_out <span class="op">=</span> <span class="va">doc_dirs</span><span class="op">$</span><span class="va">doc_tabs_figs</span>,</span>
 <span>          figures_path <span class="op">=</span> <span class="va">figures_path</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 0.204 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 0.212 sec elapsed</span></span></code></pre></div>
 <p>And now we can see our figures in the document as well:</p>
-<p><img src="data%2Fimages%2Ffigure_2_in_doc.png" style="width:100.0%"></p>
+<p><img src="data%2Fimages%2Ffigure_2_in_doc.avif" style="width:100.0%"></p>
 <p>Now we can add the footnotes:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">footnotes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"vignettes"</span>, <span class="st">"report"</span>, <span class="st">"standard_footnotes.yaml"</span><span class="op">)</span></span>
@@ -177,9 +178,9 @@ for the next processing steps.</p>
 <span>              figures_path <span class="op">=</span> <span class="va">figures_path</span>,</span>
 <span>              tables_path <span class="op">=</span> <span class="va">tables_path</span>,</span>
 <span>              footnotes <span class="op">=</span> <span class="va">footnotes</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 0.498 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 0.51 sec elapsed</span></span></code></pre></div>
 <p>We now can see our figures and tables have footnotes inserted:</p>
-<p><img src="data%2Fimages%2Ffig_2_with_fn.png" style="width:100.0%"><img src="data%2Fimages%2Ftable_2_with_fn.png" style="width:100.0%"></p>
+<p><img src="data%2Fimages%2Ffig_2_with_fn.avif" style="width:100.0%"><img src="data%2Fimages%2Ftable_2_with_fn.avif" style="width:100.0%"></p>
 <p>Now that all the elements are inserted, we can generate a clean final
 report. This severs the link between <code>reportifyr</code> and the
 document, so please be careful using this function:</p>
@@ -192,7 +193,7 @@ document, so please be careful using this function:</p>
 capturing the metadata for this final document. The metadata includes a
 file hash so you can see if this document has been updated since its
 creation.</p>
-<p><img src="data%2Fimages%2Ffig_2_final.png" style="width:100.0%"><img src="data%2Fimages%2Ftable_2_final.png" style="width:100.0%"></p>
+<p><img src="data%2Fimages%2Ffig_2_final.avif" style="width:100.0%"><img src="data%2Fimages%2Ftable_2_final.avif" style="width:100.0%"></p>
   </main>
 </div>
 
