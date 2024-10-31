@@ -133,7 +133,7 @@ add_footnotes <- function(docx_in,
     result <- processx::run(
       command = uv_path, args = fig_args, env = c("current", VIRTUAL_ENV = venv_path), error_on_status = TRUE
       )
-    if (length(result$stderr) != 0) {
+    if (nzchar(result$stderr)) {
       log4r::warn(.le$logger, paste0("Figure footnotes script stderr: ", result$stderr))
     }
   }, error = function(e) {
@@ -152,7 +152,7 @@ add_footnotes <- function(docx_in,
     result <- processx::run(
       command = uv_path, args = tab_args, env = c("current", VIRTUAL_ENV = venv_path), error_on_status = TRUE
     )
-    if (length(result$stderr) != 0) {
+    if (nzchar(result$stderr)) {
       log4r::warn(.le$logger, paste0("Table footnotes script stderr: ", result$stderr))
     }
   }, error = function(e) {

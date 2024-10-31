@@ -103,7 +103,7 @@ build_report <- function(docx_in,
         )
       })
     }, error = function(e) {
-      log4r::error(.le$logger, paste("Figure footnotes script failed:", e$message))
+      log4r::error(.le$logger, paste("Footnotes scripts failed:", e$message))
       stop("build_report stopped: Failed to add footnotes due to an error in add_footnotes.", call. = FALSE)
     })
   }
