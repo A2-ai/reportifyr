@@ -47,7 +47,7 @@ write_object_metadata <- function(
       if (!is.null(context$path) && nzchar(context$path)) {  # Check if the context and path are non-null and non-empty
         normalizePath(context$path)
       } else {
-        normalizePath(getwd())  # Fallback to the working directory if no source file is open
+        normalizePath("Object created from console")  # Fallback to the working directory if no source file is open
       }
     } else if (!is.null(knitr::current_input())) {
       normalizePath(knitr::current_input())
