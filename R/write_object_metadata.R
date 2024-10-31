@@ -42,15 +42,18 @@ write_object_metadata <- function(
   log4r::info(.le$logger, paste0("Generated file hash: ", hash))
 
   source_path <- tryCatch({
-    if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable()) {
-      context <- rstudioapi::getSourceEditorContext()
-      if (!is.null(context$path) && nzchar(context$path)) {  # Check if the context and path are non-null and non-empty
-        normalizePath(context$path)
-      } else {
-        normalizePath("Object created from console")  # Fallback to the working directory if no source file is open
-      }
+    # Check if the script is being sourced
+    src_path <- if (!is.null(sys.frame(1)$ofile)) {
+      normalizePath(sys.frame(1)$ofile)  # Path of the currently sourced file
     } else if (!is.null(knitr::current_input())) {
       normalizePath(knitr::current_input())
+    } else if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable()) {
+      context <- rstudioapi::getSourceEditorContext()
+      if (!is.null(context$path) && nzchar(context$path)) {
+        normalizePath(context$path)
+      } else {
+        normalizePath("Object created from console")
+      }
     } else if (!is.null(rmarkdown::metadata$input_file)) {
       normalizePath(rmarkdown::metadata$input_file)
     } else if (!is.null(getOption("knitr.in.file"))) {
@@ -60,6 +63,7 @@ write_object_metadata <- function(
     } else {
       stop("Unable to detect input file")
     }
+    src_path
   }, error = function(e) {
     log4r::error(.le$logger, "Error detecting source file path")
     stop(e)

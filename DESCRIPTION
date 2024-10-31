@@ -1,6 +1,6 @@
 Package: reportifyr
 Title: Create reproducible reports with quarto and word 
-Version: 0.2.0
+Version: 0.2.1
 Authors@R: c(
     person("Jacob", "Dumbleton", , "jacob@a2-ai.com", role = c("aut", "cre")),
     person("Matthew", "Smith", , "matthews@a2-ai.com", role = "aut"),
