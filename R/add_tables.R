@@ -88,13 +88,19 @@ add_tables <- function(docx_in, docx_out, tables_path, debug = F) {
         # Correct metadata file naming
         metadata_file <- paste0(tools::file_path_sans_ext(table_file), "_", tools::file_ext(table_file), "_metadata.json")
         if (!file.exists(metadata_file)) {
-          log4r::error(.le$logger, paste0("Metadata file missing for table: ", table_file))
-          stop(paste0("Metadata missing for table: ", table_file))
+          log4r::warn(.le$logger, paste0("Metadata file missing for table: ", table_file))
+          if (!inherits(data_in, "flextable")) {
+            log4r::warn(.le$logger, paste0("Default formatting will be applied for ", table_file, "."))
+            flextable <- format_flextable(data_in)
+          } else {
+            log4r::warn(.le$logger, paste0("Data is already a flextable so no formatting will be applied for ", table_file, "."))
+            flextable <- data_in
+          }
+        } else {
+          # Format the table using flextable
+          metadata <- jsonlite::fromJSON(metadata_file)
+          flextable <- format_flextable(data_in, metadata$object_meta$table1)
         }
-        metadata <- jsonlite::fromJSON(metadata_file)
-
-        # Format the table using flextable
-        flextable <- format_flextable(data_in, metadata$object_meta$table1)
 
         # Insert the table right after the paragraph containing the magic string, but keep the magic string
         magic_file_pattern <- paste0("\\{rpfy\\}:", table_name)

@@ -136,7 +136,7 @@ build_report(docx_in = docx_shell,
 This produces the same `reportifyr` draft as does the step-wise process, but with 
 only a single function call.
 
-![](data/images/tfn_wrapper.png)
+![](data/images/tfn_wrapper.avif)
 
 And we can remove the magic strings and bookmarks with the same `finalize_document` 
 function:

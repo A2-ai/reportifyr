@@ -10,6 +10,8 @@ add_footnotes(
   figures_path,
   tables_path,
   footnotes = NULL,
+  include_object_path = FALSE,
+  footnotes_fail_on_missing_metadata = TRUE,
   debug = F
 )
 }
@@ -23,6 +25,10 @@ add_footnotes(
 \item{tables_path}{Path to tables and associated metadata directory}
 
 \item{footnotes}{Path to standard_footnotes.yaml}
+
+\item{include_object_path}{Boolean for including object path path in footnotes}
+
+\item{footnotes_fail_on_missing_metadata}{Boolean for allowing objects to lack metadata and thus have no footnotes}
 
 \item{debug}{Debug}
 }
@@ -70,7 +76,9 @@ add_footnotes(
   docx_out = doc_dirs$doc_draft,
   figures_path = figures_path,
   tables_path = tables_path,
-  footnotes = footnotes
+  footnotes = footnotes,
+  include_object_path = TRUE
+  footnotes_fail_on_missing_metadata
 )
 }
 }

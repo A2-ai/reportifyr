@@ -9,7 +9,10 @@ build_report(
   docx_out,
   figures_path,
   tables_path,
-  standard_footnotes_yaml = NULL
+  standard_footnotes_yaml = NULL,
+  add_footnotes = TRUE,
+  include_object_path = FALSE,
+  footnotes_fail_on_missing_metadata = TRUE
 )
 }
 \arguments{
@@ -21,7 +24,13 @@ build_report(
 
 \item{tables_path}{Path to tables file directory}
 
-\item{standard_footnotes_yaml}{Path to standard_footnotes.yaml in report/}
+\item{standard_footnotes_yaml}{Path to standard_footnotes.yaml in report}
+
+\item{add_footnotes}{boolean for including footnotes in the document or not}
+
+\item{include_object_path}{boolean for including object path in footnotes}
+
+\item{footnotes_fail_on_missing_metadata}{Boolean for allowing objects to lack metadata and thus have no footnotes}
 }
 \description{
 Reads in a .docx file and returns an updated version with plots, tables, and footnotes replaced.

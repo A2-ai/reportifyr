@@ -1,6 +1,6 @@
 Package: reportifyr
 Title: Create reproducible reports with quarto and word 
-Version: 0.2.0
+Version: 0.2.1
 Authors@R: c(
     person("Jacob", "Dumbleton", , "jacob@a2-ai.com", role = c("aut", "cre")),
     person("Matthew", "Smith", , "matthews@a2-ai.com", role = "aut"),
@@ -10,7 +10,7 @@ Authors@R: c(
     person("Agnes", "Kim", , "agnes@a2-ai.com", role = "aut"),
     person("Anne", "Zheng", , "anne@a2-ai.com", role = "aut"),
     person("Jenna", "Johnson", , "jenna@a2-ai.com", role = "aut"),
-    person("Fenando", "Carreno", , "fernando.o.carreno@gsk.com", role = "ctb"),
+    person("Fernando", "Carreno", , "fernando.o.carreno@gsk.com", role = "ctb"),
     person("Kashyap", "Patel", , "kashyap.x.patel@gsk.com", role = "ctb"),
     person("Maxwell", "Chirehwa", , "maxwell.t.chirehwa@gsk.com", role = "ctb"),
     person("Wesley", "Cummings", , "wes@a2-ai.com", role = "ctb"),

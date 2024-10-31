@@ -9,6 +9,16 @@ get_git_info <- function(file_path) {
   result <- tryCatch({
     log <- processx::run("git", c("log", "--follow", "--", file_path))$stdout
 
+    if (log == "") {
+      log4r::warn(.le$logger, paste0("Source file path not tracked by git: ", file_path))
+      return(list(
+        creation_author = "FILE NOT TRACKED BY GIT",
+        latest_author = "FILE NOT TRACKED BY GIT",
+        creation_time = "FILE NOT TRACKED BY GIT",
+        latest_time = "FILE NOT TRACKED BY GIT"
+      ))
+    }
+
     author_lines <- regmatches(log, gregexpr("Author: [^\n]+", log))[[1]]
     date_lines <- regmatches(log, gregexpr("Date: [^\n]+", log))[[1]]
 

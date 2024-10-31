@@ -36,6 +36,8 @@ navbar:
         href: articles/streamlined_reportifyr_workflow.html
       - text: Updating a reportifyr report
         href: articles/update_report.html
+      - text: Elective footnotes
+        href: articles/elective_footnotes.html
     github:
       icon: fa-github fa-lg
       href: https://github.com/a2-ai/reportifyr

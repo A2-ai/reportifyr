@@ -113,7 +113,7 @@ If you'd like more detail on the initialization of `reportifyr`, please see the 
 
 To build reports with `reportifyr` you need to insert a figure or table caption using the 'Insert Caption' button under the 'References' ribbon.
 
-![](data/images/insert_caption.png){width=100%}
+![](data/images/insert_caption.avif){width=100%}
 
 This will insert a caption (either figure or table) into the Microsoft Word document. Underneath that caption, you need to add:
 
@@ -123,7 +123,7 @@ This string triggers the magic behind `reportifyr`, and inserts the figure or ta
 
 In the [vignette on integrating reportifyr into analyses](Integrating_reportifyr_into_analyses.html), we saved two figures and two tables. In the template Microsoft Word document packaged with `reportifyr`, figure and table captions, and their associated magic strings to allow insertion of figures/tables and footnotes, have already been inserted. Below is an image of the caption and magic string for the concentration time profile figure we generated:
 
-![](data/images/figure-2_caption_and_magic_string.png){width=100%}
+![](data/images/figure-2_caption_and_magic_string.avif){width=100%}
 
 We can now perform some setup and start filling in the template! The first thing we'll do is assign the input and output document names. We will be populating the `template.docx` which contains no figures or tables inserted by `reportifyr`. If the input document does contain `reportifyr` inserted objects, you'll need to remove them with `remove_tables_figures_footnotes` first.
 
@@ -159,7 +159,7 @@ add_tables(docx_in = doc_dirs$doc_clean,
 
 We can see the tables were successfully inserted:
 
-![](data/images/table_2_in_doc.png){width=100%}
+![](data/images/table_2_in_doc.avif){width=100%}
 
 Now that the tables are inserted, we can insert the figures:
 
@@ -173,7 +173,7 @@ add_plots(docx_in = doc_dirs$doc_tables,
 
 And now we can see our figures in the document as well:
 
-![](data/images/figure_2_in_doc.png){width=100%}
+![](data/images/figure_2_in_doc.avif){width=100%}
 
 Now we can add the footnotes:
 
@@ -189,8 +189,8 @@ add_footnotes(docx_in = doc_dirs$doc_tabs_figs,
 
 We now can see our figures and tables have footnotes inserted:
 
-![](data/images/fig_2_with_fn.png){width=100%}
-![](data/images/table_2_with_fn.png){width=100%}
+![](data/images/fig_2_with_fn.avif){width=100%}
+![](data/images/table_2_with_fn.avif){width=100%}
 
 Now that all the elements are inserted, we can generate a clean final report. This severs the link between `reportifyr` and the document, so please be careful using this function:
 
@@ -203,8 +203,8 @@ finalize_document(docx_in = doc_dirs$doc_draft,
 
 This creates a finalized document, free of magic strings, while also capturing the metadata for this final document. The metadata includes a file hash so you can see if this document has been updated since its creation.
 
-![](data/images/fig_2_final.png){width=100%}
-![](data/images/table_2_final.png){width=100%}
+![](data/images/fig_2_final.avif){width=100%}
+![](data/images/table_2_final.avif){width=100%}
 
 ```{r remove directories, include = FALSE}
 unlink(file.path(here::here(), "vignettes", ".venv"), recursive = TRUE)
