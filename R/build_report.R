@@ -51,11 +51,10 @@ build_report <- function(docx_in,
   }
   log4r::info(.le$logger, paste0("Input document found: ", docx_in))
 
+  doc_dirs <- make_doc_dirs(docx_in = docx_in)
   if (is.null(docx_out)) {
-    doc_dirs <- make_doc_dirs(docx_in = docx_in)
+    docx_out <- doc_dirs$doc_draft
     log4r::info(.le$logger, paste0("Docx_out is null, setting docx_out to: ", docx_out))
-  } else {
-    doc_dirs <- make_doc_dirs(docx_in = docx_in)
   }
 
   if (docx_in == docx_out) {
