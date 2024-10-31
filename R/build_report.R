@@ -36,7 +36,7 @@
 #' )
 #' }
 build_report <- function(docx_in,
-                         docx_out,
+                         docx_out = NULL,
                          figures_path,
                          tables_path,
                          standard_footnotes_yaml = NULL,
@@ -50,6 +50,13 @@ build_report <- function(docx_in,
     stop(paste("The input document does not exist:", docx_in))
   }
   log4r::info(.le$logger, paste0("Input document found: ", docx_in))
+
+  if (is.null(docx_out)) {
+    doc_dirs <- make_doc_dirs(docx_in = docx_in)
+    log4r::info(.le$logger, paste0("Docx_out is null, setting docx_out to: ", docx_out))
+  } else {
+    doc_dirs <- make_doc_dirs(docx_in = docx_in)
+  }
 
   if (docx_in == docx_out) {
     log4r::error(.le$logger, "Input and output files cannot be the same")
@@ -67,7 +74,6 @@ build_report <- function(docx_in,
     stop(paste("The file must be a docx file not:", tools::file_ext(docx_out)))
   }
 
-  doc_dirs <- make_doc_dirs(docx_in = docx_in)
   # Save over input docx without tfls
   remove_tables_figures_footnotes(docx_in = docx_in, docx_out = doc_dirs$doc_clean)
 
