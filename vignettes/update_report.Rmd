@@ -247,17 +247,17 @@ build_report(docx_in = docx_old,
 We can see that figures 2 and 3 were updated, and table 2 was updated, while 
 table 1 and the non-`reportifyr` content were unaltered:
 
-![Figure 1 is unaltered](data/images/fig1_update.png){width=100%}
+![Figure 1 is unaltered](data/images/fig1_update.avif){width=100%}
 
-![Figure 2 is updated](data/images/fig2_update.png){width=100%}
+![Figure 2 is updated](data/images/fig2_update.avif){width=100%}
 
-![Figure 3 is updated](data/images/fig3_update.png){width=100%}
+![Figure 3 is updated](data/images/fig3_update.avif){width=100%}
 
-![Table 1 is unaltered](data/images/tab1_update.png){width=100%}
+![Table 1 is unaltered](data/images/tab1_update.avif){width=100%}
 
-![Table 2 is updated](data/images/tab2_update.png){width=100%}
+![Table 2 is updated](data/images/tab2_update.avif){width=100%}
 
-![Table 3 is unaltered](data/images/tab3_update.png){width=100%} 
+![Table 3 is unaltered](data/images/tab3_update.avif){width=100%} 
 
 ```{r, include = FALSE}
 unlink(file.path(here::here(), "vignettes", ".venv"), recursive = TRUE)
