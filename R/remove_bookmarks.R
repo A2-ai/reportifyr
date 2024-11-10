@@ -108,11 +108,7 @@ remove_bookmarks <- function(docx_in,
       stop("Create virtual environment with initialize_python")
     }
 
-    uv_path <- normalizePath("~/.cargo/bin/uv", mustWork = FALSE)
-    if (!file.exists(uv_path)) {
-      log4r::error(.le$logger, "uv not found. Please install with initialize_python")
-      stop("Please install uv with initialize_python")
-    }
+    uv_path <- get_uv_path()
 
     script <- system.file("scripts/remove_bookmarks.py", package = "reportifyr")
     args <- c("run", script, "-i", docx_in, "-o", docx_out)

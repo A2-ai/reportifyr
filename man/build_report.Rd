@@ -6,7 +6,7 @@
 \usage{
 build_report(
   docx_in,
-  docx_out,
+  docx_out = NULL,
   figures_path,
   tables_path,
   standard_footnotes_yaml = NULL,

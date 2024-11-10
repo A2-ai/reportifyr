@@ -77,7 +77,6 @@ remove_magic_strings <- function(docx_in, docx_out) {
     stop(paste("The file must be a docx file not:", tools::file_ext(docx_out)))
   }
 
-
   if (interactive()) {
     log4r::info(.le$logger, "Prompting user for confirmation to remove bookmarks.")
     continue <- readline("This will remove magic strings from the document. This severs link between the document and reportifyr. Are you sure you want to continue? [Y/n]\n")
@@ -107,11 +106,7 @@ remove_magic_strings <- function(docx_in, docx_out) {
       stop("Create virtual environment with initialize_python")
     }
 
-    uv_path <- normalizePath("~/.cargo/bin/uv", mustWork = FALSE)
-    if (!file.exists(uv_path)) {
-      log4r::error(.le$logger, "uv not found. Please install with initialize_python")
-      stop("Please install uv with initialize_python")
-    }
+    uv_path <- get_uv_path()
 
     script <- system.file("scripts/remove_magic_strings.py", package = "reportifyr")
     args <- c("run", script, "-i", docx_in, "-o", docx_out)

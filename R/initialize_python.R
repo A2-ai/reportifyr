@@ -38,18 +38,18 @@ initialize_python <- function() {
     args <- c(args, getOption("python.version"))
     log4r::info(.le$logger, paste0("Using specified python version: ", getOption("python.version")))
   }
-  
-  uv_path <- normalizePath("~/.cargo/bin/uv", mustWork = FALSE)
+
+  uv_path <- get_uv_path()
 
   if (!dir.exists(file.path(args[[1]], ".venv"))) {
     log4r::debug(.le$logger, "Creating new virtual environment")
-    
+
     result <- processx::run(
       command = cmd,
       args = args
     )
     log4r::info(.le$logger, paste("Virtual environment created at: ", file.path(args[[1]], ".venv")))
-    
+
     args_name <- c("venv_dir", "python-docx.version", "pyyaml.version", "python.version")
     pyvers <- get_py_version(getOption("venv_dir"))
     if (!is.null(pyvers)) {
@@ -59,7 +59,7 @@ initialize_python <- function() {
       args <- c(args, "")
       log4r::warn(.le$logger, "Python version could not be detected")
     }
-    
+
     message(paste(
       "Creating python virtual environment with the following settings:\n",
       paste0("\t", args_name, ": ", args, collapse = "\n")

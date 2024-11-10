@@ -117,7 +117,7 @@ Authors:
 
 Other contributors:
 \itemize{
-  \item Fenando Carreno \email{fernando.o.carreno@gsk.com} [contributor]
+  \item Fernando Carreno \email{fernando.o.carreno@gsk.com} [contributor]
   \item Kashyap Patel \email{kashyap.x.patel@gsk.com} [contributor]
   \item Maxwell Chirehwa \email{maxwell.t.chirehwa@gsk.com} [contributor]
   \item Wesley Cummings \email{wes@a2-ai.com} [contributor]
