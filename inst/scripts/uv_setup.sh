@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# uv_setup.sh venv_directiory python-docx_version pyyaml_version python_version
+# uv_setup.sh venv_directory python-docx_version pyyaml_version uv_version [python_version]
 
-#check if uv is installed.
+# Check if uv is installed.
 if ! command -v uv &> /dev/null; then
-  echo "'uv' is not installed. Installing..."
-  curl -LsSf https://astral.sh/uv/install.sh | sh
+  echo "'uv' is not installed. Installing version $4..."
+  curl --proto '=https' --tlsv1.2 -LsSf "https://github.com/astral-sh/uv/releases/download/$4/uv-installer.sh" | sh
 fi
 
 if [[ ":$PATH:" != *":$HOME/.cargo/bin:"* ]]; then
@@ -21,10 +21,10 @@ source $HOME/.bashrc
 
 if [ ! -d "$1/.venv" ]; then
   echo "Creating venv at $1/.venv"
-  if [ -n "$4" ]; then
-    uv venv "$1/.venv" --python="$4"  # Use the version provided in $4
+  if [ -n "$5" ]; then
+    uv venv "$1/.venv" --python="$5"  # Use the Python version provided in $5
   else
-    uv venv "$1/.venv"  # Default version
+    uv venv "$1/.venv"  # Default version if $5 is not provided
   fi
 fi
 
@@ -39,6 +39,7 @@ if ! python -c "import docx" &> /dev/null; then
   fi
 fi
 
+# Check if pyyaml is installed, install it if not
 if ! python -c "import yaml" &> /dev/null; then
   if [ -n "$3" ]; then
     uv pip install "pyyaml==$3"

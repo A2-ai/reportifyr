@@ -53,13 +53,9 @@ remove_tables_figures_footnotes <- function(docx_in,
     log4r::error(.le$logger, "Virtual environment not found. Please initialize with initialize_python.")
     stop("Create virtual environment with initialize_python")
   }
-  
-  uv_path <- normalizePath("~/.cargo/bin/uv", mustWork = FALSE)
-  if (!file.exists(uv_path)) {
-    log4r::error(.le$logger, "uv not found. Please install with initialize_python")
-    stop("Please install uv with initialize_python")
-  }
-  
+
+  uv_path <- get_uv_path()
+
   notes_script <- system.file("scripts/remove_footnotes.py", package = "reportifyr")
   notes_args <- c("run", notes_script, "-i", docx_in, "-o", docx_out)
 
