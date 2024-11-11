@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">reportifyr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -81,6 +81,7 @@
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Set reportifyr options</span> ──────────────────────────────────────────────────────</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> venv_dir: /home/runner/work/reportifyr/reportifyr/vignettes</span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Optional version options</span> ────────────────────────────────────────────────────</span></span>
+<span><span class="co">#&gt; <span style="color: #BBBB00;">▇</span> options('uv.version') is not set. Default is 0.5.1</span></span>
 <span><span class="co">#&gt; <span style="color: #BBBB00;">▇</span> options('python.version') is not set. Default is system version</span></span>
 <span><span class="co">#&gt; <span style="color: #BBBB00;">▇</span> options('python-docx.version') is not set. Default is 1.1.2</span></span>
 <span><span class="co">#&gt; <span style="color: #BBBB00;">▇</span> options('pyyaml.version') is not set. Default is 6.0.2</span></span>
@@ -89,7 +90,8 @@
 <span><span class="co">#&gt;      venv_dir: /home/runner/work/reportifyr/reportifyr/vignettes</span></span>
 <span><span class="co">#&gt;  python-docx.version: 1.1.2</span></span>
 <span><span class="co">#&gt;  pyyaml.version: 6.0.2</span></span>
-<span><span class="co">#&gt;  python.version: 3.10.12</span></span>
+<span><span class="co">#&gt;  python.version: 0.5.1</span></span>
+<span><span class="co">#&gt;  venv_dir: 3.10.12</span></span>
 <span><span class="co">#&gt; Copied standard_footnotes.yaml into /home/runner/work/reportifyr/reportifyr/vignettes/report</span></span></code></pre></div>
 <p>Below is a simple analysis of the Theophylline data set that we will
 include in the report:</p>
@@ -202,9 +204,9 @@ include in the report:</p>
 <span>             figures_path <span class="op">=</span> <span class="va">figures_path</span>,</span>
 <span>             tables_path <span class="op">=</span> <span class="va">tables_path</span>,</span>
 <span>             standard_footnotes_yaml <span class="op">=</span> <span class="va">footnotes</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.634 sec elapsed</span></span>
-<span><span class="co">#&gt; 0.212 sec elapsed</span></span>
-<span><span class="co">#&gt; 0.504 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.619 sec elapsed</span></span>
+<span><span class="co">#&gt; 0.207 sec elapsed</span></span>
+<span><span class="co">#&gt; 0.5 sec elapsed</span></span></code></pre></div>
 <p>We’ll start with a <code>reportifyr</code> document that has figures,
 tables, and footnotes that need to be updated. Let’s run another
 analysis where we update figures 2 and 3, and table 2:</p>
@@ -316,9 +318,9 @@ analysis where we update figures 2 and 3, and table 2:</p>
 <span>             figures_path <span class="op">=</span> <span class="va">figures_path</span>,</span>
 <span>             tables_path <span class="op">=</span> <span class="va">tables_path</span>,</span>
 <span>             standard_footnotes_yaml <span class="op">=</span> <span class="va">footnotes</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.574 sec elapsed</span></span>
-<span><span class="co">#&gt; 0.245 sec elapsed</span></span>
-<span><span class="co">#&gt; 0.506 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.539 sec elapsed</span></span>
+<span><span class="co">#&gt; 0.228 sec elapsed</span></span>
+<span><span class="co">#&gt; 0.504 sec elapsed</span></span></code></pre></div>
 <p>We can see that figures 2 and 3 were updated, and table 2 was
 updated, while table 1 and the non-<code>reportifyr</code> content were
 unaltered:</p>
