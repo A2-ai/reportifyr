@@ -29,11 +29,18 @@ reportifyr_options_message <- function() {
     set_options <- c(set_options, paste("venv_dir:", root))
   }
   # NICE TO HAVES
-  pyversion <- getOption("python_version")
+  uvversion <- getOption("uv.version")
+  if (is.null(uvversion)) {
+    optional_options <- c(optional_options, "options('uv.version') is not set. Default is 0.5.1")
+  } else {
+    set_options <- c(set_options, paste("uv.version:", uvversion))
+  }
+
+  pyversion <- getOption("python.version")
   if (is.null(pyversion)) {
     optional_options <- c(optional_options, "options('python.version') is not set. Default is system version")
   } else {
-    set_options <- c(set_options, paste("python_version:", pyversion))
+    set_options <- c(set_options, paste("python.version:", pyversion))
   }
 
   docx_vers <- getOption("python-docx.version")

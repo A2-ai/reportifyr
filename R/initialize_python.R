@@ -34,6 +34,13 @@ initialize_python <- function() {
     log4r::info(.le$logger, "Using default pyyaml version: 6.0.2")
   }
 
+  if (!is.null(getOption("uv.version"))) {
+    args <- c(args, getOption("uv.version"))
+  } else {
+    args <- c(args, "0.5.1")
+    log4r::info(.le$logger, "Using default uv version: 0.5.1")
+  }
+
   if (!is.null(getOption("python.version"))) {
     args <- c(args, getOption("python.version"))
     log4r::info(.le$logger, paste0("Using specified python version: ", getOption("python.version")))
