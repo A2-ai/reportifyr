@@ -57,7 +57,7 @@ initialize_python <- function() {
     )
     log4r::info(.le$logger, paste("Virtual environment created at: ", file.path(args[[1]], ".venv")))
 
-    args_name <- c("venv_dir", "python-docx.version", "pyyaml.version", "python.version")
+    args_name <- c("venv_dir", "python-docx.version", "pyyaml.version", "uv.version", "python.version")
     pyvers <- get_py_version(getOption("venv_dir"))
     if (!is.null(pyvers)) {
       args <- c(args, pyvers)
