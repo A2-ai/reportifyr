@@ -49,7 +49,7 @@ make_doc_dirs <- function(docx_in){
   doc_final <- paste0(base_path, doc_name, '-final.docx')
 
   doc_dirs <- list(
-    'doc_in' = docx_in
+    'doc_in' = docx_in,
     'doc_clean' = doc_clean,
     'doc_tables' = doc_tables,
     'doc_tabs_figs' = doc_tabs_figs,
