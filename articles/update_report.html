@@ -90,8 +90,8 @@
 <span><span class="co">#&gt;      venv_dir: /home/runner/work/reportifyr/reportifyr/vignettes</span></span>
 <span><span class="co">#&gt;  python-docx.version: 1.1.2</span></span>
 <span><span class="co">#&gt;  pyyaml.version: 6.0.2</span></span>
-<span><span class="co">#&gt;  python.version: 0.5.1</span></span>
-<span><span class="co">#&gt;  venv_dir: 3.10.12</span></span>
+<span><span class="co">#&gt;  uv.version: 0.5.1</span></span>
+<span><span class="co">#&gt;  python.version: 3.10.12</span></span>
 <span><span class="co">#&gt; Copied standard_footnotes.yaml into /home/runner/work/reportifyr/reportifyr/vignettes/report</span></span></code></pre></div>
 <p>Below is a simple analysis of the Theophylline data set that we will
 include in the report:</p>
@@ -204,9 +204,9 @@ include in the report:</p>
 <span>             figures_path <span class="op">=</span> <span class="va">figures_path</span>,</span>
 <span>             tables_path <span class="op">=</span> <span class="va">tables_path</span>,</span>
 <span>             standard_footnotes_yaml <span class="op">=</span> <span class="va">footnotes</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.728 sec elapsed</span></span>
-<span><span class="co">#&gt; 0.217 sec elapsed</span></span>
-<span><span class="co">#&gt; 0.514 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.765 sec elapsed</span></span>
+<span><span class="co">#&gt; 0.219 sec elapsed</span></span>
+<span><span class="co">#&gt; 0.51 sec elapsed</span></span></code></pre></div>
 <p>We’ll start with a <code>reportifyr</code> document that has figures,
 tables, and footnotes that need to be updated. Let’s run another
 analysis where we update figures 2 and 3, and table 2:</p>
@@ -318,9 +318,9 @@ analysis where we update figures 2 and 3, and table 2:</p>
 <span>             figures_path <span class="op">=</span> <span class="va">figures_path</span>,</span>
 <span>             tables_path <span class="op">=</span> <span class="va">tables_path</span>,</span>
 <span>             standard_footnotes_yaml <span class="op">=</span> <span class="va">footnotes</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.626 sec elapsed</span></span>
-<span><span class="co">#&gt; 0.234 sec elapsed</span></span>
-<span><span class="co">#&gt; 0.521 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.577 sec elapsed</span></span>
+<span><span class="co">#&gt; 0.241 sec elapsed</span></span>
+<span><span class="co">#&gt; 0.517 sec elapsed</span></span></code></pre></div>
 <p>We can see that figures 2 and 3 were updated, and table 2 was
 updated, while table 1 and the non-<code>reportifyr</code> content were
 unaltered:</p>
