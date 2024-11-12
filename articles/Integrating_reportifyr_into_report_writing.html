@@ -130,6 +130,9 @@ first.</p>
 paths that are useful for this process:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">doc_dirs</span></span>
+<span><span class="co">#&gt; $doc_in</span></span>
+<span><span class="co">#&gt; [1] "/home/runner/work/reportifyr/reportifyr/vignettes/report/shell/template.docx"</span></span>
+<span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $doc_clean</span></span>
 <span><span class="co">#&gt; [1] "/home/runner/work/reportifyr/reportifyr/vignettes/report/draft/template-clean.docx"</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -158,7 +161,7 @@ for the next processing steps.</p>
 <span><span class="fu"><a href="../reference/add_tables.html">add_tables</a></span><span class="op">(</span>docx_in <span class="op">=</span> <span class="va">doc_dirs</span><span class="op">$</span><span class="va">doc_clean</span>,</span>
 <span>           docx_out <span class="op">=</span> <span class="va">doc_dirs</span><span class="op">$</span><span class="va">doc_tables</span>,</span>
 <span>           tables_path <span class="op">=</span> <span class="va">tables_path</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.768 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.644 sec elapsed</span></span></code></pre></div>
 <p>We can see the tables were successfully inserted:</p>
 <p><img src="data%2Fimages%2Ftable_2_in_doc.avif" style="width:100.0%"></p>
 <p>Now that the tables are inserted, we can insert the figures:</p>
@@ -168,7 +171,7 @@ for the next processing steps.</p>
 <span><span class="fu"><a href="../reference/add_plots.html">add_plots</a></span><span class="op">(</span>docx_in <span class="op">=</span> <span class="va">doc_dirs</span><span class="op">$</span><span class="va">doc_tables</span>,</span>
 <span>          docx_out <span class="op">=</span> <span class="va">doc_dirs</span><span class="op">$</span><span class="va">doc_tabs_figs</span>,</span>
 <span>          figures_path <span class="op">=</span> <span class="va">figures_path</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 0.213 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 0.207 sec elapsed</span></span></code></pre></div>
 <p>And now we can see our figures in the document as well:</p>
 <p><img src="data%2Fimages%2Ffigure_2_in_doc.avif" style="width:100.0%"></p>
 <p>Now we can add the footnotes:</p>
@@ -180,7 +183,7 @@ for the next processing steps.</p>
 <span>              figures_path <span class="op">=</span> <span class="va">figures_path</span>,</span>
 <span>              tables_path <span class="op">=</span> <span class="va">tables_path</span>,</span>
 <span>              footnotes <span class="op">=</span> <span class="va">footnotes</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 0.509 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 0.501 sec elapsed</span></span></code></pre></div>
 <p>We now can see our figures and tables have footnotes inserted:</p>
 <p><img src="data%2Fimages%2Ffig_2_with_fn.avif" style="width:100.0%"><img src="data%2Fimages%2Ftable_2_with_fn.avif" style="width:100.0%"></p>
 <p>Now that all the elements are inserted, we can generate a clean final
