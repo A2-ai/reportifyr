@@ -161,7 +161,7 @@ for the next processing steps.</p>
 <span><span class="fu"><a href="../reference/add_tables.html">add_tables</a></span><span class="op">(</span>docx_in <span class="op">=</span> <span class="va">doc_dirs</span><span class="op">$</span><span class="va">doc_clean</span>,</span>
 <span>           docx_out <span class="op">=</span> <span class="va">doc_dirs</span><span class="op">$</span><span class="va">doc_tables</span>,</span>
 <span>           tables_path <span class="op">=</span> <span class="va">tables_path</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.619 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.656 sec elapsed</span></span></code></pre></div>
 <p>We can see the tables were successfully inserted:</p>
 <p><img src="data%2Fimages%2Ftable_2_in_doc.avif" style="width:100.0%"></p>
 <p>Now that the tables are inserted, we can insert the figures:</p>
@@ -171,7 +171,7 @@ for the next processing steps.</p>
 <span><span class="fu"><a href="../reference/add_plots.html">add_plots</a></span><span class="op">(</span>docx_in <span class="op">=</span> <span class="va">doc_dirs</span><span class="op">$</span><span class="va">doc_tables</span>,</span>
 <span>          docx_out <span class="op">=</span> <span class="va">doc_dirs</span><span class="op">$</span><span class="va">doc_tabs_figs</span>,</span>
 <span>          figures_path <span class="op">=</span> <span class="va">figures_path</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 0.206 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 0.205 sec elapsed</span></span></code></pre></div>
 <p>And now we can see our figures in the document as well:</p>
 <p><img src="data%2Fimages%2Ffigure_2_in_doc.avif" style="width:100.0%"></p>
 <p>Now we can add the footnotes:</p>
@@ -183,7 +183,7 @@ for the next processing steps.</p>
 <span>              figures_path <span class="op">=</span> <span class="va">figures_path</span>,</span>
 <span>              tables_path <span class="op">=</span> <span class="va">tables_path</span>,</span>
 <span>              footnotes <span class="op">=</span> <span class="va">footnotes</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 0.498 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 0.504 sec elapsed</span></span></code></pre></div>
 <p>We now can see our figures and tables have footnotes inserted:</p>
 <p><img src="data%2Fimages%2Ffig_2_with_fn.avif" style="width:100.0%"><img src="data%2Fimages%2Ftable_2_with_fn.avif" style="width:100.0%"></p>
 <p>Now that all the elements are inserted, we can generate a clean final
