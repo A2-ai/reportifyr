@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">reportifyr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -117,8 +117,8 @@ default <code>TRUE</code>.</p>
 <span>             tables_path <span class="op">=</span> <span class="va">tables_path</span>,</span>
 <span>             standard_footnotes_yaml <span class="op">=</span> <span class="va">footnotes</span>,</span>
 <span>             add_footnotes <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.638 sec elapsed</span></span>
-<span><span class="co">#&gt; 0.207 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.648 sec elapsed</span></span>
+<span><span class="co">#&gt; 0.206 sec elapsed</span></span></code></pre></div>
 <p>This produces a report without footnotes in the entire document. <img src="data%2Fimages%2Ffig2_no_fn_ef.avif" style="width:100.0%" alt="fig2 no fn"><img src="data%2Fimages%2Ffig3_no_fn_ef.avif" style="width:100.0%" alt="fig3 no fn"><img src="data%2Fimages%2Ftab1_no_fn_ef.avif" style="width:100.0%" alt="tab1 no fn"><img src="data%2Fimages%2Ftab2_no_fn_ef.avif" style="width:100.0%" alt="tab2 no fn"></p>
 <p>If we instead want to include an appendix figure and table without
 footnotes, but want footnotes within the rest of the report we can use
@@ -205,15 +205,15 @@ content.</p>
 <span>             add_footnotes <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>             footnotes_fail_on_missing_metadata <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span>             <span class="op">)</span></span>
-<span><span class="co">#&gt; 2024-11-12 15:19:19 [WARN] Metadata file missing for table: /home/runner/work/reportifyr/reportifyr/vignettes/OUTPUTS/tables/theoph-pk-demographics.csv</span></span>
-<span><span class="co">#&gt; 2024-11-12 15:19:19 [WARN] Default formatting will be applied for /home/runner/work/reportifyr/reportifyr/vignettes/OUTPUTS/tables/theoph-pk-demographics.csv.</span></span>
-<span><span class="co">#&gt; 2.011 sec elapsed</span></span>
-<span><span class="co">#&gt; 0.231 sec elapsed</span></span>
-<span><span class="co">#&gt; 2024-11-12 15:19:20 [WARN] Figure footnotes script stderr: Metadata file not found: /home/runner/work/reportifyr/reportifyr/vignettes/OUTPUTS/figures/theoph-pk-gof_png_metadata.json</span></span>
+<span><span class="co">#&gt; 2024-11-13 15:49:16 [WARN] Metadata file missing for table: /home/runner/work/reportifyr/reportifyr/vignettes/OUTPUTS/tables/theoph-pk-demographics.csv</span></span>
+<span><span class="co">#&gt; 2024-11-13 15:49:16 [WARN] Default formatting will be applied for /home/runner/work/reportifyr/reportifyr/vignettes/OUTPUTS/tables/theoph-pk-demographics.csv.</span></span>
+<span><span class="co">#&gt; 1.916 sec elapsed</span></span>
+<span><span class="co">#&gt; 0.232 sec elapsed</span></span>
+<span><span class="co">#&gt; 2024-11-13 15:49:18 [WARN] Figure footnotes script stderr: Metadata file not found: /home/runner/work/reportifyr/reportifyr/vignettes/OUTPUTS/figures/theoph-pk-gof_png_metadata.json</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; 2024-11-12 15:19:20 [WARN] Table footnotes script stderr: Metadata file not found: /home/runner/work/reportifyr/reportifyr/vignettes/OUTPUTS/tables/theoph-pk-demographics_csv_metadata.json</span></span>
+<span><span class="co">#&gt; 2024-11-13 15:49:18 [WARN] Table footnotes script stderr: Metadata file not found: /home/runner/work/reportifyr/reportifyr/vignettes/OUTPUTS/tables/theoph-pk-demographics_csv_metadata.json</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; 0.53 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 0.521 sec elapsed</span></span></code></pre></div>
 <p><img src="data%2Fimages%2Ffig2_fn_ef_draft.avif" style="width:100.0%"><img src="data%2Fimages%2Ffig3_fn_ef_draft.avif" style="width:100.0%"><img src="data%2Fimages%2Ffig4_no_fn_ef_draft.avif" style="width:100.0%"><img src="data%2Fimages%2Ftab1_fn_ef_draft.avif" style="width:100.0%"><img src="data%2Fimages%2Ftab2_fn_ef_draft.avif" style="width:100.0%"><img src="data%2Fimages%2Ftab4_no_fn_ef_draft.avif" style="width:100.0%"></p>
 <p>We can see in the logs that theoph-pk-demographics.csv was missing
 metadata and that default formatting was applied. We additionally see
@@ -242,15 +242,15 @@ additional footnote with object path.</p>
 <span>             footnotes_fail_on_missing_metadata <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>             include_object_path <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span>             <span class="op">)</span></span>
-<span><span class="co">#&gt; 2024-11-12 15:19:22 [WARN] Metadata file missing for table: /home/runner/work/reportifyr/reportifyr/vignettes/OUTPUTS/tables/theoph-pk-demographics.csv</span></span>
-<span><span class="co">#&gt; 2024-11-12 15:19:22 [WARN] Default formatting will be applied for /home/runner/work/reportifyr/reportifyr/vignettes/OUTPUTS/tables/theoph-pk-demographics.csv.</span></span>
-<span><span class="co">#&gt; 2.041 sec elapsed</span></span>
-<span><span class="co">#&gt; 0.223 sec elapsed</span></span>
-<span><span class="co">#&gt; 2024-11-12 15:19:24 [WARN] Figure footnotes script stderr: Metadata file not found: /home/runner/work/reportifyr/reportifyr/vignettes/OUTPUTS/figures/theoph-pk-gof_png_metadata.json</span></span>
+<span><span class="co">#&gt; 2024-11-13 15:49:20 [WARN] Metadata file missing for table: /home/runner/work/reportifyr/reportifyr/vignettes/OUTPUTS/tables/theoph-pk-demographics.csv</span></span>
+<span><span class="co">#&gt; 2024-11-13 15:49:20 [WARN] Default formatting will be applied for /home/runner/work/reportifyr/reportifyr/vignettes/OUTPUTS/tables/theoph-pk-demographics.csv.</span></span>
+<span><span class="co">#&gt; 1.96 sec elapsed</span></span>
+<span><span class="co">#&gt; 0.222 sec elapsed</span></span>
+<span><span class="co">#&gt; 2024-11-13 15:49:21 [WARN] Figure footnotes script stderr: Metadata file not found: /home/runner/work/reportifyr/reportifyr/vignettes/OUTPUTS/figures/theoph-pk-gof_png_metadata.json</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; 2024-11-12 15:19:24 [WARN] Table footnotes script stderr: Metadata file not found: /home/runner/work/reportifyr/reportifyr/vignettes/OUTPUTS/tables/theoph-pk-demographics_csv_metadata.json</span></span>
+<span><span class="co">#&gt; 2024-11-13 15:49:21 [WARN] Table footnotes script stderr: Metadata file not found: /home/runner/work/reportifyr/reportifyr/vignettes/OUTPUTS/tables/theoph-pk-demographics_csv_metadata.json</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; 0.502 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 0.513 sec elapsed</span></span></code></pre></div>
 <p><img src="data%2Fimages%2Ffig2_op_fn_ef_draft.avif" style="width:100.0%"><img src="data%2Fimages%2Ffig3_op_fn_ef_draft.avif" style="width:100.0%"><img src="data%2Fimages%2Ffig4_op_no_fn_ef_draft.avif" style="width:100.0%"><img src="data%2Fimages%2Ftab1_op_fn_ef_draft.avif" style="width:100.0%"><img src="data%2Fimages%2Ftab2_op_fn_ef_draft.avif" style="width:100.0%"><img src="data%2Fimages%2Ftab4_op_no_fn_ef_draft.avif" style="width:100.0%"></p>
   </main>
 </div>
