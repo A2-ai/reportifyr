@@ -71,9 +71,7 @@ add_tables <- function(docx_in, docx_out, tables_path, debug = F) {
       log4r::info(.le$logger, paste0("Found magic string: ", matches[1], " in paragraph ", i))
       table_name <- gsub("\\{rpfy\\}:", "", matches[1]) |> trimws() # Remove "{rpfy}:"
       table_file <- file.path(tables_path, table_name)
-      #if (tools::file_ext(table_file) %in% c("RDS", "csv")) {
 
-      #}
       # Check if the file exists
       if (file.exists(table_file)) {
         found_matches <- TRUE

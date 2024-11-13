@@ -45,7 +45,8 @@ write_csv_with_metadata <- function(object,
     meta_type = meta_type,
     equations = meta_equations,
     notes = meta_notes,
-    abbrevs = meta_abbrevs
+    abbrevs = meta_abbrevs,
+    table1_format = table1_format
   )
 
   save_rtf(object = object, file = file, table1_format = table1_format)
