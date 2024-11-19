@@ -142,7 +142,7 @@ def create_meta_text_lines(footnotes, metadata, include_object_path):
                 notes_text += f". {note}"
             else: 
                 notes_text += f"Notes: {note}"
-                notes_text = True
+                notes_added = True
 
     if not notes_added:
         notes_text += "Notes N/A"
