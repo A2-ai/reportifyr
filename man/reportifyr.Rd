@@ -113,11 +113,11 @@ Authors:
   \item Agnes Kim \email{agnes@a2-ai.com}
   \item Anne Zheng \email{anne@a2-ai.com}
   \item Jenna Johnson \email{jenna@a2-ai.com}
+  \item Fernando Carreno \email{fernando.o.carreno@gsk.com}
 }
 
 Other contributors:
 \itemize{
-  \item Fernando Carreno \email{fernando.o.carreno@gsk.com} [contributor]
   \item Kashyap Patel \email{kashyap.x.patel@gsk.com} [contributor]
   \item Maxwell Chirehwa \email{maxwell.t.chirehwa@gsk.com} [contributor]
   \item Wesley Cummings \email{wes@a2-ai.com} [contributor]
