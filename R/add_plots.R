@@ -3,7 +3,6 @@
 #' @description Reads in a .docx file and returns a new version with figures placed at appropriate places in the document.
 #' @param docx_in Path to the input .docx file
 #' @param docx_out Path to output .docx to save to
-#' @param figures_path Path to images file directory
 #' @param fig_width Figure width in inches. This is a global controller. Defaults to NULL. If NULL, the size is calculated calculated based on the pixels of the actual figure
 #' @param fig_height Figure height in inches. This is a global controller. Defaults to NULL. If NULL, the size is automatically calculated based on the pixels of the actual figure
 #' @param debug Debug
@@ -43,7 +42,6 @@
 #' }
 add_plots <- function(docx_in,
                       docx_out,
-                      figures_path,
                       fig_width = NULL,
                       fig_height = NULL,
                       debug = F) {
@@ -71,8 +69,13 @@ add_plots <- function(docx_in,
     log4r::debug(.le$logger, "Debug mode enabled")
     browser()
   }
+
+  figures_path <- parse_directory_for_images(directory = here::here(),
+                                             exclude_dirs = c("/renv/"))
+  figures_path_str <- paste(figures_path, collapse = ",")
+
   script <- system.file("scripts/add_figure.py", package = "reportifyr")
-  args <- c("run", script, "-i", docx_in, "-o", docx_out, "-d", figures_path)
+  args <- c("run", script, "-i", docx_in, "-o", docx_out, "-d", figures_path_str)
 
   if (!is.null(fig_width)) {
     args <- c(args, "w", fig_width)
