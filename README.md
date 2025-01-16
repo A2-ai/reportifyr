@@ -8,17 +8,19 @@
 [![R-CMD-check](https://github.com/A2-ai/reportifyr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/A2-ai/reportifyr/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-The goal of `reportifyr` is to assist with semi-automatic report
-creation, providing a streamlined process for saving tables, figures,
-and footnotes from analysis scripts and incorporating them into
-Microsoft Word documents for report generation. `reportifyr` is a
-wrapper around the `officer` R package and `python-docx` python library,
-allowing users to easily manipulate Microsoft Word documents in R for
-polished and consistent reports.
+The goal of `reportifyr` is to facilitate semi-automated report creation
+by providing a streamlined process for saving tables, figures, and
+footnotes from analysis scripts and integrating them into Microsoft Word
+documents. `reportifyr` functions as a wrapper around the `officer` R
+package and `python-docx` python library to enable users to efficiently
+and easily manipulate analysis outputs into polished and consistent
+Microsoft Word reports.
 
 ## Installation
 
-You can install the development version of `reportifyr` like so:
+The development version of `reportifyr` can be downloaded by running in
+Console: <br> <span style="font-size: 10px;"> \*package ‘pak’ is
+required.</span>
 
 ``` r
 pak::pkg_install("a2-ai/reportifyr")
@@ -44,14 +46,15 @@ initialize_report_project(project_dir = here::here())
 
 ## Steps at the analysis level
 
-To take advantage of more advanced features of the `reportifyr` package
-(such as automatic abbreviation creation and footnote placing) you need
-to capture some metadata during the analysis.
+To use the full features of `reportifyr` -such as automatic abbreviation
+and footnote placing- metadata must first be captured during the
+analysis step.
 
-The `reportifyr` package contains some helpful functions for easily
-capturing metadata. These functions should be used in actual analysis
-scripts. The metadata .json files are saved along side the object files
-(figures or tables) and will be referenced when building reports.
+The `reportifyr` package simplifies this process by providing functions
+that seamlessly capture metadata (in `.json` format) alongside saved
+object files (figures or tables) when used during analysis. Then, during
+the report generation step, `reportifyr` utilizes these metadata files
+to semi-automate reports.
 
 ``` r
 # Path to the analysis figures
