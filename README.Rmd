@@ -19,10 +19,7 @@ knitr::opts_chunk$set(
 [![R-CMD-check](https://github.com/A2-ai/reportifyr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/A2-ai/reportifyr/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-The goal of `reportifyr` is to facilitate semi-automated report creation by providing 
-a streamlined process for saving tables, figures, and footnotes from analysis scripts 
-and integrating them into Microsoft Word documents. `reportifyr` 
-functions as a wrapper around the `officer` R package and `python-docx` python library to enable users to efficiently and easily manipulate analysis outputs into polished and consistent Microsoft Word reports.
+The goal of `reportifyr` is to facilitate semi-automated report creation by providing a streamlined process for saving tables, figures, and footnotes from analysis scripts and integrating them into Microsoft Word documents. `reportifyr` functions as a wrapper around the `officer` R package and `python-docx` python library to enable users to efficiently and easily manipulate analysis outputs into polished and consistent Microsoft Word reports.
 
 ## Installation
 
@@ -43,7 +40,7 @@ library(reportifyr)
 ## Initializing appropriate folder structures
 
 Before starting any reporting effort, it is important to initialize all
-reporting directories within the project directory you are working in. Please note 
+reporting directories within the working project directory. Please note 
 that for development, the directory structure and names have been hard-coded. We 
 realize this is sub-optimal and are working on allowing user-defined `report/` 
 and `OUTPUTS/` structure!
@@ -58,9 +55,7 @@ To use the full features of `reportifyr` -such as automatic
 abbreviation and footnote placing- metadata must first be captured 
 during the analysis step.
 
-The `reportifyr` package simplifies this process by providing functions that seamlessly
-capture metadata (in `.json` format) alongside saved object files (figures or tables) when used 
-during analysis. Then, during the report generation step, `reportifyr` utilizes these metadata files to semi-automate reports.
+The `reportifyr` package simplifies this process by providing functions that seamlessly capture metadata (in `.json` format) alongside saved object files (figures or tables) when used during analysis. During the report generation step, `reportifyr` utilizes these metadata files to semi-automate reports.
 
 ``` r
 # Path to the analysis figures
@@ -122,8 +117,7 @@ write_object_metadata(object = file.path(tables.path, out_name))
 
 ## Report creation
 
-This is a basic example which shows you how to render a Microsoft Word
-document with figures, tables, and footnotes.
+This is a basic example rendering a Microsoft Word document with figures, tables, and footnotes.
 
 ``` r
 # ------------------------------------------------------------------------------
