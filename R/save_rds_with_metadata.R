@@ -1,14 +1,14 @@
 #' Wrapper around the saveRDS function. Saves an object as .RDS and .RTF and captures analysis relevant metadata in a .json file
 #'
 #' @description Extension to the saveRDS function that allows capturing object metadata as a separate .json file.
-#' @param object R object to serialize
-#' @param file A connection or the name of the file where the R object is saved to or read from
-#' @param meta_type The analysis meta type. Defaults to "NA"
-#' @param meta_equations Additional equations to add to metadata
-#' @param meta_notes Additional notes to add to metadata
-#' @param meta_abbrevs Additional abbrevs to add to metadata
-#' @param table1_format Boolean for declaring object is table1 format
-#' @param ... Additional args to be used in saveRDS
+#' @param object The R object to serialize.
+#' @param file The connection or name of the file where the R object is saved.
+#' @param meta_type A string to specify the type of object. Default is "NA".
+#' @param meta_equations A string or vector of strings representing equations to include in the metadata. Default is NULL.
+#' @param meta_notes A string or vector of strings representing notes to include in the metadata. Default is NULL.
+#' @param meta_abbrevs A string or vector of strings representing abbreviations to include in the metadata. Default is NULL.
+#' @param table1_format A boolean indicating whether to apply table1-style formatting. Defaults to FALSE.
+#' @param ... Additional arguments passed to the base saveRDS() function.
 #'
 #' @export
 #'

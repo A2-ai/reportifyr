@@ -1,6 +1,6 @@
 #' Get meta types from standard_footnotes.yaml
 #'
-#' @param path_to_footnotes_yaml The path to the standard_footnotes.yaml
+#' @param path_to_footnotes_yaml The file path to the standard_footnotes.yaml file.
 #'
 #' @return A list of meta_types to be called while performing an analysis
 #'

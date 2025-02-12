@@ -1,14 +1,14 @@
 #' Updates a Word file to include formatted plots, tables, and footnotes
 #'
 #' @description Reads in a .docx file and returns an updated version with plots, tables, and footnotes replaced.
-#' @param docx_in Path to input .docx to update
-#' @param docx_out Path to output .docx to save to
-#' @param figures_path Path to images file directory
-#' @param tables_path Path to tables file directory
-#' @param standard_footnotes_yaml Path to standard_footnotes.yaml in report
-#' @param add_footnotes boolean for including footnotes in the document or not
-#' @param include_object_path boolean for including object path in footnotes
-#' @param footnotes_fail_on_missing_metadata Boolean for allowing objects to lack metadata and thus have no footnotes
+#' @param docx_in The file path to the input .docx file.
+#' @param docx_out The file path to the output .docx file to save to. Default is NULL.
+#' @param figures_path The file path to the figures and associated metadata directory.
+#' @param tables_path The file path to the tables and associated metadata directory.
+#' @param standard_footnotes_yaml The file path to the standard_footnotes.yaml. Default is NULL. If NULL, a default standard_footnotes.yaml bundled with the reportifyr package is used.
+#' @param add_footnotes A boolean indicating whether to insert footnotes into the docx_in or not. Default is TRUE.
+#' @param include_object_path A boolean indicating whether to include the file path of the figure or table in the footnotes. Default is FALSE.
+#' @param footnotes_fail_on_missing_metadata A boolean indicating whether to stop execution if the metadata .json file for a figure or table is missing. Default is TRUE.
 #'
 #' @export
 #'

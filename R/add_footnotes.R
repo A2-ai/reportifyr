@@ -1,14 +1,14 @@
 #' Inserts Footnotes in appropriate places in Word files
 #'
 #' @description Reads in a .docx file and returns a new version with footnotes placed at appropriate places in the document.
-#' @param docx_in Path to the input .docx file
-#' @param docx_out Path to output .docx to save to
-#' @param figures_path Path to images and associated metadata directory
-#' @param tables_path Path to tables and associated metadata directory
-#' @param standard_footnotes_yaml Path to standard_footnotes.yaml
-#' @param include_object_path Boolean for including object path path in footnotes
-#' @param footnotes_fail_on_missing_metadata Boolean for allowing objects to lack metadata and thus have no footnotes
-#' @param debug Debug
+#' @param docx_in The file path to the input .docx file.
+#' @param docx_out The file path to the output .docx file to save to.
+#' @param figures_path The file path to the figures and associated metadata directory.
+#' @param tables_path The file path to the tables and associated metadata directory.
+#' @param standard_footnotes_yaml The file path to the standard_footnotes.yaml. Default is NULL. If NULL, a default standard_footnotes.yaml bundled with the reportifyr package is used.
+#' @param include_object_path A boolean indicating whether to include the file path of the figure or table in the footnotes. Default is FALSE.
+#' @param footnotes_fail_on_missing_metadata A boolean indicating whether to stop execution if the metadata .json file for a figure or table is missing. Default is TRUE.
+#' @param debug Debug.
 #'
 #' @export
 #'

@@ -1,8 +1,8 @@
 #' Finalizes the document by removing magic strings and bookmarks
 #'
 #' @description Reads in a .docx file and returns a finalized version with magic strings and bookmarks removed.
-#' @param docx_in Path to input .docx to finalize
-#' @param docx_out Path to output .docx to save to
+#' @param docx_in The file path to the input .docx file.
+#' @param docx_out The file path to the output .docx file to save to. Default is NULL. If NULL, docx_out is assigned doc_dirs$doc_final using make_doc_dirs(docx_in = docx_in).
 #'
 #' @export
 #'

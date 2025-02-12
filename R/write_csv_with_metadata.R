@@ -1,14 +1,14 @@
 #' Wrapper around the write.csv function. Saves data as .RDS and .RTF and captures analysis relevant metadata in a .json file
 #'
 #' @description Extension to the write.csv function that allows capturing object metadata as a separate .json file.
-#' @param object The object to be written, preferably a matrix or data frame. If not, it is attempted to coerce object to a data frame
-#' @param file Either a character string naming a file or a connection open for writing. "" indicates output to the console.
-#' @param meta_type The analysis meta type. Defaults to "NA"
-#' @param meta_equations Additional equations for metadata
-#' @param meta_notes Additional notes for metadata
-#' @param meta_abbrevs Additional abbrevs for metadata
-#' @param table1_format Boolean for declaring table is table1 format
-#' @param ... Additional arguments that can be passed to write.csv
+#' @param object The R object to serialize.
+#' @param file The connection or name of the file where the R object is saved.
+#' @param meta_type A string to specify the type of object. Default is "NA".
+#' @param meta_equations A string or vector of strings representing equations to include in the metadata. Default is NULL.
+#' @param meta_notes A string or vector of strings representing notes to include in the metadata. Default is NULL.
+#' @param meta_abbrevs A string or vector of strings representing abbreviations to include in the metadata. Default is NULL.
+#' @param table1_format A boolean indicating whether to apply table1-style formatting. Defaults to FALSE.
+#' @param ... Additional arguments passed to the utils write.csv() function.
 #'
 #' @export
 #'

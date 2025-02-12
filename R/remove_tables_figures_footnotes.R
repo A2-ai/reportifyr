@@ -1,8 +1,8 @@
 #' Removes Tables, Figures, and Footnotes from a Word file
 #'
 #' @description Reads in a .docx file and returns a new version with tables, figures, and footnotes removed from the document.
-#' @param docx_in Path to the input .docx file
-#' @param docx_out Path to output .docx to save to
+#' @param docx_in The file path to the input .docx file.
+#' @param docx_out The file path to the output .docx file to save to.
 #'
 #' @export
 #'

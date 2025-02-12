@@ -1,12 +1,12 @@
 #' Inserts Figures in appropriate places in Word files
 #'
 #' @description Reads in a .docx file and returns a new version with figures placed at appropriate places in the document.
-#' @param docx_in Path to the input .docx file
-#' @param docx_out Path to output .docx to save to
-#' @param figures_path Path to images file directory
-#' @param fig_width Figure width in inches. This is a global controller. Defaults to NULL. If NULL, the size is calculated calculated based on the pixels of the actual figure
-#' @param fig_height Figure height in inches. This is a global controller. Defaults to NULL. If NULL, the size is automatically calculated based on the pixels of the actual figure
-#' @param debug Debug
+#' @param docx_in The file path to the input .docx file.
+#' @param docx_out The file path to the output .docx file to save to.
+#' @param figures_path The file path to the figures directory.
+#' @param fig_width A global controller. The figure width in inches. Default is NULL. If NULL, the width is determined by the figure's pixel dimensions.
+#' @param fig_height A global controller. The figure height in inches. Default is NULL. If NULL, the height is determined by the figure's pixel dimensions.
+#' @param debug Debug.
 #'
 #' @export
 #'

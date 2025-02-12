@@ -1,6 +1,6 @@
 #' Validates a file's hash against a stored hash in the associated _metadata.json file
 #'
-#' @param file A connection or the name of the file where the R object is saved to or read from
+#' @param file The connection or name of the file where the R object is saved.
 #'
 #' @return A boolean declaring if the hashes are equal or not
 #'

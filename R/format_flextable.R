@@ -1,7 +1,7 @@
 #' Formats data frames to a flextable specification
 #'
-#' @param data_in Data frame to be formatted
-#' @param table1_format Boolean for using table1 formatting
+#' @param data_in The input data to be formatted. Must be either a data frame or a flextable object.
+#' @param table1_format A boolean indicating whether to apply table1-style formatting. Default is FALSE.
 #'
 #' @export
 #'

@@ -1,9 +1,9 @@
 #' Adds tables by looking for magic string
 #'
-#' @param docx_in input doc
-#' @param docx_out output doc
-#' @param tables_path path to tables file
-#' @param debug debug mode
+#' @param docx_in The file path to the input .docx file.
+#' @param docx_out The file path to the output .docx file to save to.
+#' @param tables_path The file path to the tables and associated metadata directory.
+#' @param debug Debug.
 #'
 #' @export
 #'

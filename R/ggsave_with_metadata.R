@@ -1,13 +1,13 @@
 #' Wrapper around the ggplot2 ggsave function. Saves a ggplot (or other grid object) and captures analysis relevant metadata in a .json file
 #'
 #' @description Extension to the ggsave function that allows capturing object metadata as a separate .json file.
-#' @param filename File name to create on disk
-#' @param plot Plot to save, defaults to last plot displayed
-#' @param meta_type Parameter for specifying meta_type for write_object_metadata
-#' @param meta_equations Parameter for specifying additional equations
-#' @param meta_notes Parameter for specifying additional notes
-#' @param meta_abbrevs Parameter for specifying additional abbreviations
-#' @param ... Additional args to be used in ggsave
+#' @param filename The filename for the plot to save to.
+#' @param plot The plot object to save. Default is the last displayed plot (ggplot2::last_plot()).
+#' @param meta_type A string to specify the type of object. Default is "NA".
+#' @param meta_equations A string or vector of strings representing equations to include in the metadata. Default is NULL.
+#' @param meta_notes A string or vector of strings representing notes to include in the metadata. Default is NULL.
+#' @param meta_abbrevs A string or vector of strings representing abbreviations to include in the metadata. Default is NULL.
+#' @param ... Additional arguments passed to the ggplot2::ggsave() function.
 #' @export
 #'
 #' @examples \dontrun{

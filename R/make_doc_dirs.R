@@ -1,6 +1,6 @@
 #' Helper function that defines document output paths
 #'
-#' @param docx_in Path to the input .docx file
+#' @param docx_in The file path to the input .docx file.
 #'
 #' @return A list of document paths
 #'
