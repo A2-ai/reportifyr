@@ -208,7 +208,7 @@ ggsave_with_metadata(
   width = 6,
   height = 3
 )
-update_object_footnotes(file.path(figures_path, plot_file_name),notes = "Confidence interval is 50%",  abbrevs = meta_abbrevs$AUC)
+update_object_footnotes(file.path(figures_path, plot_file_name), meta_notes = "Confidence interval is 50%",  meta_abbrevs = meta_abbrevs$AUC)
 tables_path <- file.path(here::here(), "vignettes", "OUTPUTS", "tables")
 outfile_name <- "theoph-pk-parameters.csv"
 
