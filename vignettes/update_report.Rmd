@@ -158,7 +158,7 @@ ggsave_with_metadata(
   width = 6,
   height = 3,
 )
-update_object_footnotes(file.path(figures_path, meta_plot_file_name), notes = "Trajectories are colored by subject")
+update_object_footnotes(file.path(figures_path, meta_plot_file_name), meta_notes = "Trajectories are colored by subject")
 
 calc_auc_linear_log <- function(time, conc) {
   auc <- 0
