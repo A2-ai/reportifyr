@@ -1,10 +1,10 @@
 #' Updates an object's footnote metadata - equations, notes, or abbreviations
 #'
-#' @param file_path Path to object or object's metadata file
-#' @param overwrite Boolean to overwrite existing entries or append. Default is to append
-#' @param equations String or vector of strings of equations to add
-#' @param notes String or vector of strings of notes to add
-#' @param abbrevs String or vector of strings of abbreviations to add
+#' @param file_path The file path to the object or its metadata file.
+#' @param overwrite A boolean indicating whether to overwrite existing metadata entries. Default is FALSE (appends to existing entries).
+#' @param meta_equations A string or vector of strings representing equations to include or overwrite in the metadata.
+#' @param meta_notes A string or vector of strings representing notes to include or overwrite in the metadata.
+#' @param meta_abbrevs A string or vector of strings representing abbreviations to include or overwrite in the metadata.
 #'
 #' @export
 #'
@@ -13,9 +13,9 @@
 #' }
 update_object_footnotes <- function(file_path,
                                     overwrite = FALSE,
-                                    equations = NULL,
-                                    notes = NULL,
-                                    abbrevs = NULL) {
+                                    meta_equations = NULL,
+                                    meta_notes = NULL,
+                                    meta_abbrevs = NULL) {
   log4r::debug(.le$logger, "Starting update_object_footnotes function")
 
   if (tools::file_ext(file_path) != "json") {
@@ -34,14 +34,14 @@ update_object_footnotes <- function(file_path,
   log4r::debug(.le$logger, "Metadata file loaded successfully")
   if (overwrite) {
     log4r::info(.le$logger, "Overwrite is TRUE, replacing existing footnotes")
-    metadata$object_meta$footnotes$equations <- as.list(unique(c(equations)))
-    metadata$object_meta$footnotes$notes <- as.list(unique(c(notes)))
-    metadata$object_meta$footnotes$abbreviations <- as.list(unique(c(abbrevs)))
+    metadata$object_meta$footnotes$equations <- as.list(unique(c(meta_equations)))
+    metadata$object_meta$footnotes$notes <- as.list(unique(c(meta_notes)))
+    metadata$object_meta$footnotes$abbreviations <- as.list(unique(c(meta_abbrevs)))
   } else {
     log4r::info(.le$logger, "Overwrite is FALSE, appending to existing footnotes")
-    metadata$object_meta$footnotes$equations <- as.list(unique(c(metadata$object_meta$footnotes$equations, equations)))
-    metadata$object_meta$footnotes$notes <- as.list(unique(c(metadata$object_meta$footnotes$notes, notes)))
-    metadata$object_meta$footnotes$abbreviations <- as.list(unique(c(metadata$object_meta$footnotes$abbreviations, abbrevs)))
+    metadata$object_meta$footnotes$equations <- as.list(unique(c(metadata$object_meta$footnotes$equations, meta_equations)))
+    metadata$object_meta$footnotes$notes <- as.list(unique(c(metadata$object_meta$footnotes$notes, meta_notes)))
+    metadata$object_meta$footnotes$abbreviations <- as.list(unique(c(metadata$object_meta$footnotes$abbreviations, meta_abbrevs)))
   }
 
   json_data <- jsonlite::toJSON(metadata, pretty = TRUE, auto_unbox = TRUE)

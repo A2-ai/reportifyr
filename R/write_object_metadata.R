@@ -1,11 +1,11 @@
 #' Writes an object's metadata .json file
 #'
-#' @param object_file Path to the file of the object to write metadata for
-#' @param meta_type A string denoting what standard notes to use
-#' @param equations Additional equations to include in metadata, either string of single equation or vector of multiple
-#' @param notes Additional notes to include in metadata, either string of single note or vector of multiple
-#' @param abbrevs Additional abbreviations to include in metadata, either string of single abbrev or vector of multiple
-#' @param table1_format Boolean for using table1 formatting for flextables
+#' @param object_file The file path of the object to write metadata for.
+#' @param meta_type A string to specify the type of object. Default is "NA".
+#' @param meta_equations A string or vector of strings representing equations to include in the metadata. Default is NULL.
+#' @param meta_notes A string or vector of strings representing notes to include in the metadata. Default is NULL.
+#' @param meta_abbrevs A string or vector of strings representing abbreviations to include in the metadata. Default is NULL.
+#' @param table1_format A boolean indicating whether table1 formatting is used for add_tables(). Defaults to FALSE.
 #'
 #' @export
 #'
@@ -17,9 +17,9 @@
 write_object_metadata <- function(
     object_file,
     meta_type = NULL,
-    equations = NULL,
-    notes = NULL,
-    abbrevs = NULL,
+    meta_equations = NULL,
+    meta_notes = NULL,
+    meta_abbrevs = NULL,
     table1_format = F) {
 
   log4r::debug(.le$logger, "Starting write_object_metadata function")
@@ -99,9 +99,9 @@ write_object_metadata <- function(
       hash = hash,
       table1 = table1_format,
       footnotes = list(
-        equations = as.list(equations),
-        notes = as.list(notes),
-        abbreviations = as.list(unique(c(abbrevs)))
+        equations = as.list(meta_equations),
+        notes = as.list(meta_notes),
+        abbreviations = as.list(unique(c(meta_abbrevs)))
       )
     )
   )
