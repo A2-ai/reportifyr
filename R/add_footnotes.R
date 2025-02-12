@@ -5,7 +5,7 @@
 #' @param docx_out Path to output .docx to save to
 #' @param figures_path Path to images and associated metadata directory
 #' @param tables_path Path to tables and associated metadata directory
-#' @param footnotes Path to standard_footnotes.yaml
+#' @param standard_footnotes_yaml Path to standard_footnotes.yaml
 #' @param include_object_path Boolean for including object path path in footnotes
 #' @param footnotes_fail_on_missing_metadata Boolean for allowing objects to lack metadata and thus have no footnotes
 #' @param debug Debug
@@ -21,7 +21,7 @@
 #' doc_dirs <- make_doc_dirs(docx_in = docx_in)
 #' figures_path <- file.path(here::here(), "OUTPUTS", "figures")
 #' tables_path <- file.path(here::here(), "OUTPUTS", "tables")
-#' footnotes <- file.path(here::here(), "report", "standard_footnotes.yaml")
+#' standard_footnotes_yaml <- file.path(here::here(), "report", "standard_footnotes.yaml")
 #'
 #' # ---------------------------------------------------------------------------
 #' # Step 1.
@@ -52,7 +52,7 @@
 #'   docx_out = doc_dirs$doc_draft,
 #'   figures_path = figures_path,
 #'   tables_path = tables_path,
-#'   footnotes = footnotes,
+#'   standard_footnotes_yaml = standard_footnotes_yaml,
 #'   include_object_path = TRUE
 #'   footnotes_fail_on_missing_metadata
 #' )
@@ -61,7 +61,7 @@ add_footnotes <- function(docx_in,
                           docx_out,
                           figures_path,
                           tables_path,
-                          footnotes = NULL,
+                          standard_footnotes_yaml = NULL,
                           include_object_path = FALSE,
                           footnotes_fail_on_missing_metadata = TRUE,
                           debug = F) {
@@ -97,10 +97,10 @@ add_footnotes <- function(docx_in,
   tab_script <- system.file("scripts/add_table_footnotes.py", package = "reportifyr")
   tab_args <- c("run", tab_script, "-i", docx_out, "-o", docx_out, "-d", tables_path, "-b", include_object_path, "-m", footnotes_fail_on_missing_metadata)
 
-  if (!is.null(footnotes)) {
-    log4r::info(.le$logger, paste0("Using provided footnotes file: ", footnotes))
-    fig_args <- c(fig_args, "-f", footnotes)
-    tab_args <- c(tab_args, "-f", footnotes)
+  if (!is.null(standard_footnotes_yaml)) {
+    log4r::info(.le$logger, paste0("Using provided footnotes file: ", standard_footnotes_yaml))
+    fig_args <- c(fig_args, "-f", standard_footnotes_yaml)
+    tab_args <- c(tab_args, "-f", standard_footnotes_yaml)
   } else {
     footnotes_file <- system.file("extdata/standard_footnotes.yaml", package = "reportifyr")
     log4r::info(.le$logger, paste0("Using default footnotes file: ", footnotes_file))
