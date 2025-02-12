@@ -102,7 +102,7 @@ build_report <- function(docx_in,
           docx_out = docx_out,
           figures_path = figures_path,
           tables_path = tables_path,
-          footnotes = standard_footnotes_yaml,
+          standard_footnotes_yaml = standard_footnotes_yaml,
           include_object_path = include_object_path,
           footnotes_fail_on_missing_metadata = footnotes_fail_on_missing_metadata
         )
