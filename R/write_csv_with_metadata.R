@@ -43,9 +43,9 @@ write_csv_with_metadata <- function(object,
   write_object_metadata(
     file,
     meta_type = meta_type,
-    equations = meta_equations,
-    notes = meta_notes,
-    abbrevs = meta_abbrevs,
+    meta_equations = meta_equations,
+    meta_notes = meta_notes,
+    meta_abbrevs = meta_abbrevs,
     table1_format = table1_format
   )
 

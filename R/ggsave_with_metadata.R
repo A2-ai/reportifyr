@@ -52,9 +52,9 @@ ggsave_with_metadata <- function(
   write_object_metadata(
     filename,
     meta_type = meta_type,
-    equations = meta_equations,
-    notes = meta_notes,
-    abbrevs = meta_abbrevs
+    meta_equations = meta_equations,
+    meta_notes = meta_notes,
+    meta_abbrevs = meta_abbrevs
   )
   log4r::debug(.le$logger, "Exiting ggsave_with_metadata function")
 }
