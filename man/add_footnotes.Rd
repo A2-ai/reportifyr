@@ -9,28 +9,28 @@ add_footnotes(
   docx_out,
   figures_path,
   tables_path,
-  footnotes = NULL,
+  standard_footnotes_yaml = NULL,
   include_object_path = FALSE,
   footnotes_fail_on_missing_metadata = TRUE,
   debug = F
 )
 }
 \arguments{
-\item{docx_in}{Path to the input .docx file}
+\item{docx_in}{The file path to the input .docx file.}
 
-\item{docx_out}{Path to output .docx to save to}
+\item{docx_out}{The file path to the output .docx file to save to.}
 
-\item{figures_path}{Path to images and associated metadata directory}
+\item{figures_path}{The file path to the figures and associated metadata directory.}
 
-\item{tables_path}{Path to tables and associated metadata directory}
+\item{tables_path}{The file path to the tables and associated metadata directory.}
 
-\item{footnotes}{Path to standard_footnotes.yaml}
+\item{standard_footnotes_yaml}{The file path to the standard_footnotes.yaml. Default is NULL. If NULL, a default standard_footnotes.yaml bundled with the reportifyr package is used.}
 
-\item{include_object_path}{Boolean for including object path path in footnotes}
+\item{include_object_path}{A boolean indicating whether to include the file path of the figure or table in the footnotes. Default is FALSE.}
 
-\item{footnotes_fail_on_missing_metadata}{Boolean for allowing objects to lack metadata and thus have no footnotes}
+\item{footnotes_fail_on_missing_metadata}{A boolean indicating whether to stop execution if the metadata .json file for a figure or table is missing. Default is TRUE.}
 
-\item{debug}{Debug}
+\item{debug}{Debug.}
 }
 \description{
 Reads in a .docx file and returns a new version with footnotes placed at appropriate places in the document.
@@ -45,7 +45,7 @@ docx_in <- file.path(here::here(), "report", "shell", "template.docx")
 doc_dirs <- make_doc_dirs(docx_in = docx_in)
 figures_path <- file.path(here::here(), "OUTPUTS", "figures")
 tables_path <- file.path(here::here(), "OUTPUTS", "tables")
-footnotes <- file.path(here::here(), "report", "standard_footnotes.yaml")
+standard_footnotes_yaml <- file.path(here::here(), "report", "standard_footnotes.yaml")
 
 # ---------------------------------------------------------------------------
 # Step 1.
@@ -76,7 +76,7 @@ add_footnotes(
   docx_out = doc_dirs$doc_draft,
   figures_path = figures_path,
   tables_path = tables_path,
-  footnotes = footnotes,
+  standard_footnotes_yaml = standard_footnotes_yaml,
   include_object_path = TRUE
   footnotes_fail_on_missing_metadata
 )

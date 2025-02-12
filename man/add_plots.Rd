@@ -14,17 +14,17 @@ add_plots(
 )
 }
 \arguments{
-\item{docx_in}{Path to the input .docx file}
+\item{docx_in}{The file path to the input .docx file.}
 
-\item{docx_out}{Path to output .docx to save to}
+\item{docx_out}{The file path to the output .docx file to save to.}
 
-\item{figures_path}{Path to images file directory}
+\item{figures_path}{The file path to the figures directory.}
 
-\item{fig_width}{Figure width in inches. This is a global controller. Defaults to NULL. If NULL, the size is calculated calculated based on the pixels of the actual figure}
+\item{fig_width}{A global controller. The figure width in inches. Default is NULL. If NULL, the width is determined by the figure's pixel dimensions.}
 
-\item{fig_height}{Figure height in inches. This is a global controller. Defaults to NULL. If NULL, the size is automatically calculated based on the pixels of the actual figure}
+\item{fig_height}{A global controller. The figure height in inches. Default is NULL. If NULL, the height is determined by the figure's pixel dimensions.}
 
-\item{debug}{Debug}
+\item{debug}{Debug.}
 }
 \description{
 Reads in a .docx file and returns a new version with figures placed at appropriate places in the document.

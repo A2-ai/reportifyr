@@ -16,21 +16,21 @@ save_rds_with_metadata(
 )
 }
 \arguments{
-\item{object}{R object to serialize}
+\item{object}{The R object to serialize.}
 
-\item{file}{A connection or the name of the file where the R object is saved to or read from}
+\item{file}{The connection or name of the file where the R object is saved.}
 
-\item{meta_type}{The analysis meta type. Defaults to "NA"}
+\item{meta_type}{A string to specify the type of object. Default is "NA".}
 
-\item{meta_equations}{Additional equations to add to metadata}
+\item{meta_equations}{A string or vector of strings representing equations to include in the metadata. Default is NULL.}
 
-\item{meta_notes}{Additional notes to add to metadata}
+\item{meta_notes}{A string or vector of strings representing notes to include in the metadata. Default is NULL.}
 
-\item{meta_abbrevs}{Additional abbrevs to add to metadata}
+\item{meta_abbrevs}{A string or vector of strings representing abbreviations to include in the metadata. Default is NULL.}
 
-\item{table1_format}{Boolean for declaring object is table1 format}
+\item{table1_format}{A boolean indicating whether to apply table1-style formatting. Defaults to FALSE.}
 
-\item{...}{Additional args to be used in saveRDS}
+\item{...}{Additional arguments passed to the base saveRDS() function.}
 }
 \description{
 Extension to the saveRDS function that allows capturing object metadata as a separate .json file.

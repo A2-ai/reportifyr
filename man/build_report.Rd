@@ -16,21 +16,21 @@ build_report(
 )
 }
 \arguments{
-\item{docx_in}{Path to input .docx to update}
+\item{docx_in}{The file path to the input .docx file.}
 
-\item{docx_out}{Path to output .docx to save to}
+\item{docx_out}{The file path to the output .docx file to save to. Default is NULL.}
 
-\item{figures_path}{Path to images file directory}
+\item{figures_path}{The file path to the figures and associated metadata directory.}
 
-\item{tables_path}{Path to tables file directory}
+\item{tables_path}{The file path to the tables and associated metadata directory.}
 
-\item{standard_footnotes_yaml}{Path to standard_footnotes.yaml in report}
+\item{standard_footnotes_yaml}{The file path to the standard_footnotes.yaml. Default is NULL. If NULL, a default standard_footnotes.yaml bundled with the reportifyr package is used.}
 
-\item{add_footnotes}{boolean for including footnotes in the document or not}
+\item{add_footnotes}{A boolean indicating whether to insert footnotes into the docx_in or not. Default is TRUE.}
 
-\item{include_object_path}{boolean for including object path in footnotes}
+\item{include_object_path}{A boolean indicating whether to include the file path of the figure or table in the footnotes. Default is FALSE.}
 
-\item{footnotes_fail_on_missing_metadata}{Boolean for allowing objects to lack metadata and thus have no footnotes}
+\item{footnotes_fail_on_missing_metadata}{A boolean indicating whether to stop execution if the metadata .json file for a figure or table is missing. Default is TRUE.}
 }
 \description{
 Reads in a .docx file and returns an updated version with plots, tables, and footnotes replaced.

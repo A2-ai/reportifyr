@@ -7,7 +7,7 @@
 validate_object(file)
 }
 \arguments{
-\item{file}{A connection or the name of the file where the R object is saved to or read from}
+\item{file}{The connection or name of the file where the R object is saved.}
 }
 \value{
 A boolean declaring if the hashes are equal or not

@@ -7,21 +7,21 @@
 update_object_footnotes(
   file_path,
   overwrite = FALSE,
-  equations = NULL,
-  notes = NULL,
-  abbrevs = NULL
+  meta_equations = NULL,
+  meta_notes = NULL,
+  meta_abbrevs = NULL
 )
 }
 \arguments{
-\item{file_path}{Path to object or object's metadata file}
+\item{file_path}{The file path to the object or its metadata file.}
 
-\item{overwrite}{Boolean to overwrite existing entries or append. Default is to append}
+\item{overwrite}{A boolean indicating whether to overwrite existing metadata entries. Default is FALSE (appends to existing entries).}
 
-\item{equations}{String or vector of strings of equations to add}
+\item{meta_equations}{A string or vector of strings representing equations to include or overwrite in the metadata.}
 
-\item{notes}{String or vector of strings of notes to add}
+\item{meta_notes}{A string or vector of strings representing notes to include or overwrite in the metadata.}
 
-\item{abbrevs}{String or vector of strings of abbreviations to add}
+\item{meta_abbrevs}{A string or vector of strings representing abbreviations to include or overwrite in the metadata.}
 }
 \description{
 Updates an object's footnote metadata - equations, notes, or abbreviations

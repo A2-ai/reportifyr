@@ -7,9 +7,9 @@
 remove_tables_figures_footnotes(docx_in, docx_out)
 }
 \arguments{
-\item{docx_in}{Path to the input .docx file}
+\item{docx_in}{The file path to the input .docx file.}
 
-\item{docx_out}{Path to output .docx to save to}
+\item{docx_out}{The file path to the output .docx file to save to.}
 }
 \description{
 Reads in a .docx file and returns a new version with tables, figures, and footnotes removed from the document.

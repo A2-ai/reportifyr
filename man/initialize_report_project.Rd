@@ -7,7 +7,7 @@
 initialize_report_project(project_dir)
 }
 \arguments{
-\item{project_dir}{The path to the main directory folder}
+\item{project_dir}{The file path to the main project directory where the directory structure will be created. The directory must already exist; otherwise, an error will be thrown.}
 }
 \description{
 Create report directories within a project

@@ -7,9 +7,9 @@
 finalize_document(docx_in, docx_out = NULL)
 }
 \arguments{
-\item{docx_in}{Path to input .docx to finalize}
+\item{docx_in}{The file path to the input .docx file.}
 
-\item{docx_out}{Path to output .docx to save to}
+\item{docx_out}{The file path to the output .docx file to save to. Default is NULL. If NULL, docx_out is assigned doc_dirs$doc_final using make_doc_dirs(docx_in = docx_in).}
 }
 \description{
 Reads in a .docx file and returns a finalized version with magic strings and bookmarks removed.

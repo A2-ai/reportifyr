@@ -7,9 +7,9 @@
 format_flextable(data_in, table1_format = F)
 }
 \arguments{
-\item{data_in}{Data frame to be formatted}
+\item{data_in}{The input data to be formatted. Must be either a data frame or a flextable object.}
 
-\item{table1_format}{Boolean for using table1 formatting}
+\item{table1_format}{A boolean indicating whether to apply table1-style formatting. Default is FALSE.}
 }
 \value{
 A formatted flextable

@@ -7,7 +7,7 @@
 preview_metadata_files(file_dir)
 }
 \arguments{
-\item{file_dir}{Path to a directory containing metadata .json files}
+\item{file_dir}{The file path to a directory containing metadata .json files.}
 }
 \value{
 A data frame of metadata footnotes and meta type

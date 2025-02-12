@@ -7,13 +7,13 @@
 add_tables(docx_in, docx_out, tables_path, debug = F)
 }
 \arguments{
-\item{docx_in}{input doc}
+\item{docx_in}{The file path to the input .docx file.}
 
-\item{docx_out}{output doc}
+\item{docx_out}{The file path to the output .docx file to save to.}
 
-\item{tables_path}{path to tables file}
+\item{tables_path}{The file path to the tables and associated metadata directory.}
 
-\item{debug}{debug mode}
+\item{debug}{Debug.}
 }
 \description{
 Adds tables by looking for magic string

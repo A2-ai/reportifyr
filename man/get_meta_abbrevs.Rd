@@ -7,7 +7,7 @@
 get_meta_abbrevs(path_to_footnotes_yaml)
 }
 \arguments{
-\item{path_to_footnotes_yaml}{The path to the standard_footnotes.yaml}
+\item{path_to_footnotes_yaml}{The file path to the standard_footnotes.yaml file.}
 }
 \value{
 A list of meta_abbrevs to be called while performing an analysis
