@@ -8,6 +8,17 @@
 initialize_python <- function() {
   log4r::debug(.le$logger, "Starting initialize_python function")
 
+  if (interactive()) {
+    log4r::info(.le$logger, "Prompting user for confirmation to install UV, Python, and Python dependencies to your local files.")
+    continue <- readline("This will install UV, Python, and Python dependencies to your local files. Are you sure you want to continue? [Y/n]\n")
+  } else {
+    continue <- "Y"  # Automatically proceed in non-interactive environments
+    log4r::info(.le$logger, "Non-interactive session detected, proceeding with installation.")
+  }
+
+  if (continue == "Y") {
+    log4r::info(.le$logger, "Installation confirmed.")
+
   cmd <- system.file("scripts/uv_setup.sh", package = "reportifyr")
   log4r::info(.le$logger, paste0("Command for setting up virtual environment: ", cmd))
 
@@ -86,9 +97,16 @@ initialize_python <- function() {
       file.path(args[[1]], ".venv")
     ))
   }
+} else if (continue == "n") {
+    log4r::info(.le$logger, "User declined installation. No changes made.")
+    message("Not installing UV, Python, and Python dependencies.")
+  } else {
+    log4r::error(.le$logger, "Invalid response from user. Must enter Y or n.")
+    stop("Must enter Y or n.")
+  }
+
   log4r::debug(.le$logger, "Exiting initialize_python function")
 }
-
 
 #' Grabs python version for .venv
 #'
