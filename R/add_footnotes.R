@@ -1,13 +1,13 @@
-#' Inserts Footnotes in appropriate places in Word files
+#' Inserts Footnotes in appropriate places in a Microsoft Word file
 #'
-#' @description Reads in a .docx file and returns a new version with footnotes placed at appropriate places in the document.
-#' @param docx_in The file path to the input .docx file.
-#' @param docx_out The file path to the output .docx file to save to.
+#' @description Reads in a `.docx` file and returns a new version with footnotes placed at appropriate places in the document.
+#' @param docx_in The file path to the input `.docx` file.
+#' @param docx_out The file path to the output `.docx` file to save to.
 #' @param figures_path The file path to the figures and associated metadata directory.
 #' @param tables_path The file path to the tables and associated metadata directory.
-#' @param standard_footnotes_yaml The file path to the standard_footnotes.yaml. Default is NULL. If NULL, a default standard_footnotes.yaml bundled with the reportifyr package is used.
-#' @param include_object_path A boolean indicating whether to include the file path of the figure or table in the footnotes. Default is FALSE.
-#' @param footnotes_fail_on_missing_metadata A boolean indicating whether to stop execution if the metadata .json file for a figure or table is missing. Default is TRUE.
+#' @param standard_footnotes_yaml The file path to the `standard_footnotes.yaml`. Default is `NULL`. If `NULL`, a default `standard_footnotes.yaml` bundled with the `reportifyr` package is used.
+#' @param include_object_path A boolean indicating whether to include the file path of the figure or table in the footnotes. Default is `FALSE`.
+#' @param footnotes_fail_on_missing_metadata A boolean indicating whether to stop execution if the metadata `.json` file for a figure or table is missing. Default is `TRUE`.
 #' @param debug Debug.
 #'
 #' @export
@@ -17,25 +17,25 @@
 #' # ---------------------------------------------------------------------------
 #' # Load all dependencies
 #' # ---------------------------------------------------------------------------
-#' docx_in <- file.path(here::here(), "report", "shell", "template.docx")
+#' docx_in <- here::here("report", "shell", "template.docx")
 #' doc_dirs <- make_doc_dirs(docx_in = docx_in)
-#' figures_path <- file.path(here::here(), "OUTPUTS", "figures")
-#' tables_path <- file.path(here::here(), "OUTPUTS", "tables")
-#' standard_footnotes_yaml <- file.path(here::here(), "report", "standard_footnotes.yaml")
+#' figures_path <- here::here("OUTPUTS", "figures")
+#' tables_path <- here::here("OUTPUTS", "tables")
+#' standard_footnotes_yaml <- here::here("report", "standard_footnotes.yaml")
 #'
 #' # ---------------------------------------------------------------------------
 #' # Step 1.
-#' # Table addition running add_tables will format and insert tables into the doc.
+#' # `add_tables()` will format and insert tables into the `.docx` file.
 #' # ---------------------------------------------------------------------------
 #' add_tables(
-#'   docx_in = docx_in,
+#'   docx_in = doc_dirs$doc_in,
 #'   docx_out = doc_dirs$doc_tables,
 #'   tables_path = tables_path
 #' )
 #'
 #' # ---------------------------------------------------------------------------
 #' # Step 2.
-#' # Next we place in the plots using the add_plots function.
+#' # Next we insert the plots using the `add_plots()` function.
 #' # ---------------------------------------------------------------------------
 #' add_plots(
 #'   docx_in = doc_dirs$doc_tables,
@@ -45,7 +45,7 @@
 #'
 #' # ---------------------------------------------------------------------------
 #' # Step 3.
-#' # Now we can add the footnotes to all the inserted figures and tables.
+#' # Now we can add the footnotes with the `add_footnotes` function.
 #' # ---------------------------------------------------------------------------
 #' add_footnotes(
 #'   docx_in = doc_dirs$doc_tabs_figs,
@@ -53,8 +53,8 @@
 #'   figures_path = figures_path,
 #'   tables_path = tables_path,
 #'   standard_footnotes_yaml = standard_footnotes_yaml,
-#'   include_object_path = TRUE
-#'   footnotes_fail_on_missing_metadata
+#'   include_object_path = FALSE,
+#'   footnotes_fail_on_missing_metadata = TRUE
 #' )
 #' }
 add_footnotes <- function(docx_in,
@@ -64,7 +64,7 @@ add_footnotes <- function(docx_in,
                           standard_footnotes_yaml = NULL,
                           include_object_path = FALSE,
                           footnotes_fail_on_missing_metadata = TRUE,
-                          debug = F) {
+                          debug = FALSE) {
   log4r::debug(.le$logger, "Starting add_footnotes function")
 
   tictoc::tic()

@@ -1,8 +1,8 @@
 #' Removes Tables, Figures, and Footnotes from a Word file
 #'
-#' @description Reads in a .docx file and returns a new version with tables, figures, and footnotes removed from the document.
-#' @param docx_in The file path to the input .docx file.
-#' @param docx_out The file path to the output .docx file to save to.
+#' @description Reads in a `.docx` file and returns a new version with tables, figures, and footnotes removed from the document.
+#' @param docx_in The file path to the input `.docx` file.
+#' @param docx_out The file path to the output `.docx` file to save to.
 #'
 #' @export
 #'
@@ -11,14 +11,14 @@
 #' # ---------------------------------------------------------------------------
 #' # Load all dependencies
 #' # ---------------------------------------------------------------------------
-#' docx_in <- file.path(here::here(), "report", "shell", "template.docx")
+#' docx_in <- here::here("report", "shell", "template.docx")
 #' doc_dirs <- make_doc_dirs(docx_in = docx_in)
 #'
 #' # ---------------------------------------------------------------------------
-#' # Removal to set-up docx_in
+#' # Removing tables, figures, and footnotes
 #' # ---------------------------------------------------------------------------
 #' remove_tables_figures_footnotes(
-#'   docx_in = docx_in,
+#'   docx_in = doc_dirs$doc_in,
 #'   docx_out = doc_dirs$doc_clean
 #' )
 #' }

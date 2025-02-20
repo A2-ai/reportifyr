@@ -1,7 +1,7 @@
 #' Updates an object's footnote metadata - equations, notes, or abbreviations
 #'
 #' @param file_path The file path to the object or its metadata file.
-#' @param overwrite A boolean indicating whether to overwrite existing metadata entries. Default is FALSE (appends to existing entries).
+#' @param overwrite A boolean indicating whether to overwrite existing metadata entries. Default is `FALSE` (appends to existing entries).
 #' @param meta_equations A string or vector of strings representing equations to include or overwrite in the metadata.
 #' @param meta_notes A string or vector of strings representing notes to include or overwrite in the metadata.
 #' @param meta_abbrevs A string or vector of strings representing abbreviations to include or overwrite in the metadata.

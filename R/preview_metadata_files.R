@@ -7,7 +7,8 @@
 #' @export
 #'
 #' @examples \dontrun{
-#' preview_metadata_file("OUTPUTS/figures/")
+#' figures_path <- here::here("OUTPUTS", "figures")
+#' preview_metadata_file(figures_path)
 #' }
 preview_metadata_files <- function(file_dir) {
   log4r::debug(.le$logger, "Starting preview_metadata_files function")
@@ -106,7 +107,9 @@ preview_metadata_files <- function(file_dir) {
 #' @export
 #'
 #' @examples \dontrun{
-#' preview_metadata("OUTPUTS/figures/myplot.png")
+#' figures_path <- here::here("OUTPUTS", "figures")
+#' plot_file_name <- "myplot.png"
+#' preview_metadata(file.path(figures_path, plot_file_name))
 #' }
 preview_metadata <- function(file_name) {
   log4r::debug(.le$logger, "Starting preview_metadata function")

@@ -1,17 +1,14 @@
 #' Get meta abbreviations from standard_footnotes.yaml
 #'
-#' @param path_to_footnotes_yaml The file path to the standard_footnotes.yaml file.
+#' @param path_to_footnotes_yaml The file path to the `standard_footnotes.yaml` file.
 #'
-#' @return A list of meta_abbrevs to be called while performing an analysis
+#' @return A list of `meta_abbrevs` to be called while performing an analysis
 #'
 #' @export
 #'
 #' @examples \dontrun{
-#' meta_abbrevs <- get_meta_abbrevs(
-#'   path_to_footnotes_yaml = file.path(
-#'     here::here(), "report", "standard_footnotes.yaml"
-#'   )
-#' )
+#' standard_footnotes_yaml <- here::here("report", "standard_footnotes.yaml")
+#' meta_abbrevs <- get_meta_abbrevs(path_to_footnotes_yaml = standard_footnotes_yaml)
 #' }
 get_meta_abbrevs <- function(path_to_footnotes_yaml) {
   log4r::debug(.le$logger, "Starting get_meta_abbrevs function")

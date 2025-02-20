@@ -1,6 +1,6 @@
 #' Helper function that defines document output paths
 #'
-#' @param docx_in The file path to the input .docx file.
+#' @param docx_in The file path to the input `.docx` file.
 #'
 #' @return A list of document paths
 #'
@@ -11,8 +11,8 @@
 #' # ---------------------------------------------------------------------------
 #' # Load all dependencies
 #' # ---------------------------------------------------------------------------
-#' docx_in <- file.path(here::here(), "report", "shell", "template.docx")
-#' doc_dirs  <- make_doc_dirs(docx_in = docx_in)
+#' docx_in <- here::here("report", "shell", "template.docx")
+#' doc_dirs <- make_doc_dirs(docx_in = docx_in)
 #' }
 make_doc_dirs <- function(docx_in){
   log4r::debug(.le$logger, "Starting make_doc_dirs function")
