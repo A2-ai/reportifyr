@@ -11,44 +11,43 @@ write_csv_with_metadata(
   meta_equations = NULL,
   meta_notes = NULL,
   meta_abbrevs = NULL,
-  table1_format = F,
+  table1_format = FALSE,
   ...
 )
 }
 \arguments{
-\item{object}{The R object to serialize.}
+\item{object}{The \code{R} object to serialize.}
 
-\item{file}{The connection or name of the file where the R object is saved.}
+\item{file}{The connection or name of the file where the \code{R} object is saved.}
 
-\item{meta_type}{A string to specify the type of object. Default is "NA".}
+\item{meta_type}{A string to specify the type of object. Default is \code{"NA"}.}
 
-\item{meta_equations}{A string or vector of strings representing equations to include in the metadata. Default is NULL.}
+\item{meta_equations}{A string or vector of strings representing equations to include in the metadata. Default is \code{NULL}.}
 
-\item{meta_notes}{A string or vector of strings representing notes to include in the metadata. Default is NULL.}
+\item{meta_notes}{A string or vector of strings representing notes to include in the metadata. Default is \code{NULL}.}
 
-\item{meta_abbrevs}{A string or vector of strings representing abbreviations to include in the metadata. Default is NULL.}
+\item{meta_abbrevs}{A string or vector of strings representing abbreviations to include in the metadata. Default is \code{NULL}.}
 
-\item{table1_format}{A boolean indicating whether to apply table1-style formatting. Defaults to FALSE.}
+\item{table1_format}{A boolean indicating whether to apply table1-style formatting. Default is \code{FALSE}.}
 
-\item{...}{Additional arguments passed to the utils write.csv() function.}
+\item{...}{Additional arguments passed to the \code{utils::write.csv()} function.}
 }
 \description{
-Extension to the write.csv function that allows capturing object metadata as a separate .json file.
+Extension to the \code{write.csv()} function that allows capturing object metadata as a separate \code{.json} file.
 }
 \examples{
 \dontrun{
 
-# Path to the analysis tables (.csv) and metadata (.json files)
-tables.path <- "OUTPUTS/tables"
-
 # ---------------------------------------------------------------------------------
 # Save a simple table
 # ---------------------------------------------------------------------------------
+tables_path <- here::here("OUTPUTS", "tables")
+outfile_name <- "01-12345-pk-theoph.csv"
 
-out_name <- "01-12345-pk-theoph.csv"
 write_csv_with_metadata(
   object = Theoph,
-  file = file.path(tables.path, out_name), row_names = F
+  file = file.path(tables.path, out_name),
+  row_names = FALSE
 )
 }
 }

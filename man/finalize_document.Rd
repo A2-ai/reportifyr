@@ -2,17 +2,17 @@
 % Please edit documentation in R/finalize_document.R
 \name{finalize_document}
 \alias{finalize_document}
-\title{Finalizes the document by removing magic strings and bookmarks}
+\title{Finalizes the Microsoft Word file by removing magic strings and bookmarks}
 \usage{
 finalize_document(docx_in, docx_out = NULL)
 }
 \arguments{
-\item{docx_in}{The file path to the input .docx file.}
+\item{docx_in}{The file path to the input \code{.docx} file.}
 
-\item{docx_out}{The file path to the output .docx file to save to. Default is NULL. If NULL, docx_out is assigned doc_dirs$doc_final using make_doc_dirs(docx_in = docx_in).}
+\item{docx_out}{The file path to the output \code{.docx} file to save to. Default is \code{NULL}. If \code{NULL}, \code{docx_out} is assigned \code{doc_dirs$doc_final} using \code{make_doc_dirs(docx_in = docx_in)}.}
 }
 \description{
-Reads in a .docx file and returns a finalized version with magic strings and bookmarks removed.
+Reads in a \code{.docx} file and returns a finalized version with magic strings and bookmarks removed.
 }
 \examples{
 \dontrun{
@@ -20,27 +20,30 @@ Reads in a .docx file and returns a finalized version with magic strings and boo
 # ---------------------------------------------------------------------------
 # Load all dependencies
 # ---------------------------------------------------------------------------
-docx_in <- file.path(here::here(), "report", "shell", "template.docx")
-figures_path <- file.path(here::here(), "OUTPUTS", "figures")
-tables_path <- file.path(here::here(), "OUTPUTS", "tables")
-footnotes <- file.path(here::here(), "report", "standard_footnotes.yaml")
+docx_in <- here::here("report", "shell", "template.docx")
+doc_dirs <- make_doc_dirs(docx_in = docx_in)
+figures_path <- here::here("OUTPUTS", "figures")
+tables_path <- here::here("OUTPUTS", "tables")
+standard_footnotes_yaml <- here::here("report", "standard_footnotes.yaml")
 
 # ---------------------------------------------------------------------------
 # Step 1.
-# Run the wrapper function build_report() to replace figures, tables, and
-# footnotes in a .docx file.
+# Run the `build_report()` wrapper function to replace figures, tables, and
+# footnotes in a `.docx` file.
 # ---------------------------------------------------------------------------
 build_report(
-  docx_in = docx_in,
+  docx_in = doc_dirs$doc_in,
   docx_out = doc_dirs$doc_draft,
   figures_path = figures_path,
   tables_path = tables_path,
-  standard_footnotes_yaml = footnotes
+  standard_footnotes_yaml = standard_footnote_yaml
 )
 
 # ---------------------------------------------------------------------------
 # Step 2.
-# If you are happy with the report and are ready to finalize the document.
+# If you are ready to finalize the `.docx` file, run the `finalize_document()`
+# function. This will remove the ties between reportifyr and the document, so
+# please be mindful!
 # ---------------------------------------------------------------------------
 finalize_document(
   docx_in = doc_dirs$doc_draft,

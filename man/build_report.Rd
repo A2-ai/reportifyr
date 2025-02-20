@@ -2,7 +2,7 @@
 % Please edit documentation in R/build_report.R
 \name{build_report}
 \alias{build_report}
-\title{Updates a Word file to include formatted plots, tables, and footnotes}
+\title{Updates a Microsoft Word file to include formatted plots, tables, and footnotes}
 \usage{
 build_report(
   docx_in,
@@ -16,24 +16,24 @@ build_report(
 )
 }
 \arguments{
-\item{docx_in}{The file path to the input .docx file.}
+\item{docx_in}{The file path to the input \code{.docx} file.}
 
-\item{docx_out}{The file path to the output .docx file to save to. Default is NULL.}
+\item{docx_out}{The file path to the output \code{.docx} file to save to. Default is \code{NULL}.}
 
 \item{figures_path}{The file path to the figures and associated metadata directory.}
 
 \item{tables_path}{The file path to the tables and associated metadata directory.}
 
-\item{standard_footnotes_yaml}{The file path to the standard_footnotes.yaml. Default is NULL. If NULL, a default standard_footnotes.yaml bundled with the reportifyr package is used.}
+\item{standard_footnotes_yaml}{The file path to the \code{standard_footnotes.yaml}. Default is \code{NULL}. If \code{NULL}, a default \code{standard_footnotes.yaml} bundled with the \code{reportifyr} package is used.}
 
-\item{add_footnotes}{A boolean indicating whether to insert footnotes into the docx_in or not. Default is TRUE.}
+\item{add_footnotes}{A boolean indicating whether to insert footnotes into the \code{docx_in} or not. Default is \code{TRUE}.}
 
-\item{include_object_path}{A boolean indicating whether to include the file path of the figure or table in the footnotes. Default is FALSE.}
+\item{include_object_path}{A boolean indicating whether to include the file path of the figure or table in the footnotes. Default is \code{FALSE}.}
 
-\item{footnotes_fail_on_missing_metadata}{A boolean indicating whether to stop execution if the metadata .json file for a figure or table is missing. Default is TRUE.}
+\item{footnotes_fail_on_missing_metadata}{A boolean indicating whether to stop execution if the metadata \code{.json} file for a figure or table is missing. Default is \code{TRUE}.}
 }
 \description{
-Reads in a .docx file and returns an updated version with plots, tables, and footnotes replaced.
+Reads in a \code{.docx} file and returns a new version with plots, tables, and footnotes replaced.
 }
 \examples{
 \dontrun{
@@ -41,22 +41,23 @@ Reads in a .docx file and returns an updated version with plots, tables, and foo
 # ---------------------------------------------------------------------------
 # Load all dependencies
 # ---------------------------------------------------------------------------
-docx_in <- file.path(here::here(), "report", "shell", "template.docx")
-figures_path <- file.path(here::here(), "OUTPUTS", "figures")
-tables_path <- file.path(here::here(), "OUTPUTS", "tables")
-footnotes <- file.path(here::here(), "report", "standard_footnotes.yaml")
+docx_in <- here::here("report", "shell", "template.docx")
+doc_dirs <- make_doc_dirs(docx_in = docx_in)
+figures_path <- here::here("OUTPUTS", "figures")
+tables_path <- here::here("OUTPUTS", "tables")
+standard_footnotes_yaml <- here::here("report", "standard_footnotes.yaml")
 
 # ---------------------------------------------------------------------------
 # Step 1.
-# Run the wrapper function to replace figures, tables, and footnotes in a
-# .docx file.
+# Run the `build_report()` wrapper function to replace figures, tables, and
+# footnotes in a `.docx` file.
 # ---------------------------------------------------------------------------
 build_report(
-  docx_in = docx_in,
+  docx_in = doc_dirs$doc_in,
   docx_out = doc_dirs$doc_draft,
   figures_path = figures_path,
   tables_path = tables_path,
-  standard_footnotes_yaml = footnotes
+  standard_footnotes_yaml = standard_footnotes_yaml
 )
 }
 }

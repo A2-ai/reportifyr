@@ -17,6 +17,8 @@ Previews a single metadata file for an object
 }
 \examples{
 \dontrun{
-preview_metadata("OUTPUTS/figures/myplot.png")
+figures_path <- here::here("OUTPUTS", "figures")
+plot_file_name <- "myplot.png"
+preview_metadata(file.path(figures_path, plot_file_name))
 }
 }

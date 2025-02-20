@@ -15,7 +15,7 @@ update_object_footnotes(
 \arguments{
 \item{file_path}{The file path to the object or its metadata file.}
 
-\item{overwrite}{A boolean indicating whether to overwrite existing metadata entries. Default is FALSE (appends to existing entries).}
+\item{overwrite}{A boolean indicating whether to overwrite existing metadata entries. Default is \code{FALSE} (appends to existing entries).}
 
 \item{meta_equations}{A string or vector of strings representing equations to include or overwrite in the metadata.}
 

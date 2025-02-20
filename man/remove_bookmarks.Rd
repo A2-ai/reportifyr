@@ -2,17 +2,17 @@
 % Please edit documentation in R/remove_bookmarks.R
 \name{remove_bookmarks}
 \alias{remove_bookmarks}
-\title{Removes Bookmarks from a Word file}
+\title{Removes Bookmarks from a Microsoft Word file}
 \usage{
 remove_bookmarks(docx_in, docx_out)
 }
 \arguments{
-\item{docx_in}{Path to the input .docx file}
+\item{docx_in}{The file path to the input \code{.docx} file.}
 
-\item{docx_out}{Path to output .docx to save to}
+\item{docx_out}{The file path to the output \code{.docx} file to save to.}
 }
 \description{
-Reads in a .docx file and returns a new version with bookmarks removed from the document.
+Reads in a \code{.docx} file and returns a new version with bookmarks removed from the document.
 }
 \examples{
 \dontrun{
@@ -20,48 +20,28 @@ Reads in a .docx file and returns a new version with bookmarks removed from the 
 # ---------------------------------------------------------------------------
 # Load all dependencies
 # ---------------------------------------------------------------------------
-docx_in <- file.path(here::here(), "report", "shell", "template.docx")
+docx_in <- here::here("report", "shell", "template.docx")
 doc_dirs <- make_doc_dirs(docx_in = docx_in)
-figures_path <- file.path(here::here(), "OUTPUTS", "figures")
-tables_path <- file.path(here::here(), "OUTPUTS", "tables")
-footnotes <- file.path(here::here(), "report", "standard_footnotes.yaml")
+figures_path <- here::here("OUTPUTS", "figures")
+tables_path <- here::here("OUTPUTS", "tables")
+standard_footnotes_yaml <- here::here("report", "standard_footnotes.yaml")
 
 # ---------------------------------------------------------------------------
 # Step 1.
-# Table addition running add_tables will format and insert tables into the doc.
+# Run the `build_report()` wrapper function to replace figures, tables, and
+# footnotes in a `.docx` file.
 # ---------------------------------------------------------------------------
-add_tables(
-  docx_in = docx_in,
-  docx_out = doc_dirs$doc_tables,
-  tables_path = tables_path
-)
-
-# ---------------------------------------------------------------------------
-# Step 3.
-# Next we place in the plots using the add_plots function.
-# ---------------------------------------------------------------------------
-add_plots(
-  docx_in = doc_dirs$doc_tables,
-  docx_out = doc_dirs$doc_tabs_figs,
-  figures_path = figures_path
-)
-
-# ---------------------------------------------------------------------------
-# Step 4.
-# Now we can add the footnotes to all the inserted figures and tables.
-# ---------------------------------------------------------------------------
-add_footnotes(
-  docx_in = doc_dirs$doc_tabs_figs,
+build_report(
+  docx_in = doc_dirs$doc_in,
   docx_out = doc_dirs$doc_draft,
   figures_path = figures_path,
   tables_path = tables_path,
-  footnotes = footnotes
+  standard_footnotes_yaml = standard_footnotes_yaml
 )
 
 # ---------------------------------------------------------------------------
-# Step 5.
-# Clean the output for a final document creation. This will remove the ties
-# between reportifyr and the document so be careful!
+# Step 2.
+# Clean the output for final document creation.
 # ---------------------------------------------------------------------------
 remove_bookmarks(
   docx_in = doc_dirs$doc_draft,

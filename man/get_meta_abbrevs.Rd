@@ -7,20 +7,17 @@
 get_meta_abbrevs(path_to_footnotes_yaml)
 }
 \arguments{
-\item{path_to_footnotes_yaml}{The file path to the standard_footnotes.yaml file.}
+\item{path_to_footnotes_yaml}{The file path to the \code{standard_footnotes.yaml} file.}
 }
 \value{
-A list of meta_abbrevs to be called while performing an analysis
+A list of \code{meta_abbrevs} to be called while performing an analysis
 }
 \description{
 Get meta abbreviations from standard_footnotes.yaml
 }
 \examples{
 \dontrun{
-meta_abbrevs <- get_meta_abbrevs(
-  path_to_footnotes_yaml = file.path(
-    here::here(), "report", "standard_footnotes.yaml"
-  )
-)
+standard_footnotes_yaml <- here::here("report", "standard_footnotes.yaml")
+meta_abbrevs <- get_meta_abbrevs(path_to_footnotes_yaml = standard_footnotes_yaml)
 }
 }

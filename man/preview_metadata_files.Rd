@@ -17,6 +17,7 @@ Preview all metadata .json files in a directory
 }
 \examples{
 \dontrun{
-preview_metadata_file("OUTPUTS/figures/")
+figures_path <- here::here("OUTPUTS", "figures")
+preview_metadata_file(figures_path)
 }
 }

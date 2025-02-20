@@ -10,29 +10,30 @@ write_object_metadata(
   meta_equations = NULL,
   meta_notes = NULL,
   meta_abbrevs = NULL,
-  table1_format = F
+  table1_format = FALSE
 )
 }
 \arguments{
 \item{object_file}{The file path of the object to write metadata for.}
 
-\item{meta_type}{A string to specify the type of object. Default is "NA".}
+\item{meta_type}{A string to specify the type of object. Default is \code{"NA"}.}
 
-\item{meta_equations}{A string or vector of strings representing equations to include in the metadata. Default is NULL.}
+\item{meta_equations}{A string or vector of strings representing equations to include in the metadata. Default is \code{NULL}.}
 
-\item{meta_notes}{A string or vector of strings representing notes to include in the metadata. Default is NULL.}
+\item{meta_notes}{A string or vector of strings representing notes to include in the metadata. Default is \code{NULL}.}
 
-\item{meta_abbrevs}{A string or vector of strings representing abbreviations to include in the metadata. Default is NULL.}
+\item{meta_abbrevs}{A string or vector of strings representing abbreviations to include in the metadata. Default is \code{NULL}.}
 
-\item{table1_format}{A boolean indicating whether table1 formatting is used for add_tables(). Defaults to FALSE.}
+\item{table1_format}{A boolean indicating whether table1 formatting is used for \code{add_tables()}. Default is \code{FALSE}.}
 }
 \description{
 Writes an object's metadata .json file
 }
 \examples{
 \dontrun{
-ft <- flextable(iris)
+figures_path <- here::here("OUTPUTS", "figures")
+plot_file_name <- "01-12345-pk-timecourse1.png"
 
-write_object_metadata(ft, "table", file_path)
+write_object_metadata(object_file = file.path(figures_path, plot_file_name))
 }
 }
