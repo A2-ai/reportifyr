@@ -99,7 +99,7 @@ initialize_python <- function() {
   }
 } else if (continue == "n") {
     log4r::info(.le$logger, "User declined installation. No changes made.")
-    message("Not installing UV, Python, and Python dependencies.")
+    message("Not installing UV, Python, or Python dependencies.")
   } else {
     log4r::error(.le$logger, "Invalid response from user. Must enter Y or n.")
     stop("Must enter Y or n.")
