@@ -11,7 +11,7 @@
 #'
 #' @examples \dontrun{
 #' figures_path <- here::here("OUTPUTS", "figures")
-#' plot_file_name <- 01-12345-pk-timecourse1.png"
+#' plot_file_name <- "01-12345-pk-timecourse1.png"
 #'
 #' write_object_metadata(object_file = file.path(figures_path, plot_file_name))
 #' }

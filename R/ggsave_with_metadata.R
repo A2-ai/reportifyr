@@ -25,7 +25,7 @@
 #'
 #' # Save a png using the wrapper function
 #' figures_path <- here::here("OUTPUTS", "figures")
-#' plot_file_name <- 01-12345-pk-timecourse1.png"
+#' plot_file_name <- "01-12345-pk-timecourse1.png"
 #' ggsave_with_metadata(filename = file.path(figures_path, plot_file_name))
 #' }
 ggsave_with_metadata <- function(
