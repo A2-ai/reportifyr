@@ -22,7 +22,7 @@
 #'
 #' write_csv_with_metadata(
 #'   object = Theoph,
-#'   file = file.path(tables.path, out_name),
+#'   file = file.path(tables_path, out_name),
 #'   row_names = FALSE
 #' )
 #' }
