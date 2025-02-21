@@ -1,6 +1,6 @@
 #' Removes Magic Strings from a Word file
 #'
-#' @description Reads in a .`docx` file and returns a new version with magic strings removed from the document.
+#' @description Reads in a `.docx` file and returns a new version with magic strings removed from the document.
 #' @param docx_in The file path to the input `.docx` file.
 #' @param docx_out The file path to the output `.docx` file to save to.
 #'
