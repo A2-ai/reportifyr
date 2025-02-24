@@ -10,7 +10,7 @@ initialize_python <- function() {
 
   if (interactive()) {
     log4r::info(.le$logger, "Prompting user for confirmation to install UV, Python, and Python dependencies to your local files.")
-    continue <- readline("This will install UV, Python, and Python dependencies to your local files. Are you sure you want to continue? [Y/n]\n")
+    continue <- readline("If UV, Python, and Python dependencies (python-docx, PyYAML) are not installed, this will install them.\nOtherwise, the installed versions will be used.\nAre you sure you want to continue? [Y/n]\n")
   } else {
     continue <- "Y"  # Automatically proceed in non-interactive environments
     log4r::info(.le$logger, "Non-interactive session detected, proceeding with installation.")
@@ -99,7 +99,7 @@ initialize_python <- function() {
   }
 } else if (continue == "n") {
     log4r::info(.le$logger, "User declined installation. No changes made.")
-    message("User declined installation of UV, Python, and Python dependencies. Full functionality of reportifyr will not be available.")
+    message("User declined installation of UV, Python, and Python dependencies.\nFull functionality of reportifyr will not be available.")
   } else {
     log4r::error(.le$logger, "Invalid response from user. Must enter Y or n.")
     stop("Must enter Y or n.")
