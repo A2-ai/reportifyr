@@ -1,33 +1,38 @@
-#' Adds tables by looking for magic string
+#' Inserts Tables in appropriate places in a Microsoft Word file
 #'
-#' @param docx_in input doc
-#' @param docx_out output doc
-#' @param tables_path path to tables file
-#' @param debug debug mode
+#' @description Reads in a `.docx` file and returns a new version with tables placed at appropriate places in the document.
+#' @param docx_in The file path to the input `.docx` file.
+#' @param docx_out The file path to the output `.docx` file to save to.
+#' @param tables_path The file path to the tables and associated metadata directory.
+#' @param debug Debug.
 #'
 #' @export
 #'
 #' @examples \dontrun{
+#'
 #' # ---------------------------------------------------------------------------
 #' # Load all dependencies
 #' # ---------------------------------------------------------------------------
-#' docx_in <- file.path(here::here(), "report", "shell", "template.docx")
+#' docx_in <- here::here("report", "shell", "template.docx")
 #' doc_dirs <- make_doc_dirs(docx_in = docx_in)
-#' figures_path <- file.path(here::here(), "OUTPUTS", "figures")
-#' tables_path <- file.path(here::here(), "OUTPUTS", "tables")
-#' footnotes <- file.path(here::here(), "report", "standard_footnotes.yaml")
+#' figures_path <- here::here("OUTPUTS", "figures")
+#' tables_path <- here::here("OUTPUTS", "tables")
+#' standard_footnotes_yaml <- here::here("report", "standard_footnotes.yaml")
 #'
 #' # ---------------------------------------------------------------------------
 #' # Step 1.
-#' # Table addition running add_tables will format and insert tables into the doc.
+#' # `add_tables()` will format and insert tables into the `.docx` file.
 #' # ---------------------------------------------------------------------------
 #' add_tables(
-#'   docx_in = doc_dirs$doc_clean,
+#'   docx_in = doc_dirs$doc_in,
 #'   docx_out = doc_dirs$doc_tables,
 #'   tables_path = tables_path
 #' )
 #' }
-add_tables <- function(docx_in, docx_out, tables_path, debug = F) {
+add_tables <- function(docx_in,
+                       docx_out,
+                       tables_path,
+                       debug = FALSE) {
   log4r::debug(.le$logger, "Starting add_tables function")
   tictoc::tic()
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/add_plots.R
 \name{add_plots}
 \alias{add_plots}
-\title{Inserts Figures in appropriate places in Word files}
+\title{Inserts Figures in appropriate places in a Microsoft Word file}
 \usage{
 add_plots(
   docx_in,
@@ -10,24 +10,24 @@ add_plots(
   figures_path,
   fig_width = NULL,
   fig_height = NULL,
-  debug = F
+  debug = FALSE
 )
 }
 \arguments{
-\item{docx_in}{Path to the input .docx file}
+\item{docx_in}{The file path to the input \code{.docx} file.}
 
-\item{docx_out}{Path to output .docx to save to}
+\item{docx_out}{The file path to the output \code{.docx} file to save to.}
 
-\item{figures_path}{Path to images file directory}
+\item{figures_path}{The file path to the figures directory.}
 
-\item{fig_width}{Figure width in inches. This is a global controller. Defaults to NULL. If NULL, the size is calculated calculated based on the pixels of the actual figure}
+\item{fig_width}{A global controller. The figure width in inches. Default is \code{NULL}. If \code{NULL}, the width is determined by the figure's pixel dimensions.}
 
-\item{fig_height}{Figure height in inches. This is a global controller. Defaults to NULL. If NULL, the size is automatically calculated based on the pixels of the actual figure}
+\item{fig_height}{A global controller. The figure height in inches. Default is \code{NULL}. If \code{NULL}, the height is determined by the figure's pixel dimensions.}
 
-\item{debug}{Debug}
+\item{debug}{Debug.}
 }
 \description{
-Reads in a .docx file and returns a new version with figures placed at appropriate places in the document.
+Reads in a \code{.docx} file and returns a new version with figures placed at appropriate places in the document.
 }
 \examples{
 \dontrun{
@@ -35,15 +35,15 @@ Reads in a .docx file and returns a new version with figures placed at appropria
 # ---------------------------------------------------------------------------
 # Load all dependencies
 # ---------------------------------------------------------------------------
-docx_in <- file.path(here::here(), "report", "shell", "template.docx")
+docx_in <- here::here("report", "shell", "template.docx")
 doc_dirs <- make_doc_dirs(docx_in = docx_in)
-figures_path <- file.path(here::here(), "OUTPUTS", "figures")
-tables_path <- file.path(here::here(), "OUTPUTS", "tables")
-footnotes <- file.path(here::here(), "report", "standard_footnotes.yaml")
+figures_path <- here::here("OUTPUTS", "figures")
+tables_path <- here::here("OUTPUTS", "tables")
+standard_footnotes_yaml <- here::here("report", "standard_footnotes.yaml")
 
 # ---------------------------------------------------------------------------
 # Step 1.
-# Table addition running add_tables will format and insert tables into the doc.
+# `add_tables()` will format and insert tables into the `.docx` file.
 # ---------------------------------------------------------------------------
 add_tables(
   docx_in = doc_dirs$doc_in,
@@ -52,8 +52,8 @@ add_tables(
 )
 
 # ---------------------------------------------------------------------------
-# Step 3.
-# Next we place in the plots using the add_plots function.
+# Step 2.
+# Next we insert the plots using the `add_plots()` function.
 # ---------------------------------------------------------------------------
 add_plots(
   docx_in = doc_dirs$doc_tables,

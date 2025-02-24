@@ -7,12 +7,12 @@
 remove_tables_figures_footnotes(docx_in, docx_out)
 }
 \arguments{
-\item{docx_in}{Path to the input .docx file}
+\item{docx_in}{The file path to the input \code{.docx} file.}
 
-\item{docx_out}{Path to output .docx to save to}
+\item{docx_out}{The file path to the output \code{.docx} file to save to.}
 }
 \description{
-Reads in a .docx file and returns a new version with tables, figures, and footnotes removed from the document.
+Reads in a \code{.docx} file and returns a new version with tables, figures, and footnotes removed from the document.
 }
 \examples{
 \dontrun{
@@ -20,14 +20,14 @@ Reads in a .docx file and returns a new version with tables, figures, and footno
 # ---------------------------------------------------------------------------
 # Load all dependencies
 # ---------------------------------------------------------------------------
-docx_in <- file.path(here::here(), "report", "shell", "template.docx")
+docx_in <- here::here("report", "shell", "template.docx")
 doc_dirs <- make_doc_dirs(docx_in = docx_in)
 
 # ---------------------------------------------------------------------------
-# Removal to set-up docx_in
+# Removing tables, figures, and footnotes
 # ---------------------------------------------------------------------------
 remove_tables_figures_footnotes(
-  docx_in = docx_in,
+  docx_in = doc_dirs$doc_in,
   docx_out = doc_dirs$doc_clean
 )
 }

@@ -15,30 +15,28 @@ ggsave_with_metadata(
 )
 }
 \arguments{
-\item{filename}{File name to create on disk}
+\item{filename}{The filename for the plot to save to.}
 
-\item{plot}{Plot to save, defaults to last plot displayed}
+\item{plot}{The plot object to save. Default is the last displayed plot (\code{ggplot2::last_plot()}).}
 
-\item{meta_type}{Parameter for specifying meta_type for write_object_metadata}
+\item{meta_type}{A string to specify the type of object. Default is \code{"NA"}.}
 
-\item{meta_equations}{Parameter for specifying additional equations}
+\item{meta_equations}{A string or vector of strings representing equations to include in the metadata. Default is \code{NULL}.}
 
-\item{meta_notes}{Parameter for specifying additional notes}
+\item{meta_notes}{A string or vector of strings representing notes to include in the metadata. Default is \code{NULL}.}
 
-\item{meta_abbrevs}{Parameter for specifying additional abbreviations}
+\item{meta_abbrevs}{A string or vector of strings representing abbreviations to include in the metadata. Default is \code{NULL}.}
 
-\item{...}{Additional args to be used in ggsave}
+\item{...}{Additional arguments passed to the \code{ggplot2::ggsave()} function.}
 }
 \description{
-Extension to the ggsave function that allows capturing object metadata as a separate .json file.
+Extension to the \code{ggsave()} function that allows capturing object metadata as a separate \code{.json} file.
 }
 \examples{
 \dontrun{
-# Path to the analysis figures (.png) and metadata (.json files)
-figures_path <- file.path(tempdir(), "figures")
 
 # ---------------------------------------------------------------------------
-# Construct a simple ggplot
+# Construct and save a simple ggplot
 # ---------------------------------------------------------------------------
 g <- ggplot2::ggplot(
   data = Theoph,
@@ -48,10 +46,9 @@ g <- ggplot2::ggplot(
   ggplot2::geom_line() +
   ggplot2::theme_bw()
 
-# Save a png using the helper function
-out_name <- "01-12345-pk-timecourse1.png"
-ggsave_with_metadata(
-  filename = file.path(figures_path, out_name),
-)
+# Save a png using the wrapper function
+figures_path <- here::here("OUTPUTS", "figures")
+plot_file_name <- "01-12345-pk-timecourse1.png"
+ggsave_with_metadata(filename = file.path(figures_path, plot_file_name))
 }
 }

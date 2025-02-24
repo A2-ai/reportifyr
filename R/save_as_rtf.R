@@ -1,8 +1,8 @@
 #' Formats and saves a flextable object as .RTF
 #'
-#' @param object R object to serialize
-#' @param file A connection or the name of the file where the R object is saved to or read from
-#' @param table1_format Boolean for declaring if object is table1 format, passed to format_flextable
+#' @param object The `R` object to serialize.
+#' @param file The connection or name of the file where the `R` object is saved.
+#' @param table1_format A boolean for declaring if object is table1 format, passed to `format_flextable()`.
 #'
 #' @keywords internal
 #' @noRd

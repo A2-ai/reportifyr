@@ -7,7 +7,7 @@
 validate_object(file)
 }
 \arguments{
-\item{file}{A connection or the name of the file where the R object is saved to or read from}
+\item{file}{The connection or name of the file where the \code{R} object is saved.}
 }
 \value{
 A boolean declaring if the hashes are equal or not
@@ -17,9 +17,9 @@ Validates a file's hash against a stored hash in the associated _metadata.json f
 }
 \examples{
 \dontrun{
-tables.path  <- "OUTPUTS/tables"
-out_name <- "01-12345-pk-theoph.csv"
+tables_path <- here::here("OUTPUTS", "tables")
+outfile_name <- "01-12345-pk-theoph.csv"
 
-validate_object(file = file.path(tables.path, out_name))
+validate_object(file = file.path(tables_path, out_name))
 }
 }

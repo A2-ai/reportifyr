@@ -1,14 +1,14 @@
-#' Updates a Word file to include formatted plots, tables, and footnotes
+#' Updates a Microsoft Word file to include formatted plots, tables, and footnotes
 #'
-#' @description Reads in a .docx file and returns an updated version with plots, tables, and footnotes replaced.
-#' @param docx_in Path to input .docx to update
-#' @param docx_out Path to output .docx to save to
-#' @param figures_path Path to images file directory
-#' @param tables_path Path to tables file directory
-#' @param standard_footnotes_yaml Path to standard_footnotes.yaml in report
-#' @param add_footnotes boolean for including footnotes in the document or not
-#' @param include_object_path boolean for including object path in footnotes
-#' @param footnotes_fail_on_missing_metadata Boolean for allowing objects to lack metadata and thus have no footnotes
+#' @description Reads in a `.docx` file and returns a new version with plots, tables, and footnotes replaced.
+#' @param docx_in The file path to the input `.docx` file.
+#' @param docx_out The file path to the output `.docx` file to save to. Default is `NULL`.
+#' @param figures_path The file path to the figures and associated metadata directory.
+#' @param tables_path The file path to the tables and associated metadata directory.
+#' @param standard_footnotes_yaml The file path to the `standard_footnotes.yaml`. Default is `NULL`. If `NULL`, a default `standard_footnotes.yaml` bundled with the `reportifyr` package is used.
+#' @param add_footnotes A boolean indicating whether to insert footnotes into the `docx_in` or not. Default is `TRUE`.
+#' @param include_object_path A boolean indicating whether to include the file path of the figure or table in the footnotes. Default is `FALSE`.
+#' @param footnotes_fail_on_missing_metadata A boolean indicating whether to stop execution if the metadata `.json` file for a figure or table is missing. Default is `TRUE`.
 #'
 #' @export
 #'
@@ -17,22 +17,23 @@
 #' # ---------------------------------------------------------------------------
 #' # Load all dependencies
 #' # ---------------------------------------------------------------------------
-#' docx_in <- file.path(here::here(), "report", "shell", "template.docx")
-#' figures_path <- file.path(here::here(), "OUTPUTS", "figures")
-#' tables_path <- file.path(here::here(), "OUTPUTS", "tables")
-#' footnotes <- file.path(here::here(), "report", "standard_footnotes.yaml")
+#' docx_in <- here::here("report", "shell", "template.docx")
+#' doc_dirs <- make_doc_dirs(docx_in = docx_in)
+#' figures_path <- here::here("OUTPUTS", "figures")
+#' tables_path <- here::here("OUTPUTS", "tables")
+#' standard_footnotes_yaml <- here::here("report", "standard_footnotes.yaml")
 #'
 #' # ---------------------------------------------------------------------------
 #' # Step 1.
-#' # Run the wrapper function to replace figures, tables, and footnotes in a
-#' # .docx file.
+#' # Run the `build_report()` wrapper function to replace figures, tables, and
+#' # footnotes in a `.docx` file.
 #' # ---------------------------------------------------------------------------
 #' build_report(
-#'   docx_in = docx_in,
+#'   docx_in = doc_dirs$doc_in,
 #'   docx_out = doc_dirs$doc_draft,
 #'   figures_path = figures_path,
 #'   tables_path = tables_path,
-#'   standard_footnotes_yaml = footnotes
+#'   standard_footnotes_yaml = standard_footnotes_yaml
 #' )
 #' }
 build_report <- function(docx_in,
@@ -102,7 +103,7 @@ build_report <- function(docx_in,
           docx_out = docx_out,
           figures_path = figures_path,
           tables_path = tables_path,
-          footnotes = standard_footnotes_yaml,
+          standard_footnotes_yaml = standard_footnotes_yaml,
           include_object_path = include_object_path,
           footnotes_fail_on_missing_metadata = footnotes_fail_on_missing_metadata
         )

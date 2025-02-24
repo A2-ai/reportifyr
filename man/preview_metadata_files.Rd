@@ -7,7 +7,7 @@
 preview_metadata_files(file_dir)
 }
 \arguments{
-\item{file_dir}{Path to a directory containing metadata .json files}
+\item{file_dir}{The file path to a directory containing metadata .json files.}
 }
 \value{
 A data frame of metadata footnotes and meta type
@@ -17,6 +17,7 @@ Preview all metadata .json files in a directory
 }
 \examples{
 \dontrun{
-preview_metadata_file("OUTPUTS/figures/")
+figures_path <- here::here("OUTPUTS", "figures")
+preview_metadata_file(figures_path)
 }
 }

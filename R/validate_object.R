@@ -1,16 +1,16 @@
 #' Validates a file's hash against a stored hash in the associated _metadata.json file
 #'
-#' @param file A connection or the name of the file where the R object is saved to or read from
+#' @param file The connection or name of the file where the `R` object is saved.
 #'
 #' @return A boolean declaring if the hashes are equal or not
 #'
 #' @export
 #'
 #' @examples \dontrun{
-#' tables.path  <- "OUTPUTS/tables"
-#' out_name <- "01-12345-pk-theoph.csv"
+#' tables_path <- here::here("OUTPUTS", "tables")
+#' outfile_name <- "01-12345-pk-theoph.csv"
 #'
-#' validate_object(file = file.path(tables.path, out_name))
+#' validate_object(file = file.path(tables_path, out_name))
 #' }
 validate_object <- function(file) {
   log4r::debug(.le$logger, "Starting validate_object function")

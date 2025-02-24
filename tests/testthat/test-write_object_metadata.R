@@ -32,7 +32,7 @@ test_that("write_object_metadata includes additional metadata fields", {
   notes <- "This is a test note"
   abbrevs <- c("abbrev1", "abbrev2")
 
-  write_object_metadata(temp_object, meta_type = "table", equations = equations, notes = notes, abbrevs = abbrevs)
+  write_object_metadata(temp_object, meta_type = "table", meta_equations = equations, meta_notes = notes, meta_abbrevs = abbrevs)
 
   expected_json_file <- paste0(tools::file_path_sans_ext(temp_object), "_txt_metadata.json")
   expect_true(file.exists(expected_json_file))

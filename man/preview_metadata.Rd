@@ -7,7 +7,7 @@
 preview_metadata(file_name)
 }
 \arguments{
-\item{file_name}{Path to an object to view its metadata}
+\item{file_name}{The file path of the file whose metadata you want to preview.}
 }
 \value{
 A single row data frame consisting of metadata type and footnotes for the object supplied
@@ -17,6 +17,8 @@ Previews a single metadata file for an object
 }
 \examples{
 \dontrun{
-preview_metadata("OUTPUTS/figures/myplot.png")
+figures_path <- here::here("OUTPUTS", "figures")
+plot_file_name <- "myplot.png"
+preview_metadata(file.path(figures_path, plot_file_name))
 }
 }

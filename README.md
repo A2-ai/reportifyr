@@ -8,13 +8,13 @@
 [![R-CMD-check](https://github.com/A2-ai/reportifyr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/A2-ai/reportifyr/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-The goal of `reportifyr` is to assist with semi-automatic report
-creation, providing a streamlined process for saving tables, figures,
-and footnotes from analysis scripts and incorporating them into
-Microsoft Word documents for report generation. `reportifyr` is a
-wrapper around the `officer` R package and `python-docx` python library,
-allowing users to easily manipulate Microsoft Word documents in R for
-polished and consistent reports.
+The goal of `reportifyr` is to optimize and streamline workflows
+associated with Microsoft Word document (report) generation, which
+includes supporting tasks across multiple stages of the reporting
+process (analyses, drafting, etc.) `reportifyr` functions as a wrapper
+around the `officer` `R` package and `python-docx` `Python` library,
+allowing users to easily produce traceable and consistent reports in
+`R`.
 
 ## Installation
 
@@ -24,25 +24,25 @@ You can install the development version of `reportifyr` like so:
 pak::pkg_install("a2-ai/reportifyr")
 ```
 
-## Interacting with reportifyr
+## Interacting with `reportifyr`
 
 ``` r
 library(reportifyr)
 ```
 
-## Initializing appropriate folder structures
+## Initializing Appropriate Folder Structures
 
 Before starting any reporting effort, it is important to initialize all
 reporting directories within the project directory you are working in.
 Please note that for development, the directory structure and names have
 been hard-coded. We realize this is sub-optimal and are working on
-allowing user-defined `report/` and `OUTPUTS/` structure!
+allowing user-defined `report` and `OUTPUTS` structure!
 
 ``` r
 initialize_report_project(project_dir = here::here())
 ```
 
-## Steps at the analysis level
+## Steps at the Analysis Stage
 
 To take advantage of more advanced features of the `reportifyr` package
 (such as automatic abbreviation creation and footnote placing) you need
@@ -50,124 +50,132 @@ to capture some metadata during the analysis.
 
 The `reportifyr` package contains some helpful functions for easily
 capturing metadata. These functions should be used in actual analysis
-scripts. The metadata .json files are saved along side the object files
-(figures or tables) and will be referenced when building reports.
+scripts. The metadata `.json` files are saved along side the artifact
+files (figures or tables) and will be referenced when building reports.
+
+This is a basic example which shows how to save a plot and table using
+two of `reportifyr`’s wrapper functions:
 
 ``` r
-# Path to the analysis figures
-figures_path <- "OUTPUTS/figures"
-
-# We can grab some standard meta types to ease footnote insertion
-meta_types = get_meta_types(project_dir = here::here())
+# ------------------------------------------------------------------------------
+# Retrieve standardized parameters to ease footnote insertion
+# ------------------------------------------------------------------------------
+meta_abbrevs <- get_meta_abbrevs(path_to_footnotes_yaml = here::here("report", "standard_footnotes.yaml"))
+meta_type <- get_meta_type(path_to_footnotes_yaml = here::here("report", "standard_footnotes.yaml"))
 
 # ------------------------------------------------------------------------------
-# Construct a simple ggplot
+# Construct and save a simple ggplot
 # ------------------------------------------------------------------------------
-library(ggplot2)
-g <- ggplot(data = Theoph, aes(x=Time, y = conc, group = Subject)) + 
-  geom_point() + 
-  geom_line() + 
-  theme_bw()
+g <- ggplot2::ggplot(
+  data = Theoph,
+  ggplot2::aes(x = Time, y = conc, group = Subject)
+) +
+  ggplot2::geom_point() +
+  ggplot2::geom_line() +
+  ggplot2::theme_bw()
 
-# Save a .png using the helper function
-out_name <- "01-12345-pk-timecourse.png"
+# Save a png using the wrapper function
+figures_path <- here::here("OUTPUTS", "figures")
+plot_file_name <- "01-12345-pk-timecourse1.png"
+
 ggsave_with_metadata(
-  filename = file.path(figures_path, out_name), 
-  width = 9.4, 
-  height = 6.72,
-  meta_type = meta_type$conc-time-trajectories
+  filename = file.path(figures_path, plot_file_name),
+  meta_type = meta_type$conc-time-trajectories,
+  meta_abbrevs = c(meta_abbrevs$CMAXA)
 )
 
-# Or save with `ggplot2::ggsave` and immediately after run the `write_object_metadata` function
-out_name <- "01-12345-pk-timecourse2.png"
+# Alternatively you could call `ggplot2::ggsave()` and then call `write_object_metadata()`
 ggplot2::ggsave(
-  filename = file.path(figures.path, out_name), 
-  plot = g,
-  width = 9.4,
-  height = 6.72) 
-write_object_metadata(
-  file.path(figures.path, out_name),
-  meta_type = meta_type$conc-time-trajectories)
-```
-
-``` r
-# Path to the analysis tables
-tables_path  <- "OUTPUTS/tables"
-
-# ------------------------------------------------------------------------------
-# Construct a simple table
-# ------------------------------------------------------------------------------
-
-# Let's save a .csv using the helper function
-out_name <- "01-12345-pk-theoph.csv"
-write_csv_with_metadata(
-  object = Theoph, 
-  file = file.path(tables.path, out_name),
-  row.names = F
+  filename = file.path(figures_path, plot_file_name),
+  plot = p,
+  width = 6,
+  height = 4
 )
 
-# Or save with `write.csv` and immediately after run the `write_object_metadata` function
-write.csv(x = Theoph, file = file.path(tables.path, out_name), row.names = F)
-write_object_metadata(object = file.path(tables.path, out_name))
+write_object_metadata(
+  object_file = file.path(figures_path, plot_file_name),
+  meta_type = meta_type$conc-time-trajectories,
+  meta_abbrevs = c(meta_abbrevs$CMAXA)
+)
 ```
-
-## Report creation
-
-This is a basic example which shows you how to render a Microsoft Word
-document with figures, tables, and footnotes.
 
 ``` r
 # ------------------------------------------------------------------------------
-# A minimal example
+# Save a simple table
 # ------------------------------------------------------------------------------
-# Load all dependencies.
+tables_path <- here::here("OUTPUTS", "tables")
+outfile_name <- "01-12345-pk-theoph.csv"
+
+write_csv_with_metadata(
+  object = Theoph,
+  file = file.path(tables_path, out_name),
+  row_names = FALSE
+)
+
+# Alternatively you could call `write.csv()` and then call `write_object_metadata()`.
+write.csv(
+  x = Theoph, 
+  file = file.path(tables_path, out_name), 
+  row.names = FALSE
+)
+
+write_object_metadata(object = file.path(tables_path, out_name))
+```
+
+## Steps at the Report Drafting Stage
+
+This is a basic step-by-step example which shows how to render a report
+with figures, tables, and footnotes included:
+
+``` r
 # ------------------------------------------------------------------------------
-library(reportifyr)
-
-initialize_report_project(project_dir = here::here())
-
-docx_in <- file.path(here::here(), "report", "shell", "template.docx")
+# Load all dependencies
+# ------------------------------------------------------------------------------
+docx_in <- here::here("report", "shell", "template.docx")
 doc_dirs <- make_doc_dirs(docx_in = docx_in)
-figures_path <- file.path(here::here(), "OUTPUTS", "figures")
-tables_path <- file.path(here::here(), "OUTPUTS", "tables")
-footnotes <- file.path(here::here(), "report", "standard_footnotes.yaml")
+figures_path <- here::here("OUTPUTS", "figures")
+tables_path <- here::here("OUTPUTS", "tables")
+standard_footnotes_yaml <- here::here("report", "standard_footnotes.yaml")
 
-# ---------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Step 1.
-# Table addition, running `add_tables` will format and insert tables into the doc.
-# ---------------------------------------------------------------------------
+# `add_tables()` will format and insert tables into the `.docx` file.
+# ------------------------------------------------------------------------------
 add_tables(
-  docx_in = doc_dirs$doc_clean,
+  docx_in = doc_dirs$doc_in,
   docx_out = doc_dirs$doc_tables,
   tables_path = tables_path
 )
 
-# ---------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Step 2.
-# Next we place in the plots using the `add_plots` function.
-# ---------------------------------------------------------------------------
+# Next we insert the plots using the `add_plots()` function.
+# ------------------------------------------------------------------------------
 add_plots(
   docx_in = doc_dirs$doc_tables,
   docx_out = doc_dirs$doc_tabs_figs,
   figures_path = figures_path
 )
 
-# ---------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Step 3.
-# Now we can add the footnotes to all the inserted figures and tables using `add_footnotes`.
-# ---------------------------------------------------------------------------
+# Now we can add the footnotes with the `add_footnotes` function.
+# ------------------------------------------------------------------------------
 add_footnotes(
   docx_in = doc_dirs$doc_tabs_figs,
   docx_out = doc_dirs$doc_draft,
   figures_path = figures_path,
   tables_path = tables_path,
-  footnotes = footnotes
+  standard_footnotes_yaml = standard_footnotes_yaml,
+  include_object_path = FALSE,
+  footnotes_fail_on_missing_metadata = TRUE
 )
 
 # ---------------------------------------------------------------------------
 # Step 4.
-# Clean the output for final document creation using `finalize_document`. 
-# This will remove the ties between reportifyr and the document so be careful!
+# If you are ready to finalize the `.docx` file, run the `finalize_document()`
+# function. This will remove the ties between reportifyr and the document, so
+# please be mindful!
 # ---------------------------------------------------------------------------
 finalize_document(
   docx_in = doc_dirs$doc_draft,
@@ -175,29 +183,29 @@ finalize_document(
 )
 ```
 
-`reportifyr` also offers a wrapper to complete all above steps with one
-function call:
+`reportifyr` also offers a wrapper to complete all of the artifact
+additions with one function call:
 
 ``` r
-library(reportifyr)
+# ---------------------------------------------------------------------------
+# Load all dependencies
+# ---------------------------------------------------------------------------
+docx_in <- here::here("report", "shell", "template.docx")
+doc_dirs <- make_doc_dirs(docx_in = docx_in)
+figures_path <- here::here("OUTPUTS", "figures")
+tables_path <- here::here("OUTPUTS", "tables")
+standard_footnotes_yaml <- here::here("report", "standard_footnotes.yaml")
 
-initialize_report_project(project_dir = here::here())
-
-figures_path <- file.path(here::here(), "OUTPUTS", "figures")
-tables_path <- file.path(here::here(), "OUTPUTS", "tables")
-footnotes <- file.path(here::here(), "report", "standard_footnotes.yaml")
-
-docx_in <- file.path(here::here(), "report", "shell", "template.docx")
-docx_out <- file.path(here::here(), "report", "draft", "draft.docx")
-
-build_report(docx_in = docx_in,
-             docx_out = docx_out,
-             figures_path = figures_path,
-             tables_path = tables_path,
-             standard_footnotes_yaml = footnotes)
-             
-# If you're satisfied with the report and want to remove the magic strings, you'll 
-# need to run `finalize_document`
-finalize_document(docx_in = docx_out,
-                  docx_out = "report/final/final.docx")
+# ---------------------------------------------------------------------------
+# Step 1.
+# Run the `build_report()` wrapper function to replace figures, tables, and
+# footnotes in a `.docx` file.
+# ---------------------------------------------------------------------------
+build_report(
+  docx_in = doc_dirs$doc_in,
+  docx_out = doc_dirs$doc_draft,
+  figures_path = figures_path,
+  tables_path = tables_path,
+  standard_footnotes_yaml = standard_footnotes_yaml
+)
 ```

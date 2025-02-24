@@ -44,9 +44,9 @@ test_that("preview_metadata returns correct filtered metadata for an existing ob
   expect_true("object1.csv" %in% result_df$name)
 
   # Test that the extracted metadata for object1.csv is correct
-  expect_true(grepl("E \\= mc\\^2", result_df$equations))
-  expect_true(grepl("Test note 1", result_df$notes))
-  expect_true(grepl("abbr1", result_df$abbreviations))
+  expect_true(grepl("E \\= mc\\^2", result_df$meta_equations))
+  expect_true(grepl("Test note 1", result_df$meta_notes))
+  expect_true(grepl("abbr1", result_df$meta_abbrevs))
 
   file.remove(file_1, file_2, object_file_1, object_file_2)
 })

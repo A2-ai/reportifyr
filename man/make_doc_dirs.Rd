@@ -7,7 +7,7 @@
 make_doc_dirs(docx_in)
 }
 \arguments{
-\item{docx_in}{Path to the input .docx file}
+\item{docx_in}{The file path to the input \code{.docx} file.}
 }
 \value{
 A list of document paths
@@ -21,7 +21,7 @@ Helper function that defines document output paths
 # ---------------------------------------------------------------------------
 # Load all dependencies
 # ---------------------------------------------------------------------------
-docx_in <- file.path(here::here(), "report", "shell", "template.docx")
-doc_dirs  <- make_doc_dirs(docx_in = docx_in)
+docx_in <- here::here("report", "shell", "template.docx")
+doc_dirs <- make_doc_dirs(docx_in = docx_in)
 }
 }

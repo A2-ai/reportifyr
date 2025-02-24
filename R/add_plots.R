@@ -1,12 +1,12 @@
-#' Inserts Figures in appropriate places in Word files
+#' Inserts Figures in appropriate places in a Microsoft Word file
 #'
-#' @description Reads in a .docx file and returns a new version with figures placed at appropriate places in the document.
-#' @param docx_in Path to the input .docx file
-#' @param docx_out Path to output .docx to save to
-#' @param figures_path Path to images file directory
-#' @param fig_width Figure width in inches. This is a global controller. Defaults to NULL. If NULL, the size is calculated calculated based on the pixels of the actual figure
-#' @param fig_height Figure height in inches. This is a global controller. Defaults to NULL. If NULL, the size is automatically calculated based on the pixels of the actual figure
-#' @param debug Debug
+#' @description Reads in a `.docx` file and returns a new version with figures placed at appropriate places in the document.
+#' @param docx_in The file path to the input `.docx` file.
+#' @param docx_out The file path to the output `.docx` file to save to.
+#' @param figures_path The file path to the figures directory.
+#' @param fig_width A global controller. The figure width in inches. Default is `NULL`. If `NULL`, the width is determined by the figure's pixel dimensions.
+#' @param fig_height A global controller. The figure height in inches. Default is `NULL`. If `NULL`, the height is determined by the figure's pixel dimensions.
+#' @param debug Debug.
 #'
 #' @export
 #'
@@ -15,15 +15,15 @@
 #' # ---------------------------------------------------------------------------
 #' # Load all dependencies
 #' # ---------------------------------------------------------------------------
-#' docx_in <- file.path(here::here(), "report", "shell", "template.docx")
+#' docx_in <- here::here("report", "shell", "template.docx")
 #' doc_dirs <- make_doc_dirs(docx_in = docx_in)
-#' figures_path <- file.path(here::here(), "OUTPUTS", "figures")
-#' tables_path <- file.path(here::here(), "OUTPUTS", "tables")
-#' footnotes <- file.path(here::here(), "report", "standard_footnotes.yaml")
+#' figures_path <- here::here("OUTPUTS", "figures")
+#' tables_path <- here::here("OUTPUTS", "tables")
+#' standard_footnotes_yaml <- here::here("report", "standard_footnotes.yaml")
 #'
 #' # ---------------------------------------------------------------------------
 #' # Step 1.
-#' # Table addition running add_tables will format and insert tables into the doc.
+#' # `add_tables()` will format and insert tables into the `.docx` file.
 #' # ---------------------------------------------------------------------------
 #' add_tables(
 #'   docx_in = doc_dirs$doc_in,
@@ -32,8 +32,8 @@
 #' )
 #'
 #' # ---------------------------------------------------------------------------
-#' # Step 3.
-#' # Next we place in the plots using the add_plots function.
+#' # Step 2.
+#' # Next we insert the plots using the `add_plots()` function.
 #' # ---------------------------------------------------------------------------
 #' add_plots(
 #'   docx_in = doc_dirs$doc_tables,
@@ -46,7 +46,7 @@ add_plots <- function(docx_in,
                       figures_path,
                       fig_width = NULL,
                       fig_height = NULL,
-                      debug = F) {
+                      debug = FALSE) {
   log4r::debug(.le$logger, "Starting add_plots function")
 
   tictoc::tic()

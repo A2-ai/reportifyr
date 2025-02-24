@@ -17,7 +17,7 @@ test_that("update_object_footnotes appends footnotes when overwrite is FALSE", {
 
   jsonlite::write_json(metadata, temp_json)
 
-  update_object_footnotes(temp_json, equations = "New equation", notes = "New note", abbrevs = "abbr2", overwrite = FALSE)
+  update_object_footnotes(temp_json, meta_equations = "New equation", meta_notes = "New note", meta_abbrevs = "abbr2", overwrite = FALSE)
 
   updated_metadata <- jsonlite::fromJSON(temp_json, simplifyVector = TRUE)
 
@@ -47,7 +47,7 @@ test_that("update_object_footnotes overwrites footnotes when overwrite is TRUE",
 
   jsonlite::write_json(metadata, temp_json)
 
-  update_object_footnotes(temp_json, equations = "Overwritten equation", notes = "Overwritten note", abbrevs = "abbr_overwrite", overwrite = TRUE)
+  update_object_footnotes(temp_json, meta_equations = "Overwritten equation", meta_notes = "Overwritten note", meta_abbrevs = "abbr_overwrite", overwrite = TRUE)
 
   updated_metadata <- jsonlite::fromJSON(temp_json, simplifyVector = TRUE)
 
@@ -73,7 +73,7 @@ test_that("update_object_footnotes adjusts file path if not .json", {
   json_file_path <- paste0(tools::file_path_sans_ext(temp_txt), "_txt_metadata.json")
   jsonlite::write_json(metadata, json_file_path)
 
-  update_object_footnotes(temp_txt, equations = "New equation", notes = "New note", abbrevs = "abbr2")
+  update_object_footnotes(temp_txt, meta_equations = "New equation", meta_notes = "New note", meta_abbrevs = "abbr2")
 
   updated_metadata <- jsonlite::fromJSON(json_file_path, simplifyVector = TRUE)
 

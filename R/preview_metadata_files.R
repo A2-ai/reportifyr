@@ -1,13 +1,14 @@
 #' Preview all metadata .json files in a directory
 #'
-#' @param file_dir Path to a directory containing metadata .json files
+#' @param file_dir The file path to a directory containing metadata .json files.
 #'
 #' @return A data frame of metadata footnotes and meta type
 #'
 #' @export
 #'
 #' @examples \dontrun{
-#' preview_metadata_file("OUTPUTS/figures/")
+#' figures_path <- here::here("OUTPUTS", "figures")
+#' preview_metadata_file(figures_path)
 #' }
 preview_metadata_files <- function(file_dir) {
   log4r::debug(.le$logger, "Starting preview_metadata_files function")
@@ -49,38 +50,38 @@ preview_metadata_files <- function(file_dir) {
     log4r::info(.le$logger, paste0("Extracted meta_type: ", meta_type))
 
     # If these fields are lists, join them into a single string, if empty make them "N/A"
-    equations <- if (length(json_content$object_meta$footnotes$equations) == 0) {
+    meta_equations <- if (length(json_content$object_meta$footnotes$equations) == 0) {
       "N/A"
     } else if (is.list(json_content$object_meta$footnotes$equations)) {
       paste(json_content$object_meta$footnotes$equations, collapse = ", ")
     } else {
       json_content$object_meta$footnotes$equations
     }
-    log4r::info(.le$logger, paste0("Extracted equations: ", equations))
+    log4r::info(.le$logger, paste0("Extracted equations: ", meta_equations))
 
-    notes <- if (length(json_content$object_meta$footnotes$notes) == 0) {
+    meta_notes <- if (length(json_content$object_meta$footnotes$notes) == 0) {
       "N/A"
     } else if (is.list(json_content$object_meta$footnotes$notes)) {
       paste(json_content$object_meta$footnotes$notes, collapse = ", ")
     } else {
       json_content$object_meta$footnotes$notes
     }
-    log4r::info(.le$logger, paste0("Extracted notes: ", notes))
+    log4r::info(.le$logger, paste0("Extracted notes: ", meta_notes))
 
-    abbreviations <- if (length(json_content$object_meta$footnotes$abbreviations) == 0) {
+    meta_abbrevs <- if (length(json_content$object_meta$footnotes$abbreviations) == 0) {
       "N/A"
     } else if (is.list(json_content$object_meta$footnotes$abbreviations)) {
       paste(json_content$object_meta$footnotes$abbreviations, collapse = ", ")
     } else {
       json_content$object_meta$footnotes$abbreviations
     }
-    log4r::info(.le$logger, paste0("Extracted abbreviations: ", abbreviations))
+    log4r::info(.le$logger, paste0("Extracted abbreviations: ", meta_abbrevs))
 
     # Return as a named list
     log4r::debug(.le$logger, paste0("Returning extracted data for file: ", file))
     return(list(
-      name = name, meta_type = meta_type, equations = equations,
-      notes = notes, abbreviations = abbreviations
+      name = name, meta_type = meta_type, meta_equations = meta_equations,
+      meta_notes = meta_notes, meta_abbrevs = meta_abbrevs
     ))
   })
 
@@ -97,7 +98,7 @@ preview_metadata_files <- function(file_dir) {
 
 #' Previews a single metadata file for an object
 #'
-#' @param file_name Path to an object to view its metadata
+#' @param file_name The file path of the file whose metadata you want to preview.
 #'
 #' @return A single row data frame consisting of metadata type and footnotes for the object supplied
 #'
@@ -106,7 +107,9 @@ preview_metadata_files <- function(file_dir) {
 #' @export
 #'
 #' @examples \dontrun{
-#' preview_metadata("OUTPUTS/figures/myplot.png")
+#' figures_path <- here::here("OUTPUTS", "figures")
+#' plot_file_name <- "myplot.png"
+#' preview_metadata(file.path(figures_path, plot_file_name))
 #' }
 preview_metadata <- function(file_name) {
   log4r::debug(.le$logger, "Starting preview_metadata function")
