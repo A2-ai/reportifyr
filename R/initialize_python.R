@@ -99,7 +99,7 @@ initialize_python <- function() {
   }
 } else if (continue == "n") {
     log4r::info(.le$logger, "User declined installation. No changes made.")
-    message("Not installing UV, Python, or Python dependencies.")
+    message("User declined installation of UV, Python, and Python dependencies. Full functionality of reportifyr will not be available.")
   } else {
     log4r::error(.le$logger, "Invalid response from user. Must enter Y or n.")
     stop("Must enter Y or n.")
