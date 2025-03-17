@@ -11,7 +11,10 @@ initialize_report_project <- function(project_dir) {
   log4r::debug(.le$logger, "Starting initialize_report_project function")
 
   if (!dir.exists(project_dir)) {
-    log4r::error(.le$logger, paste0("The directory does not exist: ", project_dir))
+    log4r::error(
+      .le$logger,
+      paste0("The directory does not exist: ", project_dir)
+    )
     stop("The directory does not exist")
   }
   log4r::info(.le$logger, paste0("Project directory found: ", project_dir))
@@ -52,7 +55,10 @@ initialize_report_project <- function(project_dir) {
 
   if (!dir.exists(outputs_dir)) {
     dir.create(outputs_dir)
-    log4r::info(.le$logger, paste0("Outputs directory created at: ", outputs_dir))
+    log4r::info(
+      .le$logger,
+      paste0("Outputs directory created at: ", outputs_dir)
+    )
   }
 
   if (!dir.exists(file.path(outputs_dir, "figures"))) {
@@ -69,20 +75,32 @@ initialize_report_project <- function(project_dir) {
   }
   if (!is.null(getOption("venv_dir"))) {
     if (!dir.exists(file.path(getOption("venv_dir"), ".venv"))) {
-      log4r::info(.le$logger, "Virtual environment not found, initializing Python environment")
+      log4r::info(
+        .le$logger,
+        "Virtual environment not found, initializing Python environment"
+      )
       initialize_python()
     }
   } else {
-    log4r::info(.le$logger, "Virtual environment not set, initializing Python environment")
+    log4r::info(
+      .le$logger,
+      "Virtual environment not set, initializing Python environment"
+    )
     initialize_python()
   }
 
   if (!("standard_footnotes.yaml" %in% list.files(report_dir))) {
     result <- file.copy(
-      from = system.file("extdata/standard_footnotes.yaml", package = "reportifyr"),
+      from = system.file(
+        "extdata/standard_footnotes.yaml",
+        package = "reportifyr"
+      ),
       to = file.path(report_dir, "standard_footnotes.yaml")
     )
-    log4r::info(.le$logger, paste0("Copied standard_footnotes.yaml into ", report_dir))
+    log4r::info(
+      .le$logger,
+      paste0("Copied standard_footnotes.yaml into ", report_dir)
+    )
     message(paste("Copied standard_footnotes.yaml into", report_dir))
   }
   log4r::debug(.le$logger, "Exiting initialize_report_project function")

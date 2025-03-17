@@ -25,14 +25,16 @@
 #'   file = file.path(tables_path, outfile_name)
 #' )
 #' }
-save_rds_with_metadata <- function(object,
-                                   file = "",
-                                   meta_type = "NA",
-                                   meta_equations = NULL,
-                                   meta_notes = NULL,
-                                   meta_abbrevs = NULL,
-                                   table1_format = FALSE,
-                                   ...) {
+save_rds_with_metadata <- function(
+  object,
+  file = "",
+  meta_type = "NA",
+  meta_equations = NULL,
+  meta_notes = NULL,
+  meta_abbrevs = NULL,
+  table1_format = FALSE,
+  ...
+) {
   log4r::debug(.le$logger, "Starting save_rds_with_metadata function")
 
   base::saveRDS(object = object, file = file, ...)

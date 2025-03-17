@@ -9,97 +9,126 @@ initialize_python <- function() {
   log4r::debug(.le$logger, "Starting initialize_python function")
 
   if (interactive()) {
-    log4r::info(.le$logger, "Prompting user for confirmation to install UV, Python, and Python dependencies to your local files.")
-    continue <- readline("If UV, Python, and Python dependencies (python-docx, PyYAML) are not installed, this will install them.\nOtherwise, the installed versions will be used.\nAre you sure you want to continue? [Y/n]\n")
+    log4r::info(
+      .le$logger,
+      "Prompting user for confirmation to install UV, Python, and Python dependencies to your local files."
+    )
+    continue <- readline(
+      "If UV, Python, and Python dependencies (python-docx, PyYAML) are not installed, this will install them.\nOtherwise, the installed versions will be used.\nAre you sure you want to continue? [Y/n]\n"
+    )
   } else {
-    continue <- "Y"  # Automatically proceed in non-interactive environments
-    log4r::info(.le$logger, "Non-interactive session detected, proceeding with installation.")
+    continue <- "Y" # Automatically proceed in non-interactive environments
+    log4r::info(
+      .le$logger,
+      "Non-interactive session detected, proceeding with installation."
+    )
   }
 
   if (continue == "Y") {
     log4r::info(.le$logger, "Installation confirmed.")
 
-  cmd <- system.file("scripts/uv_setup.sh", package = "reportifyr")
-  log4r::info(.le$logger, paste0("Command for setting up virtual environment: ", cmd))
-
-  if (is.null(getOption("venv_dir"))) {
-    options("venv_dir" = here::here())
-    log4r::info(.le$logger, "venv_dir option set to project root")
-  }
-
-  args <- c(getOption("venv_dir"))
-  log4r::info(.le$logger, paste0("Virtual environment directory: ", args[[1]]))
-
-
-  if (!is.null(getOption("python-docx.version"))) {
-    args <- c(args, getOption("python-docx.version"))
-  } else {
-    args <- c(args, "1.1.2")
-    log4r::info(.le$logger, "Using default python-docx version: 1.1.2")
-  }
-
-  if (!is.null(getOption("pyyaml.version"))) {
-    args <- c(args, getOption("pyyaml.version"))
-  } else {
-    args <- c(args, "6.0.2")
-    log4r::info(.le$logger, "Using default pyyaml version: 6.0.2")
-  }
-
-  if (!is.null(getOption("uv.version"))) {
-    args <- c(args, getOption("uv.version"))
-  } else {
-    args <- c(args, "0.5.1")
-    log4r::info(.le$logger, "Using default uv version: 0.5.1")
-  }
-
-  if (!is.null(getOption("python.version"))) {
-    args <- c(args, getOption("python.version"))
-    log4r::info(.le$logger, paste0("Using specified python version: ", getOption("python.version")))
-  }
-
-  uv_path <- get_uv_path()
-
-  if (!dir.exists(file.path(args[[1]], ".venv"))) {
-    log4r::debug(.le$logger, "Creating new virtual environment")
-
-    result <- processx::run(
-      command = cmd,
-      args = args
+    cmd <- system.file("scripts/uv_setup.sh", package = "reportifyr")
+    log4r::info(
+      .le$logger,
+      paste0("Command for setting up virtual environment: ", cmd)
     )
-    log4r::info(.le$logger, paste("Virtual environment created at: ", file.path(args[[1]], ".venv")))
 
-    args_name <- c("venv_dir", "python-docx.version", "pyyaml.version", "uv.version", "python.version")
-    pyvers <- get_py_version(getOption("venv_dir"))
-    if (!is.null(pyvers)) {
-      args <- c(args, pyvers)
-      log4r::info(.le$logger, paste0("Python version detected: ", pyvers))
-    } else {
-      args <- c(args, "")
-      log4r::warn(.le$logger, "Python version could not be detected")
+    if (is.null(getOption("venv_dir"))) {
+      options("venv_dir" = here::here())
+      log4r::info(.le$logger, "venv_dir option set to project root")
     }
 
-    message(paste(
-      "Creating python virtual environment with the following settings:\n",
-      paste0("\t", args_name, ": ", args, collapse = "\n")
-    ))
-    log4r::debug(.le$logger, ".venv created")
-
-  } else if (!file.exists(uv_path)) {
-    message("installing uv")
-    result <- processx::run(
-      command = cmd,
-      args = args
+    args <- c(getOption("venv_dir"))
+    log4r::info(
+      .le$logger,
+      paste0("Virtual environment directory: ", args[[1]])
     )
-  } else {
-    log4r::info(.le$logger, paste(".venv already exists at:", file.path(args[[1]], ".venv")))
-    message(paste(
-      ".venv already exists at:",
-      file.path(args[[1]], ".venv")
-    ))
-  }
-} else if (continue == "n") {
+
+    if (!is.null(getOption("python-docx.version"))) {
+      args <- c(args, getOption("python-docx.version"))
+    } else {
+      args <- c(args, "1.1.2")
+      log4r::info(.le$logger, "Using default python-docx version: 1.1.2")
+    }
+
+    if (!is.null(getOption("pyyaml.version"))) {
+      args <- c(args, getOption("pyyaml.version"))
+    } else {
+      args <- c(args, "6.0.2")
+      log4r::info(.le$logger, "Using default pyyaml version: 6.0.2")
+    }
+
+    if (!is.null(getOption("uv.version"))) {
+      args <- c(args, getOption("uv.version"))
+    } else {
+      args <- c(args, "0.5.1")
+      log4r::info(.le$logger, "Using default uv version: 0.5.1")
+    }
+
+    if (!is.null(getOption("python.version"))) {
+      args <- c(args, getOption("python.version"))
+      log4r::info(
+        .le$logger,
+        paste0("Using specified python version: ", getOption("python.version"))
+      )
+    }
+
+    uv_path <- get_uv_path()
+
+    if (!dir.exists(file.path(args[[1]], ".venv"))) {
+      log4r::debug(.le$logger, "Creating new virtual environment")
+
+      result <- processx::run(
+        command = cmd,
+        args = args
+      )
+      log4r::info(
+        .le$logger,
+        paste("Virtual environment created at: ", file.path(args[[1]], ".venv"))
+      )
+
+      args_name <- c(
+        "venv_dir",
+        "python-docx.version",
+        "pyyaml.version",
+        "uv.version",
+        "python.version"
+      )
+      pyvers <- get_py_version(getOption("venv_dir"))
+      if (!is.null(pyvers)) {
+        args <- c(args, pyvers)
+        log4r::info(.le$logger, paste0("Python version detected: ", pyvers))
+      } else {
+        args <- c(args, "")
+        log4r::warn(.le$logger, "Python version could not be detected")
+      }
+
+      message(paste(
+        "Creating python virtual environment with the following settings:\n",
+        paste0("\t", args_name, ": ", args, collapse = "\n")
+      ))
+      log4r::debug(.le$logger, ".venv created")
+    } else if (!file.exists(uv_path)) {
+      message("installing uv")
+      result <- processx::run(
+        command = cmd,
+        args = args
+      )
+    } else {
+      log4r::info(
+        .le$logger,
+        paste(".venv already exists at:", file.path(args[[1]], ".venv"))
+      )
+      message(paste(
+        ".venv already exists at:",
+        file.path(args[[1]], ".venv")
+      ))
+    }
+  } else if (continue == "n") {
     log4r::info(.le$logger, "User declined installation. No changes made.")
-    message("User declined installation of UV, Python, and Python dependencies.\nFull functionality of reportifyr will not be available.")
+    message(
+      "User declined installation of UV, Python, and Python dependencies.\nFull functionality of reportifyr will not be available."
+    )
   } else {
     log4r::error(.le$logger, "Invalid response from user. Must enter Y or n.")
     stop("Must enter Y or n.")

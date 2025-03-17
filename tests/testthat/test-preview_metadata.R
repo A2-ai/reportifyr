@@ -1,30 +1,36 @@
 test_that("preview_metadata throws an error if the object file does not exist", {
   temp_file <- tempfile(fileext = ".csv")
-  expect_error(preview_metadata(temp_file), regexp = "Error: file does not exist.")
+  expect_error(
+    preview_metadata(temp_file),
+    regexp = "Error: file does not exist."
+  )
 })
 
 test_that("preview_metadata returns correct filtered metadata for an existing object file", {
   temp_dir <- tempdir()
 
   # Create metadata with object1.csv and object2.png as object files
-  metadata_1 <- list(object_meta = list(
-    meta_type = "table",
-    footnotes = list(
-      equations = list(`1` = "E = mc^2", `2` = "F = ma"),
-      notes = list(`1` = "Test note 1", `2` = "Test note 2"),
-      abbreviations = list(`1` = "abbr1", `2` = "abbr2")
+  metadata_1 <- list(
+    object_meta = list(
+      meta_type = "table",
+      footnotes = list(
+        equations = list(`1` = "E = mc^2", `2` = "F = ma"),
+        notes = list(`1` = "Test note 1", `2` = "Test note 2"),
+        abbreviations = list(`1` = "abbr1", `2` = "abbr2")
+      )
     )
-  ))
+  )
 
-  metadata_2 <- list(object_meta = list(
-    meta_type = "figure",
-    footnotes = list(
-      equations = list(`1` = "P = IV"),
-      notes = list(`1` = "Single note"),
-      abbreviations = list(`1` = "abbr_single")
+  metadata_2 <- list(
+    object_meta = list(
+      meta_type = "figure",
+      footnotes = list(
+        equations = list(`1` = "P = IV"),
+        notes = list(`1` = "Single note"),
+        abbreviations = list(`1` = "abbr_single")
+      )
     )
-  ))
-
+  )
 
   file_1 <- file.path(temp_dir, "object1_csv_metadata.json")
   file_2 <- file.path(temp_dir, "object2_png_metadata.json")
@@ -55,14 +61,16 @@ test_that("preview_metadata returns empty dataframe if object file not in metada
   temp_dir <- tempdir()
 
   # Create metadata for another object file
-  metadata_1 <- list(object_meta = list(
-    meta_type = "table",
-    footnotes = list(
-      equations = list(`1` = "E = mc^2"),
-      notes = list(`1` = "Test note"),
-      abbreviations = list(`1` = "abbr1")
+  metadata_1 <- list(
+    object_meta = list(
+      meta_type = "table",
+      footnotes = list(
+        equations = list(`1` = "E = mc^2"),
+        notes = list(`1` = "Test note"),
+        abbreviations = list(`1` = "abbr1")
+      )
     )
-  ))
+  )
 
   file_1 <- file.path(temp_dir, "object_table_metadata.json")
   jsonlite::write_json(metadata_1, file_1)

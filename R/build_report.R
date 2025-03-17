@@ -36,18 +36,23 @@
 #'   standard_footnotes_yaml = standard_footnotes_yaml
 #' )
 #' }
-build_report <- function(docx_in,
-                         docx_out = NULL,
-                         figures_path,
-                         tables_path,
-                         standard_footnotes_yaml = NULL,
-                         add_footnotes = TRUE,
-                         include_object_path = FALSE,
-                         footnotes_fail_on_missing_metadata = TRUE) {
+build_report <- function(
+  docx_in,
+  docx_out = NULL,
+  figures_path,
+  tables_path,
+  standard_footnotes_yaml = NULL,
+  add_footnotes = TRUE,
+  include_object_path = FALSE,
+  footnotes_fail_on_missing_metadata = TRUE
+) {
   log4r::debug(.le$logger, "Starting build_report function")
 
   if (!file.exists(docx_in)) {
-    log4r::error(.le$logger, paste("The input document does not exist:", docx_in))
+    log4r::error(
+      .le$logger,
+      paste("The input document does not exist:", docx_in)
+    )
     stop(paste("The input document does not exist:", docx_in))
   }
   log4r::info(.le$logger, paste0("Input document found: ", docx_in))
@@ -55,7 +60,10 @@ build_report <- function(docx_in,
   doc_dirs <- make_doc_dirs(docx_in = docx_in)
   if (is.null(docx_out)) {
     docx_out <- doc_dirs$doc_draft
-    log4r::info(.le$logger, paste0("Docx_out is null, setting docx_out to: ", docx_out))
+    log4r::info(
+      .le$logger,
+      paste0("Docx_out is null, setting docx_out to: ", docx_out)
+    )
   }
 
   if (docx_in == docx_out) {
@@ -65,17 +73,32 @@ build_report <- function(docx_in,
   log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
 
   if (!(tools::file_ext(docx_in) == "docx")) {
-    log4r::error(.le$logger, paste("The input file must be a .docx file, not:", tools::file_ext(docx_in)))
+    log4r::error(
+      .le$logger,
+      paste(
+        "The input file must be a .docx file, not:",
+        tools::file_ext(docx_in)
+      )
+    )
     stop(paste("The file must be a docx file not:", tools::file_ext(docx_in)))
   }
 
   if (!(tools::file_ext(docx_out) == "docx")) {
-    log4r::error(.le$logger, paste("The output file must be a .docx file, not:", tools::file_ext(docx_out)))
+    log4r::error(
+      .le$logger,
+      paste(
+        "The output file must be a .docx file, not:",
+        tools::file_ext(docx_out)
+      )
+    )
     stop(paste("The file must be a docx file not:", tools::file_ext(docx_out)))
   }
 
   # Save over input docx without tfls
-  remove_tables_figures_footnotes(docx_in = docx_in, docx_out = doc_dirs$doc_clean)
+  remove_tables_figures_footnotes(
+    docx_in = docx_in,
+    docx_out = doc_dirs$doc_clean
+  )
 
   add_tables(
     docx_in = doc_dirs$doc_clean,
@@ -96,30 +119,38 @@ build_report <- function(docx_in,
   )
 
   if (add_footnotes) {
-    tryCatch({
-      suppressWarnings({
-        add_footnotes(
-          docx_in = doc_dirs$doc_tabs_figs,
-          docx_out = docx_out,
-          figures_path = figures_path,
-          tables_path = tables_path,
-          standard_footnotes_yaml = standard_footnotes_yaml,
-          include_object_path = include_object_path,
-          footnotes_fail_on_missing_metadata = footnotes_fail_on_missing_metadata
+    tryCatch(
+      {
+        suppressWarnings({
+          add_footnotes(
+            docx_in = doc_dirs$doc_tabs_figs,
+            docx_out = docx_out,
+            figures_path = figures_path,
+            tables_path = tables_path,
+            standard_footnotes_yaml = standard_footnotes_yaml,
+            include_object_path = include_object_path,
+            footnotes_fail_on_missing_metadata = footnotes_fail_on_missing_metadata
+          )
+        })
+      },
+      error = function(e) {
+        log4r::error(.le$logger, paste("Footnotes scripts failed:", e$message))
+        stop(
+          "build_report stopped: Failed to add footnotes due to an error in add_footnotes.",
+          call. = FALSE
         )
-      })
-    }, error = function(e) {
-      log4r::error(.le$logger, paste("Footnotes scripts failed:", e$message))
-      stop("build_report stopped: Failed to add footnotes due to an error in add_footnotes.", call. = FALSE)
-    })
+      }
+    )
   }
-
 
   output_dir <- dirname(docx_out)
   intermediate_dir <- file.path(output_dir, "intermediate_files")
 
   if (!dir.exists(intermediate_dir)) {
-    log4r::info(.le$logger, paste0("Creating intermediate files directory: ", intermediate_dir))
+    log4r::info(
+      .le$logger,
+      paste0("Creating intermediate files directory: ", intermediate_dir)
+    )
     dir.create(intermediate_dir)
   }
 
@@ -127,7 +158,12 @@ build_report <- function(docx_in,
 
   for (item in files_and_dirs) {
     log4r::info(.le$logger, paste0("Moving file: ", item))
-    if (item != docx_out && item != docx_in && item != intermediate_dir && basename(item) != "readme.txt") {
+    if (
+      item != docx_out &&
+        item != docx_in &&
+        item != intermediate_dir &&
+        basename(item) != "readme.txt"
+    ) {
       file.rename(item, file.path(intermediate_dir, basename(item)))
     }
   }

@@ -1,11 +1,14 @@
 test_that("fit_flextable_to_page throws an error if 'ft' is not a flextable object", {
   ft <- iris
 
-  expect_error(fit_flextable_to_page(ft, page_width = 6), "'ft' must be a flextable object")
+  expect_error(
+    fit_flextable_to_page(ft, page_width = 6),
+    "'ft' must be a flextable object"
+  )
 })
 
 test_that("fit_flextable_to_page adjusts flextable width based on page width", {
-  ft <-  flextable::flextable(iris)
+  ft <- flextable::flextable(iris)
   page_width <- 6
 
   header_initial_widths <- as.numeric(ft$header$colwidths)

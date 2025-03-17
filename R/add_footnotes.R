@@ -57,31 +57,45 @@
 #'   footnotes_fail_on_missing_metadata = TRUE
 #' )
 #' }
-add_footnotes <- function(docx_in,
-                          docx_out,
-                          figures_path,
-                          tables_path,
-                          standard_footnotes_yaml = NULL,
-                          include_object_path = FALSE,
-                          footnotes_fail_on_missing_metadata = TRUE,
-                          debug = FALSE) {
+add_footnotes <- function(
+  docx_in,
+  docx_out,
+  figures_path,
+  tables_path,
+  standard_footnotes_yaml = NULL,
+  include_object_path = FALSE,
+  footnotes_fail_on_missing_metadata = TRUE,
+  debug = FALSE
+) {
   log4r::debug(.le$logger, "Starting add_footnotes function")
 
   tictoc::tic()
 
   if (!file.exists(docx_in)) {
-    log4r::error(.le$logger, paste("The input document does not exist:", docx_in))
+    log4r::error(
+      .le$logger,
+      paste("The input document does not exist:", docx_in)
+    )
     stop(paste("The input document does not exist:", docx_in))
   }
   log4r::info(.le$logger, paste0("Input document found: ", docx_in))
 
   if (!(tools::file_ext(docx_in) == "docx")) {
-    log4r::error(.le$logger, paste("The file must be a docx file, not:", tools::file_ext(docx_in)))
+    log4r::error(
+      .le$logger,
+      paste("The file must be a docx file, not:", tools::file_ext(docx_in))
+    )
     stop(paste("The file must be a docx file not:", tools::file_ext(docx_in)))
   }
 
   if (!(tools::file_ext(docx_out) == "docx")) {
-    log4r::error(.le$logger, paste("The output file must be a docx file, not:", tools::file_ext(docx_out)))
+    log4r::error(
+      .le$logger,
+      paste(
+        "The output file must be a docx file, not:",
+        tools::file_ext(docx_out)
+      )
+    )
     stop(paste("The file must be a docx file not:", tools::file_ext(docx_out)))
   }
 
@@ -90,20 +104,61 @@ add_footnotes <- function(docx_in,
     browser()
   }
 
-  fig_script <- system.file("scripts/add_figure_footnotes.py", package = "reportifyr")
-  fig_args <- c("run", fig_script, "-i", docx_in, "-o", docx_out, "-d", figures_path, "-b", include_object_path, "-m", footnotes_fail_on_missing_metadata)
+  fig_script <- system.file(
+    "scripts/add_figure_footnotes.py",
+    package = "reportifyr"
+  )
+  fig_args <- c(
+    "run",
+    fig_script,
+    "-i",
+    docx_in,
+    "-o",
+    docx_out,
+    "-d",
+    figures_path,
+    "-b",
+    include_object_path,
+    "-m",
+    footnotes_fail_on_missing_metadata
+  )
 
   # input file should be output file from call above
-  tab_script <- system.file("scripts/add_table_footnotes.py", package = "reportifyr")
-  tab_args <- c("run", tab_script, "-i", docx_out, "-o", docx_out, "-d", tables_path, "-b", include_object_path, "-m", footnotes_fail_on_missing_metadata)
+  tab_script <- system.file(
+    "scripts/add_table_footnotes.py",
+    package = "reportifyr"
+  )
+  tab_args <- c(
+    "run",
+    tab_script,
+    "-i",
+    docx_out,
+    "-o",
+    docx_out,
+    "-d",
+    tables_path,
+    "-b",
+    include_object_path,
+    "-m",
+    footnotes_fail_on_missing_metadata
+  )
 
   if (!is.null(standard_footnotes_yaml)) {
-    log4r::info(.le$logger, paste0("Using provided footnotes file: ", standard_footnotes_yaml))
+    log4r::info(
+      .le$logger,
+      paste0("Using provided footnotes file: ", standard_footnotes_yaml)
+    )
     fig_args <- c(fig_args, "-f", standard_footnotes_yaml)
     tab_args <- c(tab_args, "-f", standard_footnotes_yaml)
   } else {
-    footnotes_file <- system.file("extdata/standard_footnotes.yaml", package = "reportifyr")
-    log4r::info(.le$logger, paste0("Using default footnotes file: ", footnotes_file))
+    footnotes_file <- system.file(
+      "extdata/standard_footnotes.yaml",
+      package = "reportifyr"
+    )
+    log4r::info(
+      .le$logger,
+      paste0("Using default footnotes file: ", footnotes_file)
+    )
     fig_args <- c(fig_args, "-f", footnotes_file)
     tab_args <- c(tab_args, "-f", footnotes_file)
   }
@@ -118,45 +173,100 @@ add_footnotes <- function(docx_in,
   venv_path <- file.path(getOption("venv_dir"), ".venv")
 
   if (!dir.exists(venv_path)) {
-    log4r::error(.le$logger, "Virtual environment not found. Please initialize with initialize_python.")
+    log4r::error(
+      .le$logger,
+      "Virtual environment not found. Please initialize with initialize_python."
+    )
     stop("Create virtual environment with initialize_python")
   }
 
   uv_path <- get_uv_path()
 
   log4r::debug(.le$logger, "Running figure footnotes script")
-  fig_results <- tryCatch({
-    result <- processx::run(
-      command = uv_path, args = fig_args, env = c("current", VIRTUAL_ENV = venv_path), error_on_status = TRUE
+  fig_results <- tryCatch(
+    {
+      result <- processx::run(
+        command = uv_path,
+        args = fig_args,
+        env = c("current", VIRTUAL_ENV = venv_path),
+        error_on_status = TRUE
       )
-    if (nzchar(result$stderr)) {
-      log4r::warn(.le$logger, paste0("Figure footnotes script stderr: ", result$stderr))
+      if (nzchar(result$stderr)) {
+        log4r::warn(
+          .le$logger,
+          paste0("Figure footnotes script stderr: ", result$stderr)
+        )
+      }
+    },
+    error = function(e) {
+      log4r::error(
+        .le$logger,
+        paste0("Figure footnotes script failed. Status: ", e$status)
+      )
+      log4r::error(
+        .le$logger,
+        paste0("Figure footnotes script failed. Stderr: ", e$stderr)
+      )
+      log4r::info(
+        .le$logger,
+        paste0("Figure footnotes script failed. Stdout: ", e$stdout)
+      )
+      stop(
+        paste(
+          "Figure footnotes script failed. Status: ",
+          e$status,
+          "Stderr: ",
+          e$stderr
+        ),
+        call. = FALSE
+      )
     }
-  }, error = function(e) {
-    log4r::error(.le$logger, paste0("Figure footnotes script failed. Status: ", e$status))
-    log4r::error(.le$logger, paste0("Figure footnotes script failed. Stderr: ", e$stderr))
-    log4r::info(.le$logger, paste0("Figure footnotes script failed. Stdout: ", e$stdout))
-    stop(paste("Figure footnotes script failed. Status: ", e$status, "Stderr: ", e$stderr), call. = FALSE)
-  })
+  )
 
   log4r::info(.le$logger, paste0("Returning status: ", fig_results$status))
   log4r::info(.le$logger, paste0("Returning stderr: ", fig_results$stderr))
   log4r::info(.le$logger, paste0("Returning stdout: ", fig_results$stdout))
 
   log4r::debug(.le$logger, "Running table footnotes script")
-  tab_results <- tryCatch({
-    result <- processx::run(
-      command = uv_path, args = tab_args, env = c("current", VIRTUAL_ENV = venv_path), error_on_status = TRUE
-    )
-    if (nzchar(result$stderr)) {
-      log4r::warn(.le$logger, paste0("Table footnotes script stderr: ", result$stderr))
+  tab_results <- tryCatch(
+    {
+      result <- processx::run(
+        command = uv_path,
+        args = tab_args,
+        env = c("current", VIRTUAL_ENV = venv_path),
+        error_on_status = TRUE
+      )
+      if (nzchar(result$stderr)) {
+        log4r::warn(
+          .le$logger,
+          paste0("Table footnotes script stderr: ", result$stderr)
+        )
+      }
+    },
+    error = function(e) {
+      log4r::error(
+        .le$logger,
+        paste0("Table footnotes script failed. Status: ", e$status)
+      )
+      log4r::error(
+        .le$logger,
+        paste0("Table footnotes script failed. Stderr: ", e$stderr)
+      )
+      log4r::info(
+        .le$logger,
+        paste0("Table footnotes script failed. Stdout: ", e$stdout)
+      )
+      stop(
+        paste(
+          "Table footnotes script failed. Status: ",
+          e$status,
+          "Stderr: ",
+          e$stderr
+        ),
+        call. = FALSE
+      )
     }
-  }, error = function(e) {
-    log4r::error(.le$logger, paste0("Table footnotes script failed. Status: ", e$status))
-    log4r::error(.le$logger, paste0("Table footnotes script failed. Stderr: ", e$stderr))
-    log4r::info(.le$logger, paste0("Table footnotes script failed. Stdout: ", e$stdout))
-    stop(paste("Table footnotes script failed. Status: ", e$status, "Stderr: ", e$stderr), call. = FALSE)
-  })
+  )
 
   log4r::info(.le$logger, paste0("Returning status: ", tab_results$status))
   log4r::info(.le$logger, paste0("Returning stderr: ", tab_results$stderr))

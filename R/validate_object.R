@@ -26,10 +26,16 @@ validate_object <- function(file) {
 
   file_ext <- tools::file_ext(file)
 
-  metadata_path <- file.path(file_dir, paste0(file_basename, "_", file_ext, "_metadata.json"))
+  metadata_path <- file.path(
+    file_dir,
+    paste0(file_basename, "_", file_ext, "_metadata.json")
+  )
 
   if (!file.exists(metadata_path)) {
-    log4r::error(.le$logger, paste0("Metadata file does not exist: ", metadata_path))
+    log4r::error(
+      .le$logger,
+      paste0("Metadata file does not exist: ", metadata_path)
+    )
     stop("The associated metadata JSON file does not exist.")
   }
   log4r::info(.le$logger, paste0("Metadata file exists: ", metadata_path))
@@ -37,10 +43,16 @@ validate_object <- function(file) {
   metadata <- jsonlite::fromJSON(metadata_path)
 
   if (!"hash" %in% names(metadata$object_meta)) {
-    log4r::error(.le$logger, paste0("No hash found in metadata: ", metadata_path))
+    log4r::error(
+      .le$logger,
+      paste0("No hash found in metadata: ", metadata_path)
+    )
     stop("The metadata JSON file does not contain a hash value.")
   }
-  log4r::info(.le$logger, paste0("Hash found in metadata:", metadata$object_meta$hash))
+  log4r::info(
+    .le$logger,
+    paste0("Hash found in metadata:", metadata$object_meta$hash)
+  )
 
   file_hash <- digest::digest(file = file, algo = "blake3")
   log4r::info(.le$logger, paste0("Generated file hash: ", file_hash))

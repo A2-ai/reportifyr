@@ -42,5 +42,3 @@ test_that("get_meta_abbrevs fails for non yaml input file.", {
   expect_error(get_meta_abbrevs(temp_txt_file))
   unlink(temp_txt_file)
 })
-
-

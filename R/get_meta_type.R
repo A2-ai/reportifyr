@@ -14,7 +14,10 @@ get_meta_type <- function(path_to_footnotes_yaml) {
   log4r::debug(.le$logger, "Starting get_meta_type function")
 
   if (!file.exists(path_to_footnotes_yaml)) {
-    log4r::error(.le$logger, paste("footnotes yaml file does not exist at:", path_to_footnotes_yaml))
+    log4r::error(
+      .le$logger,
+      paste("footnotes yaml file does not exist at:", path_to_footnotes_yaml)
+    )
     stop("footnotes yaml file does not exist. Please check the provided path")
   }
 
@@ -28,12 +31,22 @@ get_meta_type <- function(path_to_footnotes_yaml) {
   tryCatch(
     {
       if (!("figure_footnotes" %in% names(yaml_content))) {
-        log4r::error(.le$logger, "'figure_footnotes' is missing or misspelled in standard_footnotes.yaml")
-        stop("Error: 'figure_footnotes' is missing or misspelled in standard_footnotes.yaml")
+        log4r::error(
+          .le$logger,
+          "'figure_footnotes' is missing or misspelled in standard_footnotes.yaml"
+        )
+        stop(
+          "Error: 'figure_footnotes' is missing or misspelled in standard_footnotes.yaml"
+        )
       }
       if (!("table_footnotes" %in% names(yaml_content))) {
-        log4r::error(.le$logger, "'table_footnotes' is missing or misspelled in standard_footnotes.yaml")
-        stop("Error: 'table_footnotes' is missing or misspelled in standard_footnotes.yaml")
+        log4r::error(
+          .le$logger,
+          "'table_footnotes' is missing or misspelled in standard_footnotes.yaml"
+        )
+        stop(
+          "Error: 'table_footnotes' is missing or misspelled in standard_footnotes.yaml"
+        )
       }
 
       meta_type <- c(
@@ -45,13 +58,19 @@ get_meta_type <- function(path_to_footnotes_yaml) {
         names(yaml_content$figure_footnotes),
         names(yaml_content$table_footnotes)
       )
-      log4r::debug(.le$logger, "Meta types successfully retrieved from YAML content")
+      log4r::debug(
+        .le$logger,
+        "Meta types successfully retrieved from YAML content"
+      )
       log4r::debug(.le$logger, "Exiting get_meta_type function")
 
       return(meta_type)
     },
     error = function(e) {
-      log4r::error(.le$logger, paste("An error occurred while retrieving meta_types:", e$message))
+      log4r::error(
+        .le$logger,
+        paste("An error occurred while retrieving meta_types:", e$message)
+      )
       message("An error occurred while retrieving meta_types: ", e$message)
       return(NULL)
     }

@@ -14,17 +14,23 @@
 #' docx_in <- here::here("report", "shell", "template.docx")
 #' doc_dirs <- make_doc_dirs(docx_in = docx_in)
 #' }
-make_doc_dirs <- function(docx_in){
+make_doc_dirs <- function(docx_in) {
   log4r::debug(.le$logger, "Starting make_doc_dirs function")
 
   if (!file.exists(docx_in)) {
-    log4r::error(.le$logger, paste("The input document does not exist:", docx_in))
+    log4r::error(
+      .le$logger,
+      paste("The input document does not exist:", docx_in)
+    )
     stop(paste("The input document does not exist:", docx_in))
   }
   log4r::info(.le$logger, paste0("Input document exists: ", docx_in))
 
   if (!(tools::file_ext(docx_in) == "docx")) {
-    log4r::error(.le$logger, paste("The file must be a docx file, not:", tools::file_ext(docx_in)))
+    log4r::error(
+      .le$logger,
+      paste("The file must be a docx file, not:", tools::file_ext(docx_in))
+    )
     stop(paste("The file must be a docx file not:", tools::file_ext(docx_in)))
   }
   log4r::info(.le$logger, "File type is valid (.docx)")
@@ -34,10 +40,13 @@ make_doc_dirs <- function(docx_in){
 
   log4r::debug(.le$logger, "Base path determined")
 
-  if(base_path == docx_in) base_path <- ""
-  log4r::debug(.le$logger, "Base path is equal to input document path, resetting base_path to empty string")
+  if (base_path == docx_in) base_path <- ""
+  log4r::debug(
+    .le$logger,
+    "Base path is equal to input document path, resetting base_path to empty string"
+  )
 
-  doc_name  <- gsub(".*/(.*)\\.docx", "\\1", docx_in)
+  doc_name <- gsub(".*/(.*)\\.docx", "\\1", docx_in)
   log4r::info(.le$logger, paste0("Document name determined: ", doc_name))
 
   doc_clean <- paste0(base_path, doc_name, '-clean.docx')
@@ -54,9 +63,13 @@ make_doc_dirs <- function(docx_in){
     'doc_tables' = doc_tables,
     'doc_tabs_figs' = doc_tabs_figs,
     'doc_draft' = doc_draft,
-    'doc_final' = doc_final)
+    'doc_final' = doc_final
+  )
 
-  log4r::info(.le$logger, paste0("Document paths created: ", toString(names(doc_dirs))))
+  log4r::info(
+    .le$logger,
+    paste0("Document paths created: ", toString(names(doc_dirs)))
+  )
   log4r::debug(.le$logger, "Exiting make_doc_dirs function")
 
   return(doc_dirs)

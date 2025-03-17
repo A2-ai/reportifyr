@@ -41,29 +41,43 @@
 #'   figures_path = figures_path
 #' )
 #' }
-add_plots <- function(docx_in,
-                      docx_out,
-                      figures_path,
-                      fig_width = NULL,
-                      fig_height = NULL,
-                      debug = FALSE) {
+add_plots <- function(
+  docx_in,
+  docx_out,
+  figures_path,
+  fig_width = NULL,
+  fig_height = NULL,
+  debug = FALSE
+) {
   log4r::debug(.le$logger, "Starting add_plots function")
 
   tictoc::tic()
 
   if (!file.exists(docx_in)) {
-    log4r::error(.le$logger, paste("The input document does not exist:", docx_in))
+    log4r::error(
+      .le$logger,
+      paste("The input document does not exist:", docx_in)
+    )
     stop(paste("The input document does not exist:", docx_in))
   }
   log4r::info(.le$logger, paste0("Input document found: ", docx_in))
 
   if (!(tools::file_ext(docx_in) == "docx")) {
-    log4r::error(.le$logger, paste("The file must be a docx file, not:", tools::file_ext(docx_in)))
+    log4r::error(
+      .le$logger,
+      paste("The file must be a docx file, not:", tools::file_ext(docx_in))
+    )
     stop(paste("The file must be a docx file not:", tools::file_ext(docx_in)))
   }
 
   if (!(tools::file_ext(docx_out) == "docx")) {
-    log4r::error(.le$logger, paste("The output file must be a docx file, not:", tools::file_ext(docx_out)))
+    log4r::error(
+      .le$logger,
+      paste(
+        "The output file must be a docx file, not:",
+        tools::file_ext(docx_out)
+      )
+    )
     stop(paste("The file must be a docx file not:", tools::file_ext(docx_out)))
   }
 
@@ -94,32 +108,54 @@ add_plots <- function(docx_in,
   venv_path <- file.path(getOption("venv_dir"), ".venv")
 
   if (!dir.exists(venv_path)) {
-    log4r::error(.le$logger, "Virtual environment not found. Please initialize with initialize_python.")
+    log4r::error(
+      .le$logger,
+      "Virtual environment not found. Please initialize with initialize_python."
+    )
     stop("Create virtual environment with initialize_python")
   }
 
   uv_path <- get_uv_path()
 
   log4r::debug(.le$logger, "Running add plots script")
-  result <- tryCatch({
-    processx::run(
-      command = uv_path, args = args, env = c("current", VIRTUAL_ENV = venv_path), error_on_status = TRUE
+  result <- tryCatch(
+    {
+      processx::run(
+        command = uv_path,
+        args = args,
+        env = c("current", VIRTUAL_ENV = venv_path),
+        error_on_status = TRUE
       )
-    }, error = function(e) {
-      log4r::error(.le$logger, paste0("Add plots script failed. Status: ", e$status))
-      log4r::error(.le$logger, paste0("Add plots script failed. Stderr: ", e$stderr))
-      log4r::info(.le$logger, paste0("Add plots script failed. Stdout: ", e$stdout))
-      stop(paste("Add plots script failed. Status: ", e$status, "Stderr: ", e$stderr))
-    })
-    if (grepl("Duplicate figure names found in the document", result$stdout)) {
-      warning("Duplicate figures found in magic strings of document.")
+    },
+    error = function(e) {
+      log4r::error(
+        .le$logger,
+        paste0("Add plots script failed. Status: ", e$status)
+      )
+      log4r::error(
+        .le$logger,
+        paste0("Add plots script failed. Stderr: ", e$stderr)
+      )
+      log4r::info(
+        .le$logger,
+        paste0("Add plots script failed. Stdout: ", e$stdout)
+      )
+      stop(paste(
+        "Add plots script failed. Status: ",
+        e$status,
+        "Stderr: ",
+        e$stderr
+      ))
     }
-    log4r::info(.le$logger, paste0("Returning status: ", result$status))
-    log4r::info(.le$logger, paste0("Returning stdout: ", result$stdout))
-    log4r::info(.le$logger, paste0("Returning stderr: ", result$stderr))
+  )
+  if (grepl("Duplicate figure names found in the document", result$stdout)) {
+    warning("Duplicate figures found in magic strings of document.")
+  }
+  log4r::info(.le$logger, paste0("Returning status: ", result$status))
+  log4r::info(.le$logger, paste0("Returning stdout: ", result$stdout))
+  log4r::info(.le$logger, paste0("Returning stderr: ", result$stderr))
 
   tictoc::toc()
 
   log4r::debug(.le$logger, "Exiting add_plots function")
-
 }

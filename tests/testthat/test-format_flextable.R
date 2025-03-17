@@ -8,7 +8,10 @@ test_that("format_flextable does not throw an error if 'data_in' is of class: da
 test_that("format_flextable throws an error for invalid 'data_in' class", {
   data_in <- "data"
 
-  expect_error(format_flextable(data_in, table1_format = FALSE), "'data_in' must be either a data frame or a flextable. If you are reading in a table1 table, pass table1_format = TRUE")
+  expect_error(
+    format_flextable(data_in, table1_format = FALSE),
+    "'data_in' must be either a data frame or a flextable. If you are reading in a table1 table, pass table1_format = TRUE"
+  )
 })
 
 # table1 assertion
@@ -23,7 +26,10 @@ test_that("format_flextable throws an error for invalid 'table1_format' class", 
   data_in <- readRDS(testthat::test_path("data", "example.RDS"))
   table1_format <- "Y"
 
-  expect_error(format_flextable(data_in, table1_format), "'table1_format' must be TRUE or FALSE")
+  expect_error(
+    format_flextable(data_in, table1_format),
+    "'table1_format' must be TRUE or FALSE"
+  )
 })
 
 
@@ -33,12 +39,15 @@ test_that("format_flextable correctly processes data_in when 'table1_format' is 
   result <- format_flextable(data_in, table1_format = TRUE)
   border_dim <- c("top", "left", "right", "bottom") # To simplify testing
 
-
-  expect_true(result$header$dataset[[1]][1] == "" | result$header$dataset[[1]][1] == " ") # Original data frame for header should have empty first cell
+  expect_true(
+    result$header$dataset[[1]][1] == "" | result$header$dataset[[1]][1] == " "
+  ) # Original data frame for header should have empty first cell
   expect_true(result$body$dataset[[1]][1] != "") # Original data frame for body should have non-empty first cell
 
   for (i in 2:ncol(result$body$dataset)) {
-    expect_true(result$body$dataset[[i]][1] == "" | result$body$dataset[[i]][1] == " ") # Original data frame for body should have empty first cells for all columns but the first
+    expect_true(
+      result$body$dataset[[i]][1] == "" | result$body$dataset[[i]][1] == " "
+    ) # Original data frame for body should have empty first cells for all columns but the first
   }
 
   expect_s3_class(result, "flextable")
@@ -56,18 +65,32 @@ test_that("format_flextable correctly processes data_in when 'table1_format' is 
   expect_true(all(unlist(result$header$styles$text$bold$data[1])))
 
   for (border in border_dim) {
-    expect_true(all(result$header$styles$pars[[paste0("border.color.", border)]][[1]] == "black"))
-    expect_true(all(result$body$styles$pars[[paste0("border.color.", border)]][[1]] == "black"))
+    expect_true(all(
+      result$header$styles$pars[[paste0("border.color.", border)]][[1]] ==
+        "black"
+    ))
+    expect_true(all(
+      result$body$styles$pars[[paste0("border.color.", border)]][[1]] == "black"
+    ))
   }
 
   for (border in border_dim) {
-    expect_true(all(result$header$styles$pars[[paste0("border.style.", border)]][[1]] == "solid"))
-    expect_true(all(result$body$styles$pars[[paste0("border.style.", border)]][[1]] == "solid"))
+    expect_true(all(
+      result$header$styles$pars[[paste0("border.style.", border)]][[1]] ==
+        "solid"
+    ))
+    expect_true(all(
+      result$body$styles$pars[[paste0("border.style.", border)]][[1]] == "solid"
+    ))
   }
 
   for (border in border_dim) {
-    expect_true(all(result$header$styles$cells[[paste0("border.width.", border)]][[1]] == 1))
-    expect_true(all(result$body$styles$cells[[paste0("border.width.", border)]][[1]] == 1))
+    expect_true(all(
+      result$header$styles$cells[[paste0("border.width.", border)]][[1]] == 1
+    ))
+    expect_true(all(
+      result$body$styles$cells[[paste0("border.width.", border)]][[1]] == 1
+    ))
   }
 
   expect_true(all(result$header$styles$text$font.family[[1]] == "Arial Narrow"))
@@ -83,7 +106,6 @@ test_that("format_flextable correctly processes data_in when 'table1_format' is 
   expect_true(all(result$header$styles$pars$padding.bottom[[1]] == 1))
   expect_true(all(result$body$styles$pars$padding.top[[1]] == 1))
   expect_true(all(result$body$styles$pars$padding.bottom[[1]] == 1))
-
 })
 
 # processing non-table1
@@ -107,18 +129,32 @@ test_that("format_flextable correctly processes data_in data frame when 'table1_
   expect_true(all(unlist(result$header$styles$text$bold$data[1])))
 
   for (border in border_dim) {
-    expect_true(all(result$header$styles$pars[[paste0("border.color.", border)]][[1]] == "black"))
-    expect_true(all(result$body$styles$pars[[paste0("border.color.", border)]][[1]] == "black"))
+    expect_true(all(
+      result$header$styles$pars[[paste0("border.color.", border)]][[1]] ==
+        "black"
+    ))
+    expect_true(all(
+      result$body$styles$pars[[paste0("border.color.", border)]][[1]] == "black"
+    ))
   }
 
   for (border in border_dim) {
-    expect_true(all(result$header$styles$pars[[paste0("border.style.", border)]][[1]] == "solid"))
-    expect_true(all(result$body$styles$pars[[paste0("border.style.", border)]][[1]] == "solid"))
+    expect_true(all(
+      result$header$styles$pars[[paste0("border.style.", border)]][[1]] ==
+        "solid"
+    ))
+    expect_true(all(
+      result$body$styles$pars[[paste0("border.style.", border)]][[1]] == "solid"
+    ))
   }
 
   for (border in border_dim) {
-    expect_true(all(result$header$styles$cells[[paste0("border.width.", border)]][[1]] == 1))
-    expect_true(all(result$body$styles$cells[[paste0("border.width.", border)]][[1]] == 1))
+    expect_true(all(
+      result$header$styles$cells[[paste0("border.width.", border)]][[1]] == 1
+    ))
+    expect_true(all(
+      result$body$styles$cells[[paste0("border.width.", border)]][[1]] == 1
+    ))
   }
 
   expect_true(all(result$header$styles$text$font.family[[1]] == "Arial Narrow"))
@@ -159,18 +195,32 @@ test_that("format_flextable correctly processes data_in flextable when 'table1_f
   expect_true(all(unlist(result$header$styles$text$bold$data[1])))
 
   for (border in border_dim) {
-    expect_true(all(result$header$styles$pars[[paste0("border.color.", border)]][[1]] == "black"))
-    expect_true(all(result$body$styles$pars[[paste0("border.color.", border)]][[1]] == "black"))
+    expect_true(all(
+      result$header$styles$pars[[paste0("border.color.", border)]][[1]] ==
+        "black"
+    ))
+    expect_true(all(
+      result$body$styles$pars[[paste0("border.color.", border)]][[1]] == "black"
+    ))
   }
 
   for (border in border_dim) {
-    expect_true(all(result$header$styles$pars[[paste0("border.style.", border)]][[1]] == "solid"))
-    expect_true(all(result$body$styles$pars[[paste0("border.style.", border)]][[1]] == "solid"))
+    expect_true(all(
+      result$header$styles$pars[[paste0("border.style.", border)]][[1]] ==
+        "solid"
+    ))
+    expect_true(all(
+      result$body$styles$pars[[paste0("border.style.", border)]][[1]] == "solid"
+    ))
   }
 
   for (border in border_dim) {
-    expect_true(all(result$header$styles$cells[[paste0("border.width.", border)]][[1]] == 1))
-    expect_true(all(result$body$styles$cells[[paste0("border.width.", border)]][[1]] == 1))
+    expect_true(all(
+      result$header$styles$cells[[paste0("border.width.", border)]][[1]] == 1
+    ))
+    expect_true(all(
+      result$body$styles$cells[[paste0("border.width.", border)]][[1]] == 1
+    ))
   }
 
   expect_true(all(result$header$styles$text$font.family[[1]] == "Arial Narrow"))

@@ -41,8 +41,7 @@
 #'   docx_out = doc_dirs$doc_final
 #' )
 #' }
-finalize_document <- function(docx_in,
-                              docx_out = NULL) {
+finalize_document <- function(docx_in, docx_out = NULL) {
   log4r::debug(.le$logger, "Starting finalize_document function")
 
   if (!file.exists(docx_in)) {
@@ -54,7 +53,10 @@ finalize_document <- function(docx_in,
   if (is.null(docx_out)) {
     doc_dirs <- make_doc_dirs(docx_in = docx_in)
     docx_out <- doc_dirs$doc_final
-    log4r::info(.le$logger, paste0("Docx_out is null, setting docx_out to: ", docx_out))
+    log4r::info(
+      .le$logger,
+      paste0("Docx_out is null, setting docx_out to: ", docx_out)
+    )
   }
 
   if (docx_in == docx_out) {
@@ -64,17 +66,32 @@ finalize_document <- function(docx_in,
   log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
 
   if (!(tools::file_ext(docx_in) == "docx")) {
-    log4r::error(.le$logger, paste("The input file must be a .docx file, not:", tools::file_ext(docx_in)))
+    log4r::error(
+      .le$logger,
+      paste(
+        "The input file must be a .docx file, not:",
+        tools::file_ext(docx_in)
+      )
+    )
     stop(paste("The file must be a docx file not:", tools::file_ext(docx_in)))
   }
 
   if (!(tools::file_ext(docx_out) == "docx")) {
-    log4r::error(.le$logger, paste("The output file must be a .docx file, not:", tools::file_ext(docx_out)))
+    log4r::error(
+      .le$logger,
+      paste(
+        "The output file must be a .docx file, not:",
+        tools::file_ext(docx_out)
+      )
+    )
     stop(paste("The file must be a docx file not:", tools::file_ext(docx_out)))
   }
 
   intermediate_docx <- gsub(".docx", "-int.docx", docx_out)
-  log4r::info(.le$logger, paste0("Intermediate document path set: ", intermediate_docx))
+  log4r::info(
+    .le$logger,
+    paste0("Intermediate document path set: ", intermediate_docx)
+  )
 
   remove_bookmarks(docx_in, intermediate_docx)
 
@@ -83,7 +100,6 @@ finalize_document <- function(docx_in,
 
   unlink(intermediate_docx)
   log4r::debug(.le$logger, "Deleting intermediate document")
-
 
   write_object_metadata(object_file = docx_out)
 

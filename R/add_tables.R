@@ -29,20 +29,23 @@
 #'   tables_path = tables_path
 #' )
 #' }
-add_tables <- function(docx_in,
-                       docx_out,
-                       tables_path,
-                       debug = FALSE) {
+add_tables <- function(docx_in, docx_out, tables_path, debug = FALSE) {
   log4r::debug(.le$logger, "Starting add_tables function")
   tictoc::tic()
 
   if (!file.exists(docx_in)) {
-    log4r::error(.le$logger, paste("The input document does not exist:", docx_in))
+    log4r::error(
+      .le$logger,
+      paste("The input document does not exist:", docx_in)
+    )
     stop(paste("The input document does not exist:", docx_in))
   }
   log4r::info(.le$logger, paste0("Input document found: ", docx_in))
 
-  if (!(tools::file_ext(docx_in) == "docx") || !(tools::file_ext(docx_out) == "docx")) {
+  if (
+    !(tools::file_ext(docx_in) == "docx") ||
+      !(tools::file_ext(docx_out) == "docx")
+  ) {
     log4r::error(.le$logger, "Both input and output files must be .docx")
     stop("Both input and output files must be .docx")
   }
@@ -54,7 +57,7 @@ add_tables <- function(docx_in,
 
   # Define magic string pattern
   start_pattern <- "\\{rpfy\\}:" # Matches "{rpfy}:"
-  end_pattern <- "\\.[^.]+$"     # Matches the file extension (e.g., ".csv", ".RDS")
+  end_pattern <- "\\.[^.]+$" # Matches the file extension (e.g., ".csv", ".RDS")
   magic_pattern <- paste0(start_pattern, ".*?", end_pattern)
 
   document <- officer::read_docx(docx_in)
@@ -63,7 +66,7 @@ add_tables <- function(docx_in,
   doc_summary <- officer::docx_summary(document)
   paragraphs <- doc_summary[doc_summary$content_type == "paragraph", "text"]
 
-  found_matches <- FALSE  # Track if we find any matches
+  found_matches <- FALSE # Track if we find any matches
 
   # Loop through paragraphs
   for (i in seq_along(paragraphs)) {
@@ -73,30 +76,56 @@ add_tables <- function(docx_in,
     matches <- regmatches(par_text, regexec(magic_pattern, par_text))[[1]]
 
     if (length(matches) > 0) {
-      log4r::info(.le$logger, paste0("Found magic string: ", matches[1], " in paragraph ", i))
+      log4r::info(
+        .le$logger,
+        paste0("Found magic string: ", matches[1], " in paragraph ", i)
+      )
       table_name <- gsub("\\{rpfy\\}:", "", matches[1]) |> trimws() # Remove "{rpfy}:"
       table_file <- file.path(tables_path, table_name)
 
       # Check if the file exists
       if (file.exists(table_file)) {
         found_matches <- TRUE
-        log4r::info(.le$logger, paste0("Found matching table file: ", table_file))
+        log4r::info(
+          .le$logger,
+          paste0("Found matching table file: ", table_file)
+        )
 
         # Load the table data
-        data_in <- switch(tools::file_ext(table_file),
-                          "csv" = utils::read.csv(table_file),
-                          "RDS" = readRDS(table_file),
-                          stop("Unsupported file type"))
+        data_in <- switch(
+          tools::file_ext(table_file),
+          "csv" = utils::read.csv(table_file),
+          "RDS" = readRDS(table_file),
+          stop("Unsupported file type")
+        )
 
         # Correct metadata file naming
-        metadata_file <- paste0(tools::file_path_sans_ext(table_file), "_", tools::file_ext(table_file), "_metadata.json")
+        metadata_file <- paste0(
+          tools::file_path_sans_ext(table_file),
+          "_",
+          tools::file_ext(table_file),
+          "_metadata.json"
+        )
         if (!file.exists(metadata_file)) {
-          log4r::warn(.le$logger, paste0("Metadata file missing for table: ", table_file))
+          log4r::warn(
+            .le$logger,
+            paste0("Metadata file missing for table: ", table_file)
+          )
           if (!inherits(data_in, "flextable")) {
-            log4r::warn(.le$logger, paste0("Default formatting will be applied for ", table_file, "."))
+            log4r::warn(
+              .le$logger,
+              paste0("Default formatting will be applied for ", table_file, ".")
+            )
             flextable <- format_flextable(data_in)
           } else {
-            log4r::warn(.le$logger, paste0("Data is already a flextable so no formatting will be applied for ", table_file, "."))
+            log4r::warn(
+              .le$logger,
+              paste0(
+                "Data is already a flextable so no formatting will be applied for ",
+                table_file,
+                "."
+              )
+            )
             flextable <- data_in
           }
         } else {
