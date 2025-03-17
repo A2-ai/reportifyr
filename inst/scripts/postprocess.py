@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 ''' 
-runpy.py is run with as python runpy.py input_file_path footnotes_path 
+postprocess.py is run with `python postprocess.py input_file_path footnotes_path` 
 '''
 outputs_dir = None
 user_footnotes_path = None
@@ -32,8 +32,8 @@ if user_footnotes_path is not None:
   if Path(user_footnotes_path).exists():
     footnotes_path = user_footnotes_path
 
-figure_path = Path(outputs_dir, "figures")
-tables_path = Path(outputs_dir, "tables")
+figure_path = os.path.join(outputs_dir, "figures")
+tables_path = os.path.join(outputs_dir, "tables")
 
 from add_figure_footnotes import add_figure_footnotes
 from add_table_footnotes import add_table_footnotes

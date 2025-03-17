@@ -8,3 +8,11 @@ inst/doc
 /Meta/
 /doc/
 docs
+.venv
+
+
+inst/scripts/__pycache__
+inst/scripts/test.R
+inst/scripts/*.docx
+inst/scripts/.DS_Store
+inst/scripts/figure
