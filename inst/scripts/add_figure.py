@@ -1,6 +1,6 @@
 import os
 import re
-import string
+import helper
 import tempfile
 import argparse
 from docx import Document
@@ -86,12 +86,8 @@ def add_label_to_image(image_path: str, index: int) -> str:
         the path to the temp image.
     '''
     
-    # Creates label wrapping around alphabet
-    label = ""
-    while index >= 0:
-        label = string.ascii_uppercase[index % 26] + label
-        index = index // 26 - 1
-    
+    label = helper.create_label(index)
+
     # load in image and create draw object
     # and set font
     img = Image.open(image_path)

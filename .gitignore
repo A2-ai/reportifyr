@@ -16,3 +16,4 @@ inst/scripts/test.R
 inst/scripts/*.docx
 inst/scripts/.DS_Store
 inst/scripts/figure
+inst/scripts/table

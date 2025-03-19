@@ -3,9 +3,9 @@ import re
 import sys
 import json
 import yaml
+import helper
 import argparse
 from docx import Document
-from docx.shared import Pt
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
@@ -73,8 +73,8 @@ def add_figure_footnotes(
                             missing_metadata = True
 
                         if add_footnote:
-                            meta_text_lines = create_meta_text_lines(
-                                footnotes, metadata, include_object_path
+                            meta_text_lines = helper.create_meta_text_lines(
+                                footnotes, metadata, include_object_path, "figure"
                             )
 
                             # Insert text after the paragraph that contains the image
@@ -140,67 +140,6 @@ def add_figure_footnotes(
     else:
         document.save(docx_out)
         print(f"Processed file saved at '{docx_out}'.")
-
-
-def create_meta_text_lines(footnotes, metadata, include_object_path):
-    meta_text_lines = []
-    source_text = ""
-    # Add source metadata
-    source = metadata.get("source_meta").get("path")
-    creation_time = metadata.get("source_meta").get("creation_time")
-    if source and creation_time:
-        source_text = f"[Source: {source} {creation_time}]"
-    meta_text_lines.append(source_text)
-
-    if include_object_path:
-        object_source = ""
-        obj_path = metadata.get("object_meta").get("path")
-        obj_creation_time = metadata.get("object_meta").get("creation_time")
-        if obj_path and obj_creation_time:
-            object_source += f"[Object: {obj_path} {obj_creation_time}]"
-            meta_text_lines.append(object_source)
-
-    # Add notes metadata
-    notes_text = ""
-    meta_type = metadata.get("object_meta").get("meta_type")
-    notes_list = (
-        metadata.get("object_meta").get("footnotes").get("notes")
-    )  # If empty this might be a list -- should be ok because len will still work.
-    notes_added = False
-    if type(meta_type) == str and meta_type != "NA":
-        n = footnotes["figure_footnotes"][meta_type]
-        if n:
-            notes_text += f"Notes: {n}"
-            notes_added = True
-
-    if len(notes_list) > 0:
-        for note in notes_list:
-            if notes_added:
-                notes_text += f". {note}"
-            else:
-                notes_text += f"Notes: {note}"
-                notes_added = True
-
-    if not notes_added:
-        notes_text += "Notes N/A\n"
-    meta_text_lines.append(notes_text)
-
-    # Add abbreviations metadata
-    abbrev_text = ""
-    abbrev_list = metadata.get("object_meta").get("footnotes").get("abbreviations")
-    if len(abbrev_list) > 0:
-        for abbrev_ind, abbrev in enumerate(abbrev_list):
-            if abbrev_ind == 0:
-                abbrev_text += (
-                    f"Abbreviations: {abbrev}: {footnotes['abbreviations'][abbrev]}. "
-                )
-            else:
-                abbrev_text += f"{abbrev}: {footnotes['abbreviations'][abbrev]}. "
-    else:
-        abbrev_text += "Abbreviations: N/A"
-    meta_text_lines.append(abbrev_text)
-    return meta_text_lines
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
