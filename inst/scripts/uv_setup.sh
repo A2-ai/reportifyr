@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# uv_setup.sh venv_directory python-docx_version pyyaml_version uv_version [python_version]
+# uv_setup.sh venv_directory python-docx_version pyyaml_version Pillow_version uv_version [python_version]
 
 # Check if uv is installed.
 if ! command -v uv &> /dev/null; then
-  echo "'uv' is not installed. Installing version $4..."
-  curl --proto '=https' --tlsv1.2 -LsSf "https://github.com/astral-sh/uv/releases/download/$4/uv-installer.sh" | sh
+  echo "'uv' is not installed. Installing version $5..."
+  curl --proto '=https' --tlsv1.2 -LsSf "https://github.com/astral-sh/uv/releases/download/$5/uv-installer.sh" | sh
 fi
 
 if [[ ":$PATH:" != *":$HOME/.cargo/bin:"* ]]; then
@@ -22,7 +22,7 @@ source $HOME/.bashrc
 if [ ! -d "$1/.venv" ]; then
   echo "Creating venv at $1/.venv"
   if [ -n "$5" ]; then
-    uv venv "$1/.venv" --python="$5"  # Use the Python version provided in $5
+    uv venv "$1/.venv" --python="$6"  # Use the Python version provided in $6
   else
     uv venv "$1/.venv"  # Default version if $5 is not provided
   fi
@@ -46,4 +46,13 @@ if ! python -c "import yaml" &> /dev/null; then
   else
     uv pip install "pyyaml==6.0.2" # This wont get hit from R because default is added there so all args are present
   fi
+fi
+
+# check if Pillow is installed, install it if not
+if ! python -c "import PIL" &> /dev/null; then
+	if [ -n "$4" ]; then
+		uv pip install "Pillow==$4"
+	else 
+		uv pip install "Pillow==11.1"
+	fi
 fi

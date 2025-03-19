@@ -1,6 +1,8 @@
 #' Create report directories within a project
 #'
-#' @param project_dir The file path to the main project directory where the directory structure will be created. The directory must already exist; otherwise, an error will be thrown.
+#' @param project_dir The file path to the main project directory
+#' where the directory structure will be created.
+#' The directory must already exist; otherwise, an error will be thrown.
 #'
 #' @export
 #'
@@ -20,31 +22,31 @@ initialize_report_project <- function(project_dir) {
   log4r::info(.le$logger, paste0("Project directory found: ", project_dir))
 
   report_dir <- file.path(project_dir, "report")
-  dir.create(report_dir, showWarnings = F)
+  dir.create(report_dir, showWarnings = FALSE)
   log4r::info(.le$logger, paste0("Report directory created at: ", report_dir))
 
-  dir.create(file.path(report_dir, "draft"), showWarnings = F)
+  dir.create(file.path(report_dir, "draft"), showWarnings = FALSE)
   log4r::debug(.le$logger, "Draft directory created")
   writeLines(
     "Directory for reportifyr draft documents",
     file.path(report_dir, "draft/readme.txt")
   )
 
-  dir.create(file.path(report_dir, "final"), showWarnings = F)
+  dir.create(file.path(report_dir, "final"), showWarnings = FALSE)
   log4r::debug(.le$logger, "Final directory created")
   writeLines(
     "Directory for reportifyr final document",
     file.path(report_dir, "final/readme.txt")
   )
 
-  dir.create(file.path(report_dir, "scripts"), showWarnings = F)
+  dir.create(file.path(report_dir, "scripts"), showWarnings = FALSE)
   log4r::debug(.le$logger, "Scripts directory created")
   writeLines(
     "Directory for R and Rmd scripts for creating reportifyr documents",
     file.path(report_dir, "scripts/readme.txt")
   )
 
-  dir.create(file.path(report_dir, "shell"), showWarnings = F)
+  dir.create(file.path(report_dir, "shell"), showWarnings = FALSE)
   log4r::debug(.le$logger, "Shell directory created")
   writeLines(
     "Directory for reportifyr shell",
@@ -90,7 +92,7 @@ initialize_report_project <- function(project_dir) {
   }
 
   if (!("standard_footnotes.yaml" %in% list.files(report_dir))) {
-    result <- file.copy(
+    file.copy(
       from = system.file(
         "extdata/standard_footnotes.yaml",
         package = "reportifyr"

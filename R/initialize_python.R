@@ -11,10 +11,14 @@ initialize_python <- function() {
   if (interactive()) {
     log4r::info(
       .le$logger,
-      "Prompting user for confirmation to install UV, Python, and Python dependencies to your local files."
+      "Prompting user for confirmation to install UV, Python, 
+			and Python dependencies to your local files."
     )
     continue <- readline(
-      "If UV, Python, and Python dependencies (python-docx, PyYAML) are not installed, this will install them.\nOtherwise, the installed versions will be used.\nAre you sure you want to continue? [Y/n]\n"
+      "If UV, Python, and Python dependencies (python-docx, PyYAML) 
+			are not installed, this will install them.
+			\nOtherwise, the installed versions will be used.
+			\nAre you sure you want to continue? [Y/n]\n"
     )
   } else {
     continue <- "Y" # Automatically proceed in non-interactive environments
@@ -58,6 +62,13 @@ initialize_python <- function() {
       log4r::info(.le$logger, "Using default pyyaml version: 6.0.2")
     }
 
+    if (!is.null(getOption("Pillow.version"))) {
+      args <- c(args, getOption("Pillow.version"))
+    } else {
+      args <- c(args, "11.1")
+      log4r::info(.le$logger, "Ussing default Pillow version: 11.1")
+    }
+
     if (!is.null(getOption("uv.version"))) {
       args <- c(args, getOption("uv.version"))
     } else {
@@ -78,7 +89,7 @@ initialize_python <- function() {
     if (!dir.exists(file.path(args[[1]], ".venv"))) {
       log4r::debug(.le$logger, "Creating new virtual environment")
 
-      result <- processx::run(
+      processx::run(
         command = cmd,
         args = args
       )
@@ -91,6 +102,7 @@ initialize_python <- function() {
         "venv_dir",
         "python-docx.version",
         "pyyaml.version",
+        "Pillow.version",
         "uv.version",
         "python.version"
       )
@@ -110,7 +122,7 @@ initialize_python <- function() {
       log4r::debug(.le$logger, ".venv created")
     } else if (!file.exists(uv_path)) {
       message("installing uv")
-      result <- processx::run(
+      processx::run(
         command = cmd,
         args = args
       )
@@ -127,7 +139,8 @@ initialize_python <- function() {
   } else if (continue == "n") {
     log4r::info(.le$logger, "User declined installation. No changes made.")
     message(
-      "User declined installation of UV, Python, and Python dependencies.\nFull functionality of reportifyr will not be available."
+      "User declined installation of UV, Python, and Python dependencies.\n
+			Full functionality of reportifyr will not be available."
     )
   } else {
     log4r::error(.le$logger, "Invalid response from user. Must enter Y or n.")
@@ -158,9 +171,11 @@ get_py_version <- function(venv_dir) {
   if (length(version_info_line) > 0) {
     version_info <- sub(".*version_info =\\s*", "", version_info_line)
     log4r::info(.le$logger, paste0("Python version detected: ", version_info))
-    return(version_info)
+
+    version_info
   } else {
     log4r::warn(.le$logger, "Python version info not found in pyvenv.cfg")
-    return(NULL)
+
+    NULL
   }
 }

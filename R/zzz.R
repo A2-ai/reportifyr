@@ -72,6 +72,16 @@ reportifyr_options_message <- function() {
     set_options <- c(set_options, paste("pyyaml.version:", pyyaml_vers))
   }
 
+  pillow_vers <- getOption("Pillow.version")
+  if (is.null(pillow_vers)) {
+    optional_options <- c(
+      optional_options,
+      "options('Pillow.version') is not set. Default is 11.1"
+    )
+  } else {
+    set_options <- c(set_options, paste("Pillow.version:", pillow_vers))
+  }
+
   # format .onAttach message
   msg <- ""
   if (length(set_options)) {

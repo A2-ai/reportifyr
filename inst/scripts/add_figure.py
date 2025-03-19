@@ -1,8 +1,11 @@
 import os
 import re
+import string
+import tempfile
 import argparse
 from docx import Document
 from docx.shared import Inches
+from PIL import Image, ImageDraw, ImageFont
 
 def add_figure(
     docx_in: str, docx_out: str, figure_dir: str, fig_width: float, fig_height: float
@@ -36,29 +39,88 @@ def add_figure(
                 else:
                     figures = figure_name.replace(" ", "").replace("[", "").replace("]", "").split(",")
 
-                for figure in  figures:
+                for i, figure in  enumerate(figures):
+                    if len(figures) > 1:
+                        add_label = True
+                    else:
+                        add_label = False
+
                     found_magic_strings.append(figure)
                     image_path = os.path.join(figure_dir, figure)
                     if os.path.exists(image_path):
+                        if add_label:
+                            labeled_image = add_label_to_image(image_path, i)
+                        else:
+                            labeled_image = image_path
+
                         run = par.add_run()
                         if fig_width is not None and fig_height is not None:
                             run.add_picture(
-                                image_path,
+                                labeled_image,
                                 width=Inches(fig_width),
                                 height=Inches(fig_height),
                             )
                         elif fig_width is not None:
-                            run.add_picture(image_path, width=Inches(fig_width))
+                            run.add_picture(labeled_image, width=Inches(fig_width))
                         elif fig_height is not None:
-                            run.add_picture(image_path, height=Inches(fig_height))
+                            run.add_picture(labeled_image, height=Inches(fig_height))
                         else:
-                            run.add_picture(image_path, width=Inches(6))  ##Hardcoded backup
+                            run.add_picture(labeled_image, width=Inches(6))  ##Hardcoded backup
 
     if len(set(found_magic_strings)) != len(found_magic_strings):
         print("Duplicate figure names found in the document.")
     document.save(docx_out)
     print(f"Processed file saved at '{docx_out}'.")
 
+
+def add_label_to_image(image_path: str, index: int) -> str:
+    '''
+        This function takes in a path to an image and an index
+        and adds the corresponding letter to the image upper 
+        left corner. If the index is > 25 then the label will
+        use multiple letters.
+        26 = AA
+        27 = AB, etc.
+
+        This function saves the updated image to tmp and returns
+        the path to the temp image.
+    '''
+    
+    # Creates label wrapping around alphabet
+    label = ""
+    while index >= 0:
+        label = string.ascii_uppercase[index % 26] + label
+        index = index // 26 - 1
+    
+    # load in image and create draw object
+    # and set font
+    img = Image.open(image_path)
+    draw = ImageDraw.Draw(img)
+    font = ImageFont.load_default(size = 56)
+
+    img_width, img_height = img.size
+    #aspect_ratio = img_width / img_height
+
+    left_corner_position = (20, 20)
+
+    draw.rectangle(
+        xy = [
+            left_corner_position[0] - 5, 
+            left_corner_position[1] - 5,
+            left_corner_position[0] + img_width * 0.025,
+            left_corner_position[1] + img_height * 0.025
+            ],
+        fill = (255, 255, 255)
+    )
+
+    draw.text(left_corner_position, label, fill = (0, 0, 0), font = font)
+    temp_file = tempfile.NamedTemporaryFile(delete = False, suffix = os.path.splitext(image_path)[1])
+    temp_path = temp_file.name
+    temp_file.close()
+
+    img.save(temp_path)
+    return(temp_path)
+    
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Add figures to input docx document")
