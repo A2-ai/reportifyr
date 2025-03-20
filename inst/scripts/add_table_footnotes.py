@@ -43,6 +43,7 @@ def add_table_footnotes(
 
             if table_name in os.listdir(table_dir):
                 metadata = helper.load_metadata(table_dir, table_name)                                                     
+                
                 add_footnote = False
                 if metadata is None:
                     missing_metadata = True
@@ -50,6 +51,7 @@ def add_table_footnotes(
                     add_footnote = True
 
                 if add_footnote:
+                    # metadata is not None if we make it here.
                     meta_text_dict = helper.create_meta_text_lines(
                         footnotes, metadata, include_object_path, "table"
                     )

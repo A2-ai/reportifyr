@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import json
 import yaml
@@ -29,7 +30,7 @@ def load_footnotes(footnotes_yaml: str) -> dict:
     with open(footnotes_yaml, "r") as y:
         return yaml.safe_load(y)
 
-def load_metadata(artifact_dir: str, artifact_file: str) -> dict:
+def load_metadata(artifact_dir: str, artifact_file: str) -> dict | None:
     """Load metadata for a table."""
     object_name, extension = os.path.splitext(artifact_file)
     metadata_file = os.path.join(
@@ -75,11 +76,17 @@ def create_meta_text_lines(
     if type(meta_type) == str and meta_type != "NA":
         n = footnotes[f"{artifact_type}_footnotes"][meta_type]
         if n:
-            notes_text += f"{n}. "
+            if n.endswith("."):
+                notes_text += f"{n} "
+            else:
+                notes_text += f"{n}. "
 
     if len(notes_list) > 0:
         for note in notes_list:
-            notes_text += f"{note}. "
+            if note.endswith("."):
+                notes_text += f"{note} "
+            else:
+                notes_text += f"{note}. "
 
     if notes_text == "":
         notes_text += "N/A"
@@ -91,7 +98,11 @@ def create_meta_text_lines(
     abbrev_list = metadata.get("object_meta").get("footnotes").get("abbreviations")
     if len(abbrev_list) > 0:
         for abbrev in abbrev_list:
-            abbrev_text += f"{abbrev}: {footnotes['abbreviations'][abbrev]}. "
+            full_form = footnotes['abbreviations'][abbrev]
+            if full_form.endswith("."):
+                abbrev_text += f"{abbrev}: {full_form} "
+            else:
+                abbrev_text += f"{abbrev}: {full_form}. "
     else:
         abbrev_text += "N/A"
     meta_text_lines["Abbreviations"] = abbrev_text
@@ -114,9 +125,9 @@ def format_metadata_line(meta_key, meta_value):
             return f"{meta_key}: {meta_value}"
 
 
-def create_formatted_run(text: str) -> run.CT_R:
-    """Create a formatted run with specified text."""
-    run = OxmlElement("w:r")
+def create_formatted_run(text: str, subscript: bool = False) -> run.CT_R:
+    """Create a single formatted run with specified text."""
+    run_element = OxmlElement("w:r")
 
     # Set formatting properties
     rPr = OxmlElement("w:rPr")
@@ -126,15 +137,55 @@ def create_formatted_run(text: str) -> run.CT_R:
     sz.set(qn("w:val"), "20")
     rPr.append(rFonts)
     rPr.append(sz)
-    run.append(rPr)
+    
+    # Add subscript property if needed
+    if subscript:
+        vertAlign = OxmlElement("w:vertAlign")
+        vertAlign.set(qn("w:val"), "subscript")
+        rPr.append(vertAlign)
+    
+    run_element.append(rPr)
 
     # Set text
     text_element = OxmlElement("w:t")
+    
+    # Preserve spaces if text starts or ends with space
+    if text.startswith(" ") or text.endswith(" "):
+        text_element.set(qn("xml:space"), "preserve")
+        
     text_element.text = text
-    run.append(text_element)
+    run_element.append(text_element)
 
-    return run
+    return run_element
 
+
+def create_formatted_runs(text: str) -> list[run.CT_R]:
+    """Create a formatted run with specified text."""
+    if "_{" not in text or "}" not in text:
+        return [create_formatted_run(text)]
+    
+    # here text has _{text} so we'll split
+    # with re and then add a bunch of runs 
+    # based on the split
+    parts = re.split(r'(_\{[^}]*\})', text)
+    runs = []
+
+    for part in parts:
+        if not part:
+            continue
+
+        if part.startswith("_{") and part.endswith("}"):
+        # Extract subscript text (remove _{} notation)
+            subscript_text = part[2:-1]
+            # Create subscript run
+            sub_run = create_formatted_run(subscript_text, subscript=True)
+            runs.append(sub_run)  
+        else:
+            # Regular text run
+            reg_run = create_formatted_run(part)
+            runs.append(reg_run)    
+
+    return runs
 
 def create_footnote_paragraph(
     meta_text_dict: dict[str, str], name: str, paragraph_id: int
@@ -154,8 +205,9 @@ def create_footnote_paragraph(
         formatted_line = format_metadata_line(meta, value)
 
         # Create run with formatted text
-        run = create_formatted_run(formatted_line)
-        new_paragraph.append(run)
+        runs = create_formatted_runs(formatted_line)
+        for run in runs:
+            new_paragraph.append(run)
 
         # Add line break if needed
         if line_idx != len(meta_text_dict) - 1:
