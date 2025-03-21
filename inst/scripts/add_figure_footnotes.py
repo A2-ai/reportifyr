@@ -11,11 +11,14 @@ def add_figure_footnotes(
     docx_out: str,
     figure_dir: str,
     footnotes_yaml: str,
+    config_yaml: str,
     include_object_path: bool = False,
     fail_on_missing_metadata: bool = True,
 ):
     # load standard footnotes from a yaml file
-    footnotes = helper.load_footnotes(footnotes_yaml)
+    footnotes = helper.load_yaml(footnotes_yaml)
+    config = helper.load_yaml(config_yaml)
+
     document = Document(docx_in)
 
     # define magic string pattern
@@ -87,7 +90,7 @@ def add_figure_footnotes(
                             ):
                                 if not footnote_inserted:
                                     new_paragraph = helper.create_footnote_paragraph(
-                                        combined_footnotes, figure_name, i
+                                        combined_footnotes, figure_name, i, config
                                     )
                                     paragraph._element.addnext(new_paragraph)
                                     footnote_inserted = True
@@ -124,6 +127,13 @@ if __name__ == "__main__":
         help="path to standard footnotes yaml",
     )
     parser.add_argument(
+        "-c",
+        "--config",
+        type=str,
+        required=True,
+        help="path to config.yaml file"
+    )
+    parser.add_argument(
         "-b",
         "--object",
         type=lambda x: x.lower() in ["true", "t"],
@@ -142,6 +152,7 @@ if __name__ == "__main__":
         args.output,
         args.figure_dir,
         args.footnotes,
+        args.config,
         args.object,
         args.fail_metadata,
     )

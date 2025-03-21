@@ -6,6 +6,7 @@
 #' @param figures_path The file path to the figures and associated metadata directory.
 #' @param tables_path The file path to the tables and associated metadata directory.
 #' @param standard_footnotes_yaml The file path to the `standard_footnotes.yaml`. Default is `NULL`. If `NULL`, a default `standard_footnotes.yaml` bundled with the `reportifyr` package is used.
+#' @param config_yaml The file path to the `config.yaml`. Default is `NULL`, a default `config.yaml` bundled with the `reportifyr` package is used.
 #' @param include_object_path A boolean indicating whether to include the file path of the figure or table in the footnotes. Default is `FALSE`.
 #' @param footnotes_fail_on_missing_metadata A boolean indicating whether to stop execution if the metadata `.json` file for a figure or table is missing. Default is `TRUE`.
 #' @param debug Debug.
@@ -63,6 +64,7 @@ add_footnotes <- function(
   figures_path,
   tables_path,
   standard_footnotes_yaml = NULL,
+  config_yaml = NULL,
   include_object_path = FALSE,
   footnotes_fail_on_missing_metadata = TRUE,
   debug = FALSE
@@ -148,20 +150,37 @@ add_footnotes <- function(
       .le$logger,
       paste0("Using provided footnotes file: ", standard_footnotes_yaml)
     )
-    fig_args <- c(fig_args, "-f", standard_footnotes_yaml)
-    tab_args <- c(tab_args, "-f", standard_footnotes_yaml)
   } else {
-    footnotes_file <- system.file(
+    standard_footnotes_yaml <- system.file(
       "extdata/standard_footnotes.yaml",
       package = "reportifyr"
     )
     log4r::info(
       .le$logger,
-      paste0("Using default footnotes file: ", footnotes_file)
+      paste0("Using default footnotes file: ", standard_footnotes_yaml)
     )
-    fig_args <- c(fig_args, "-f", footnotes_file)
-    tab_args <- c(tab_args, "-f", footnotes_file)
   }
+  # add footnotes yaml to args
+  fig_args <- c(fig_args, "-f", standard_footnotes_yaml)
+  tab_args <- c(tab_args, "-f", standard_footnotes_yaml)
+
+  if (!is.null(config_yaml)) {
+    log4r::info(
+      .le$logger,
+      paste0("Using provided config file: ", config_yaml)
+    )
+  } else {
+    config_yaml <- system.file(
+      "extdata/config.yaml",
+      package = "reportifyr"
+    )
+    log4r::info(
+      .le$logger,
+      paste0("Using default config file: ", config_yaml)
+    )
+  }
+  fig_args <- c(fig_args, "-c", config_yaml)
+  tab_args <- c(tab_args, "-c", config_yaml)
 
   if (is.null(getOption("venv_dir"))) {
     log4r::info(.le$logger, "Setting options('venv_dir') to project root.")

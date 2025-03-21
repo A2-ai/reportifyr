@@ -1,5 +1,9 @@
 abbreviations:
  AUC: Area under the curve
+ "AUC_{0-24}": Area under the concentration-time curve from 0 to 24 hours
+ "QTc_{i,j,k}": Corrected QT interval for subject i, in treatment group j, for timepoint k
+ "C_{max}": Maximum observed concentration
+ "T_{max}": "Time of C_{max}"
  AGEBL: Baseline age
  ALBBL: Baseline albumin
  ALTBL: Baseline alanine aminotransferase

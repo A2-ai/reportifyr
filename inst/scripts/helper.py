@@ -25,9 +25,9 @@ def create_label(index: int) -> str:
 
     return label
 
-def load_footnotes(footnotes_yaml: str) -> dict:
-    """Load footnotes from a YAML file."""
-    with open(footnotes_yaml, "r") as y:
+def load_yaml(yaml_file: str) -> dict:
+    """Load contents from a YAML file."""
+    with open(yaml_file, "r") as y:
         return yaml.safe_load(y)
 
 def load_metadata(artifact_dir: str, artifact_file: str) -> dict | None:
@@ -52,25 +52,25 @@ def create_meta_text_lines(
     meta_text_lines = {}
     source_text = ""
     # Add source metadata
-    source = metadata.get("source_meta").get("path")
-    creation_time = metadata.get("source_meta").get("creation_time")
+    source = metadata["source_meta"]["path"]
+    creation_time = metadata["source_meta"]["creation_time"]
     if source and creation_time:
         source_text += f"{source} {creation_time}"
     meta_text_lines["Source"] = source_text
 
     if include_object_path:
         object_source = ""
-        obj_path = metadata.get("object_meta").get("path")
-        obj_creation_time = metadata.get("object_meta").get("creation_time")
+        obj_path = metadata["object_meta"]["path"]
+        obj_creation_time = metadata["object_meta"]["creation_time"]
         if obj_path and obj_creation_time:
             object_source += f"{obj_path} {obj_creation_time}"
             meta_text_lines["Object"] = object_source
 
     # Add notes metadata
     notes_text = ""
-    meta_type = metadata.get("object_meta").get("meta_type")
+    meta_type = metadata["object_meta"]["meta_type"]
     notes_list = (
-        metadata.get("object_meta").get("footnotes").get("notes")
+        metadata["object_meta"]["footnotes"]["notes"]
     )  # If empty this might be a list -- should be ok because len will still work.
 
     if type(meta_type) == str and meta_type != "NA":
@@ -95,7 +95,7 @@ def create_meta_text_lines(
 
     # Add abbreviations metadata
     abbrev_text = ""
-    abbrev_list = metadata.get("object_meta").get("footnotes").get("abbreviations")
+    abbrev_list = metadata["object_meta"]["footnotes"]["abbreviations"]
     if len(abbrev_list) > 0:
         for abbrev in abbrev_list:
             full_form = footnotes['abbreviations'][abbrev]
@@ -125,16 +125,20 @@ def format_metadata_line(meta_key, meta_value):
             return f"{meta_key}: {meta_value}"
 
 
-def create_formatted_run(text: str, subscript: bool = False) -> run.CT_R:
+def create_formatted_run(
+    text: str, 
+    config: dict,
+    subscript: bool = False,
+) -> run.CT_R:
     """Create a single formatted run with specified text."""
     run_element = OxmlElement("w:r")
 
     # Set formatting properties
     rPr = OxmlElement("w:rPr")
     rFonts = OxmlElement("w:rFonts")
-    rFonts.set(qn("w:ascii"), "Arial Narrow")
+    rFonts.set(qn("w:ascii"), config["footnotes_font"])
     sz = OxmlElement("w:sz")
-    sz.set(qn("w:val"), "20")
+    sz.set(qn("w:val"), str(2 * config["footnotes_font_size"]))
     rPr.append(rFonts)
     rPr.append(sz)
     
@@ -159,10 +163,10 @@ def create_formatted_run(text: str, subscript: bool = False) -> run.CT_R:
     return run_element
 
 
-def create_formatted_runs(text: str) -> list[run.CT_R]:
+def create_formatted_runs(text: str, config: dict) -> list[run.CT_R]:
     """Create a formatted run with specified text."""
     if "_{" not in text or "}" not in text:
-        return [create_formatted_run(text)]
+        return [create_formatted_run(text, config)]
     
     # here text has _{text} so we'll split
     # with re and then add a bunch of runs 
@@ -178,17 +182,20 @@ def create_formatted_runs(text: str) -> list[run.CT_R]:
         # Extract subscript text (remove _{} notation)
             subscript_text = part[2:-1]
             # Create subscript run
-            sub_run = create_formatted_run(subscript_text, subscript=True)
+            sub_run = create_formatted_run(subscript_text, config, subscript=True)
             runs.append(sub_run)  
         else:
             # Regular text run
-            reg_run = create_formatted_run(part)
+            reg_run = create_formatted_run(part, config)
             runs.append(reg_run)    
 
     return runs
 
 def create_footnote_paragraph(
-    meta_text_dict: dict[str, str], name: str, paragraph_id: int
+    meta_text_dict: dict[str, str], 
+    name: str, 
+    paragraph_id: int,
+    config: dict
 ) -> paragraph.CT_P:
     """Create a paragraph element containing formatted footnote text with bookmarks."""
     new_paragraph = OxmlElement("w:p")
@@ -205,7 +212,7 @@ def create_footnote_paragraph(
         formatted_line = format_metadata_line(meta, value)
 
         # Create run with formatted text
-        runs = create_formatted_runs(formatted_line)
+        runs = create_formatted_runs(formatted_line, config)
         for run in runs:
             new_paragraph.append(run)
 

@@ -6,6 +6,7 @@
 #' @param figures_path The file path to the figures and associated metadata directory.
 #' @param tables_path The file path to the tables and associated metadata directory.
 #' @param standard_footnotes_yaml The file path to the `standard_footnotes.yaml`. Default is `NULL`. If `NULL`, a default `standard_footnotes.yaml` bundled with the `reportifyr` package is used.
+#' @param config_yaml The file path to the `config.yaml`. Default is `NULL`, a default `config.yaml` bundled with the `reportifyr` package is used.
 #' @param add_footnotes A boolean indicating whether to insert footnotes into the `docx_in` or not. Default is `TRUE`.
 #' @param include_object_path A boolean indicating whether to include the file path of the figure or table in the footnotes. Default is `FALSE`.
 #' @param footnotes_fail_on_missing_metadata A boolean indicating whether to stop execution if the metadata `.json` file for a figure or table is missing. Default is `TRUE`.
@@ -42,6 +43,7 @@ build_report <- function(
   figures_path,
   tables_path,
   standard_footnotes_yaml = NULL,
+  config_yaml = NULL,
   add_footnotes = TRUE,
   include_object_path = FALSE,
   footnotes_fail_on_missing_metadata = TRUE
@@ -107,9 +109,9 @@ build_report <- function(
   )
 
   if (add_footnotes) {
-    docx_out_figs = doc_dirs$doc_tabs_figs
+    docx_out_figs <- doc_dirs$doc_tabs_figs
   } else {
-    docx_out_figs = docx_out
+    docx_out_figs <- docx_out
   }
 
   add_plots(
@@ -128,6 +130,7 @@ build_report <- function(
             figures_path = figures_path,
             tables_path = tables_path,
             standard_footnotes_yaml = standard_footnotes_yaml,
+            config_yaml = config_yaml,
             include_object_path = include_object_path,
             footnotes_fail_on_missing_metadata = footnotes_fail_on_missing_metadata
           )

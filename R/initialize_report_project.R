@@ -101,9 +101,24 @@ initialize_report_project <- function(project_dir) {
     )
     log4r::info(
       .le$logger,
-      paste0("Copied standard_footnotes.yaml into ", report_dir)
+      paste0("copied standard_footnotes.yaml into ", report_dir)
     )
-    message(paste("Copied standard_footnotes.yaml into", report_dir))
+    message(paste("copied standard_footnotes.yaml into", report_dir))
   }
+  if (!("config.yaml" %in% list.files(report_dir))) {
+    file.copy(
+      from = system.file(
+        "extdata/config.yaml",
+        package = "reportifyr"
+      ),
+      to = file.path(report_dir, "config.yaml")
+    )
+    log4r::info(
+      .le$logger,
+      paste0("copied config.yaml into ", report_dir)
+    )
+    message(paste("copied config.yaml into", report_dir))
+  }
+
   log4r::debug(.le$logger, "Exiting initialize_report_project function")
 }
