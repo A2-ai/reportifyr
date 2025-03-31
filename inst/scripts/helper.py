@@ -53,9 +53,9 @@ def create_meta_text_lines(
     source_text = ""
     # Add source metadata
     source = metadata["source_meta"]["path"]
-    creation_time = metadata["source_meta"]["creation_time"]
-    if source and creation_time:
-        source_text += f"{source} {creation_time}"
+    latest_time = metadata["source_meta"]["latest_time"]
+    if source and latest_time:
+        source_text += f"{source} {latest_time}"
     meta_text_lines["Source"] = source_text
 
     if include_object_path:
