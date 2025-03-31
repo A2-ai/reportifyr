@@ -1,6 +1,6 @@
 #' Validate config file
 #'
-#' @param path_to_config_yaml path to config.yaml file 
+#' @param path_to_config_yaml path to config.yaml file
 #'
 #' @returns bool TRUE if config is valid, FALSE otherwise
 #' @export
@@ -74,10 +74,12 @@ validate_config <- function(path_to_config_yaml) {
   log4r::debug(.le$logger, "Checking footnote_order now")
   if (!is.null(config$footnote_order)) {
     footnotes <- c("Object", "Source", "Notes", "Abbreviations")
-    if (!identical(
-      intersect(config$footnote_order, footnotes),
-      config$footnote_order
-    )) {
+    if (
+      !identical(
+        intersect(config$footnote_order, footnotes),
+        config$footnote_order
+      )
+    ) {
       log4r::error(
         .le$logger,
         paste0(

@@ -73,20 +73,20 @@ get_git_config_author <- function(settings = gert::git_config_global()) {
 
   if (length(email) > 1 || length(name) > 1) {
     stop(
-      "Multiple user names or emails found in global git config. 
+      "Multiple user names or emails found in global git config.
 			Please check the .gitconfig file before running again."
     )
   } else if (length(email) == 0 || length(name) == 0) {
     stop(
-      "Please set git global configs 
-			git config --global user.name \"user name\", 
+      "Please set git global configs
+			git config --global user.name \"user name\",
 			git config --global user.email user\\@emai.com"
     )
   }
 
   if (!nzchar(email) || !nzchar(name)) {
     warning(
-      "No default git user or email configuration set up. 
+      "No default git user or email configuration set up.
 			Empty values set for object meta author. \n"
     )
   }
@@ -128,7 +128,7 @@ get_packages <- function() {
 }
 
 
-#' Gets the path to uv -- pre v0.5.0 installed to 
+#' Gets the path to uv -- pre v0.5.0 installed to
 #' /.cargo/bin post v0.5.0 to /.local/bin
 #'
 #' @return path to uv
