@@ -52,7 +52,11 @@ def add_table_footnotes(
                 else:
                     add_footnote = True
                     meta_text_dict = helper.create_meta_text_lines(
-                        footnotes, metadata, include_object_path, "table"
+                        footnotes, 
+                        metadata, 
+                        include_object_path, 
+                        "table",
+                        config
                     )
 
                 if add_footnote:

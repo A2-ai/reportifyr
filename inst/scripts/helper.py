@@ -45,7 +45,11 @@ def load_metadata(artifact_dir: str, artifact_file: str) -> dict | None:
         return None
 
 def create_meta_text_lines(
-    footnotes: dict, metadata: dict, include_object_path: bool, artifact_type: str
+    footnotes: dict, 
+    metadata: dict, 
+    include_object_path: bool, 
+    artifact_type: str,
+    config: dict
 ) -> dict[str, str]:
     assert artifact_type in ["figure", "table"]
 
@@ -58,13 +62,13 @@ def create_meta_text_lines(
         source_text += f"{source} {latest_time}"
     meta_text_lines["Source"] = source_text
 
-    if include_object_path:
-        object_source = ""
-        obj_path = metadata["object_meta"]["path"]
-        obj_creation_time = metadata["object_meta"]["creation_time"]
-        if obj_path and obj_creation_time:
-            object_source += f"{obj_path} {obj_creation_time}"
-            meta_text_lines["Object"] = object_source
+    
+    object_source = ""
+    obj_path = metadata["object_meta"]["path"]
+    obj_creation_time = metadata["object_meta"]["creation_time"]
+    if obj_path and obj_creation_time:
+        object_source += f"{obj_path} {obj_creation_time}"
+        meta_text_lines["Object"] = object_source
 
     # Add notes metadata
     notes_text = ""
@@ -106,17 +110,36 @@ def create_meta_text_lines(
     else:
         abbrev_text += "N/A"
     meta_text_lines["Abbreviations"] = abbrev_text
+    
+    if config["use_object_path_as_source"]:
+        meta_text_lines["Source"] = meta_text_lines["Object"]
+        del meta_text_lines['Object']
+        return meta_text_lines
+    
+    else:
+        if include_object_path:
+            return meta_text_lines
+        
+        else:
+            del meta_text_lines['Object']
+            return meta_text_lines
 
-    return meta_text_lines
 
-
-def format_metadata_line(meta_key, meta_value):
+def format_metadata_line(meta_key, meta_value, config):
     """Format a metadata line based on its key."""
+    # TODO: update [Source: {meta_value}] to include [] 
+    # if present in config
     match meta_key:
         case "Source":
-            return f"[Source: {meta_value}]"
+            if config["wrap_path_in_[]"]:
+                return f"[Source: {meta_value}]"
+            else:
+                return f"Source: {meta_value}"
         case "Object":
-            return f"[Object: {meta_value}]"
+            if config["wrap_path_in_[]"]:
+                return f"[Object: {meta_value}]"
+            else:
+                return f"Object: {meta_value}"
         case "Notes":
             return f"Notes: {meta_value}"
         case "Abbreviations":
@@ -148,13 +171,12 @@ def create_formatted_run(
     rPr.append(sz)
     
     # Add subscript or superscript property if needed
+    vertAlign = OxmlElement("w:vertAlign")
     if subscript:
-        vertAlign = OxmlElement("w:vertAlign")
         vertAlign.set(qn("w:val"), "subscript")
         rPr.append(vertAlign)
     
     elif superscript:
-        vertAlign = OxmlElement("w:vertAlign")
         vertAlign.set(qn("w:val"), "superscript")
         rPr.append(vertAlign)
 
@@ -194,12 +216,14 @@ def create_formatted_runs(text: str, config: dict) -> list[run.CT_R]:
             # Create subscript run
             sub_run = create_formatted_run(subscript_text, config, subscript = True)
             runs.append(sub_run)
+        
         elif part.startswith("^{") and part.endswith("}"):
             # Extract superscript text (remove ^{}) 
             superscript_text = part[2:-1]
             # create superscript run
             sup_run = create_formatted_run(superscript_text, config, superscript = True)
             runs.append(sup_run)
+        
         else:
             # Regular text run
             reg_run = create_formatted_run(part, config)
@@ -222,10 +246,17 @@ def create_footnote_paragraph(
     bookmark_start.set(qn("w:name"), f"fp_{name}")
     new_paragraph.append(bookmark_start)
 
-    # Add metadata lines
+    # Add metadata lines - this assumes ordered dict which should be fine
+    if config["footnote_order"]:
+        # Reorder meta_text_dict based on config
+        # skips object path if include_object_path is false.
+        meta_text_dict = {key: meta_text_dict[key] 
+            for key in config["footnote_order"]
+            if key in meta_text_dict.keys()}
+
     for line_idx, (meta, value) in enumerate(meta_text_dict.items()):
         # Format the line based on metadata type
-        formatted_line = format_metadata_line(meta, value)
+        formatted_line = format_metadata_line(meta, value, config)
 
         # Create run with formatted text
         runs = create_formatted_runs(formatted_line, config)
@@ -245,6 +276,3 @@ def create_footnote_paragraph(
     new_paragraph.append(bookmark_end)
 
     return new_paragraph
-
-
-
