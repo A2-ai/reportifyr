@@ -129,9 +129,14 @@ def create_formatted_run(
     text: str, 
     config: dict,
     subscript: bool = False,
+    superscript: bool = False
 ) -> run.CT_R:
     """Create a single formatted run with specified text."""
     run_element = OxmlElement("w:r")
+    
+    # Asserting that text is not both sub and super-script
+    # shouldn't happen, but if it does...
+    assert not (subscript and superscript)
 
     # Set formatting properties
     rPr = OxmlElement("w:rPr")
@@ -142,12 +147,17 @@ def create_formatted_run(
     rPr.append(rFonts)
     rPr.append(sz)
     
-    # Add subscript property if needed
+    # Add subscript or superscript property if needed
     if subscript:
         vertAlign = OxmlElement("w:vertAlign")
         vertAlign.set(qn("w:val"), "subscript")
         rPr.append(vertAlign)
     
+    elif superscript:
+        vertAlign = OxmlElement("w:vertAlign")
+        vertAlign.set(qn("w:val"), "superscript")
+        rPr.append(vertAlign)
+
     run_element.append(rPr)
 
     # Set text
@@ -165,13 +175,13 @@ def create_formatted_run(
 
 def create_formatted_runs(text: str, config: dict) -> list[run.CT_R]:
     """Create a formatted run with specified text."""
-    if "_{" not in text or "}" not in text:
+    if "_{" not in text and "^{" not in text:
         return [create_formatted_run(text, config)]
     
-    # here text has _{text} so we'll split
+    # here text has _{text} or ^{text} so we'll split
     # with re and then add a bunch of runs 
     # based on the split
-    parts = re.split(r'(_\{[^}]*\})', text)
+    parts = re.split(r'(_\{[^}]*\}|\^\{[^}]*\})', text)
     runs = []
 
     for part in parts:
@@ -179,11 +189,17 @@ def create_formatted_runs(text: str, config: dict) -> list[run.CT_R]:
             continue
 
         if part.startswith("_{") and part.endswith("}"):
-        # Extract subscript text (remove _{} notation)
+            # Extract subscript text (remove _{} notation)
             subscript_text = part[2:-1]
             # Create subscript run
-            sub_run = create_formatted_run(subscript_text, config, subscript=True)
-            runs.append(sub_run)  
+            sub_run = create_formatted_run(subscript_text, config, subscript = True)
+            runs.append(sub_run)
+        elif part.startswith("^{") and part.endswith("}"):
+            # Extract superscript text (remove ^{}) 
+            superscript_text = part[2:-1]
+            # create superscript run
+            sup_run = create_formatted_run(superscript_text, config, superscript = True)
+            runs.append(sup_run)
         else:
             # Regular text run
             reg_run = create_formatted_run(part, config)
