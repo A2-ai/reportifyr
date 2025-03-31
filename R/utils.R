@@ -6,7 +6,7 @@
 #' @noRd
 get_git_info <- function(file_path) {
   # If git doesn't work return NA for everything.
-  result <- tryCatch(
+  tryCatch(
     {
       log <- processx::run("git", c("log", "--follow", "--", file_path))$stdout
 
@@ -19,7 +19,7 @@ get_git_info <- function(file_path) {
           creation_author = "FILE NOT TRACKED BY GIT",
           latest_author = "FILE NOT TRACKED BY GIT",
           creation_time = "FILE NOT TRACKED BY GIT",
-          latest_time = "FILE NOT TRACKED BY GIT"
+          latest_time = format(Sys.time(), "%Y-%m-%d %H:%M:%S")
         ))
       }
 
@@ -68,8 +68,8 @@ get_git_info <- function(file_path) {
 get_git_config_author <- function(settings = gert::git_config_global()) {
   global_settings <- settings[settings$level == "global", ]
 
-  email <- subset(global_settings, name == 'user.email')$value
-  name <- subset(global_settings, name == 'user.name')$value
+  email <- subset(global_settings, name == "user.email")$value
+  name <- subset(global_settings, name == "user.name")$value
 
   if (length(email) > 1 || length(name) > 1) {
     stop(
