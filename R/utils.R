@@ -49,12 +49,12 @@ get_git_info <- function(file_path) {
     },
     error = function(e) {
       # Return the specified list in case of an error
-      return(list(
+      list(
         creation_author = "COULD NOT ACCESS GIT",
         latest_author = "COULD NOT ACCESS GIT",
         creation_time = "COULD NOT ACCESS GIT",
         latest_time = "COULD NOT ACCESS GIT"
-      ))
+      )
     }
   )
 }
@@ -73,17 +73,21 @@ get_git_config_author <- function(settings = gert::git_config_global()) {
 
   if (length(email) > 1 || length(name) > 1) {
     stop(
-      "Multiple user names or emails found in global git config. Please check the .gitconfig file before running again."
+      "Multiple user names or emails found in global git config. 
+			Please check the .gitconfig file before running again."
     )
   } else if (length(email) == 0 || length(name) == 0) {
     stop(
-      "Please set git global configs  git config --global user.name \"user name\", git config --global user.email user\\@emai.com"
+      "Please set git global configs 
+			git config --global user.name \"user name\", 
+			git config --global user.email user\\@emai.com"
     )
   }
 
   if (!nzchar(email) || !nzchar(name)) {
     warning(
-      "No default git user or email configuration set up. Empty values set for object meta author. \n"
+      "No default git user or email configuration set up. 
+			Empty values set for object meta author. \n"
     )
   }
 
@@ -120,11 +124,12 @@ get_packages <- function() {
   # Combine both metadatas
   pkgs_metadata <- c(attached_pkgs_metadata, namespaced_pkgs_metadata)
 
-  return(pkgs_metadata)
+  pkgs_metadata
 }
 
 
-#' Gets the path to uv -- pre v0.5.0 installed to /.cargo/bin post v0.5.0 to /.local/bin
+#' Gets the path to uv -- pre v0.5.0 installed to 
+#' /.cargo/bin post v0.5.0 to /.local/bin
 #'
 #' @return path to uv
 #'
@@ -146,6 +151,6 @@ get_uv_path <- function() {
     )
     stop("Please install uv with initialize_python")
   } else {
-    return(uv_path)
+    uv_path
   }
 }
