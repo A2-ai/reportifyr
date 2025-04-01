@@ -116,7 +116,12 @@ add_plots <- function(
   }
 
   uv_path <- get_uv_path()
-
+	if (is.null(uv_path)) {
+    log4r::error(
+      .le$logger, "uv not found. Please install with initialize_python"
+    )
+    stop("Please install uv with initialize_python")
+  }
   log4r::debug(.le$logger, "Running add plots script")
   result <- tryCatch(
     {

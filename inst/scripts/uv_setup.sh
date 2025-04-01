@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# uv_setup.sh venv_directory python-docx_version pyyaml_version Pillow_version uv_version [python_version]
+# uv_setup.sh venv_directory python-docx_version pyyaml_version pillow_version uv_version [python_version]
 
 # Check if uv is installed.
 if ! command -v uv &> /dev/null; then

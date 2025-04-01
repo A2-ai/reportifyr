@@ -149,8 +149,6 @@ get_uv_path <- function() {
       .le$logger,
       "uv not found. Please install with initialize_python"
     )
-    stop("Please install uv with initialize_python")
-  } else {
-    uv_path
   }
+  uv_path
 }

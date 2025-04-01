@@ -5,7 +5,7 @@
 #'
 #' @return A flextable object fit to page
 #'
-#' @keywords internal
+#' @export
 #'
 #' @examples \dontrun{
 #' # Load libary for examples:

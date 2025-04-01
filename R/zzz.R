@@ -26,7 +26,7 @@ reportifyr_options_message <- function() {
   if (is.null(root)) {
     unset_options <- c(
       unset_options,
-      "options('venv_dir') is not set. venv will be created in Project root"
+      "options('venv_dir') is not set. venv will be created in Project root unless already present."
     )
   } else {
     set_options <- c(set_options, paste("venv_dir:", root))
@@ -72,14 +72,14 @@ reportifyr_options_message <- function() {
     set_options <- c(set_options, paste("pyyaml.version:", pyyaml_vers))
   }
 
-  pillow_vers <- getOption("Pillow.version")
+  pillow_vers <- getOption("pillow.version")
   if (is.null(pillow_vers)) {
     optional_options <- c(
       optional_options,
-      "options('Pillow.version') is not set. Default is 11.1"
+      "options('pillow.version') is not set. Default is 11.1"
     )
   } else {
-    set_options <- c(set_options, paste("Pillow.version:", pillow_vers))
+    set_options <- c(set_options, paste("pillow.version:", pillow_vers))
   }
 
   # format .onAttach message
@@ -105,22 +105,16 @@ reportifyr_options_message <- function() {
     msg <- paste0(
       msg,
       cli::rule(
-        left = cli::style_bold("Needed reportifyr options")
+        left = cli::style_bold("venv options")
       ),
       "\n",
       paste0(
-        cli::col_red(cli::symbol$cross),
+        cli::col_yellow(cli::symbol$square),
         " ",
         unset_options,
         collapse = "\n"
       ),
-      "\n",
-      paste0(
-        cli::col_cyan(cli::symbol$info),
-        " ",
-        cli::format_inline("Please set all options for package to work."),
-        "\n"
-      )
+      "\n"
     )
   }
 
@@ -128,7 +122,7 @@ reportifyr_options_message <- function() {
     msg <- paste0(
       msg,
       cli::rule(
-        left = cli::style_bold("Optional version options")
+        left = cli::style_bold("Version options")
       ),
       "\n",
       paste0(
