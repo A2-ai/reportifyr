@@ -61,19 +61,26 @@ initialize_python <- function() {
       log4r::debug(.le$logger, ".venv created")
     } else if (!file.exists(uv_path)) {
       message("installing uv")
-      processx::run(
+      result <- processx::run(
         command = cmd,
         args = args
       )
+      message(result$stdout)
     } else {
       log4r::info(
         .le$logger,
         paste(".venv already exists at:", file.path(args[[1]], ".venv"))
       )
-      message(paste(
-        ".venv already exists at:",
-        file.path(args[[1]], ".venv")
-      ))
+      result <- processx::run(
+        command = cmd,
+        args = args
+      )
+      message(result$stdout)
+
+      log4r::info(
+        .le$logger,
+        paste("Virtual environment already present at: ", file.path(args[[1]], ".venv"))
+      )
     }
   } else if (continue == "n") {
     log4r::info(.le$logger, "User declined installation. No changes made.")
@@ -123,6 +130,7 @@ get_py_version <- function(venv_dir) {
 #'
 #' @return y/n string
 #' @keywords internal
+#' @noRd
 continue <- function() {
   if (interactive()) {
     log4r::info(
@@ -152,6 +160,7 @@ continue <- function() {
 #'
 #' @return list of args
 #' @keywords internal
+#' @noRd
 get_args <- function(uv_path) {
   if (is.null(getOption("venv_dir"))) {
     options("venv_dir" = here::here())
@@ -192,9 +201,7 @@ get_args <- function(uv_path) {
       args <- c(args, "0.5.1")
       log4r::info(.le$logger, "Using default uv version: 0.5.1")
     } else {
-      result <- processx::run(uv_path, "--version")
-      # output should be "uv version (commit date)\n"
-      uv_version <- strsplit(result$stdout, " ")[[1]][2]
+      uv_version <- get_uv_version(uv_path)
       args <- c(args, uv_version)
       log4r::info(.le$logger, paste0("Using uv version: ", uv_version))
     }

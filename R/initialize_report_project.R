@@ -75,23 +75,10 @@ initialize_report_project <- function(project_dir) {
     dir.create(file.path(outputs_dir, "listings"))
     log4r::debug(.le$logger, "Listings directory created")
   }
-  if (!is.null(getOption("venv_dir"))) {
-    if (!dir.exists(file.path(getOption("venv_dir"), ".venv"))) {
-      log4r::info(
-        .le$logger,
-        "Virtual environment not found, initializing Python environment"
-      )
-      initialize_python()
-    }
-  } else {
-    log4r::info(
-      .le$logger,
-      "Virtual environment not set, initializing Python environment"
-    )
-    initialize_python()
-  }
-
-  if (!("standard_footnotes.yaml" %in% list.files(report_dir))) {
+  
+	initialize_python()
+  
+	if (!("standard_footnotes.yaml" %in% list.files(report_dir))) {
     file.copy(
       from = system.file(
         "extdata/standard_footnotes.yaml",

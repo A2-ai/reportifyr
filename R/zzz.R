@@ -26,7 +26,7 @@ reportifyr_options_message <- function() {
   if (is.null(root)) {
     unset_options <- c(
       unset_options,
-      "options('venv_dir') is not set. venv will be created in Project root unless already present."
+      "Using project root for venv (unless already present), set options('venv_dir') to change"
     )
   } else {
     set_options <- c(set_options, paste("venv_dir:", root))
@@ -34,11 +34,20 @@ reportifyr_options_message <- function() {
   # NICE TO HAVES
   uvversion <- getOption("uv.version")
   if (is.null(uvversion)) {
-    optional_options <- c(
-      optional_options,
-      "options('uv.version') is not set. Default is 0.5.1"
-    )
-  } else {
+		uv_path <- get_uv_path()
+		if (is.null(uv_path)) {
+			optional_options <- c(
+				optional_options,
+				"Using uv version 0.5.1, set options('uv.version') to change"
+			)
+		} else {
+			uv_version <- get_uv_version(uv_path)
+			set_options <- c(
+				set_options,
+				paste0("Using installed uv version ", uv_version)
+			)
+		}
+	} else {
     set_options <- c(set_options, paste("uv.version:", uvversion))
   }
 
@@ -46,7 +55,7 @@ reportifyr_options_message <- function() {
   if (is.null(pyversion)) {
     optional_options <- c(
       optional_options,
-      "options('python.version') is not set. Default is system version"
+      "Using system python version, set options('python.version') to change"
     )
   } else {
     set_options <- c(set_options, paste("python.version:", pyversion))
@@ -56,7 +65,7 @@ reportifyr_options_message <- function() {
   if (is.null(docx_vers)) {
     optional_options <- c(
       optional_options,
-      "options('python-docx.version') is not set. Default is 1.1.2"
+      "Using python-docx version 1.1.2, set options('python-docx.version') to change"
     )
   } else {
     set_options <- c(set_options, paste("python-docx.version:", docx_vers))
@@ -66,7 +75,7 @@ reportifyr_options_message <- function() {
   if (is.null(pyyaml_vers)) {
     optional_options <- c(
       optional_options,
-      "options('pyyaml.version') is not set. Default is 6.0.2"
+      "Using pyyaml version 6.0.2, set options('pyyaml.version') to change"
     )
   } else {
     set_options <- c(set_options, paste("pyyaml.version:", pyyaml_vers))
@@ -76,7 +85,7 @@ reportifyr_options_message <- function() {
   if (is.null(pillow_vers)) {
     optional_options <- c(
       optional_options,
-      "options('pillow.version') is not set. Default is 11.1"
+      "Using default v11.1, set options('pillow.version') to change"
     )
   } else {
     set_options <- c(set_options, paste("pillow.version:", pillow_vers))
