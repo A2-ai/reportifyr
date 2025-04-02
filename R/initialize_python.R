@@ -52,6 +52,22 @@ initialize_python <- function() {
   venv_dir <- file.path(args[[1]], ".venv")
   is_new_env <- !dir.exists(venv_dir)
 
+  # Run the setup script for both new and existing environments
+  result <- processx::run(
+    command = cmd,
+    args = args
+  )
+  # Get Python version AFTER environment exists
+  pyvers <- get_py_version(getOption("venv_dir"))
+  if (!is.null(pyvers)) {
+    log4r::info(.le$logger, paste0("Python version detected: ", pyvers))
+    # Add Python version to args for metadata
+    args <- c(args, pyvers)
+  } else {
+    log4r::warn(.le$logger, "Python version could not be detected")
+    args <- c(args, "")
+  }
+
   if (is_new_env) {
     log4r::debug(.le$logger, "Creating new virtual environment")
     message(paste(
@@ -67,24 +83,7 @@ initialize_python <- function() {
     )
   }
 
-  # Run the setup script for both new and existing environments
-  result <- processx::run(
-    command = cmd,
-    args = args
-  )
   message(result$stdout)
-
-  # Get Python version AFTER environment exists
-  pyvers <- get_py_version(getOption("venv_dir"))
-  if (!is.null(pyvers)) {
-    log4r::info(.le$logger, paste0("Python version detected: ", pyvers))
-    # Add Python version to args for metadata
-    args <- c(args, pyvers)
-  } else {
-    log4r::warn(.le$logger, "Python version could not be detected")
-    args <- c(args, "")
-  }
-
   # Log appropriate message based on whether we created or used existing environment
   if (is_new_env) {
     log4r::info(
@@ -147,7 +146,7 @@ continue <- function() {
 			and Python dependencies to your local files."
     )
     continue <- readline(
-      "If uv, Python, and Python dependencies (python-docx, PyYAML)
+      "If uv, Python, and Python dependencies (python-docx, PyYAML, Pillow)
 			\nare not installed, this will install them.
 			\nOtherwise, the installed versions will be used.
 			\nAre you sure you want to continue? [Y/n]\n"
