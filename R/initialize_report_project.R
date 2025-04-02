@@ -75,10 +75,18 @@ initialize_report_project <- function(project_dir) {
     dir.create(file.path(outputs_dir, "listings"))
     log4r::debug(.le$logger, "Listings directory created")
   }
-  
-	initialize_python()
-  
-	if (!("standard_footnotes.yaml" %in% list.files(report_dir))) {
+
+  metadata_path <- initialize_python()
+
+  if (file.exists(metadata_path)) {
+    file.copy(
+      from = metadata_path,
+      to = file.path(report_dir, basename(metadata_path)),
+			overwrite = TRUE
+    )
+  }
+
+  if (!("standard_footnotes.yaml" %in% list.files(report_dir))) {
     file.copy(
       from = system.file(
         "extdata/standard_footnotes.yaml",
@@ -92,6 +100,7 @@ initialize_report_project <- function(project_dir) {
     )
     message(paste("copied standard_footnotes.yaml into", report_dir))
   }
+
   if (!("config.yaml" %in% list.files(report_dir))) {
     file.copy(
       from = system.file(

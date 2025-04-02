@@ -22,8 +22,7 @@ fi
 source $HOME/.bashrc
 
 if [ ! -d "$1/.venv" ]; then
-  echo "Creating venv at $1/.venv"
-  if [ -n "$5" ]; then
+  if [ -n "$6" ]; then
     uv venv "$1/.venv" --python="$6"  # Use the Python version provided in $6
 		echo "Created venv at $1/.venv using python v$6"
   else
@@ -46,7 +45,21 @@ if ! python -c "import docx" &> /dev/null; then
 		echo "Installed python-docx v1.1.2"
   fi
 else 
-	echo "python-docx already installed"
+  # Already installed, check if version matches requested
+  CURRENT_VERSION=$(python -c "import docx; print(docx.__version__)" 2>/dev/null)
+  echo "Current python-docx version: $CURRENT_VERSION"
+  
+  if [ -n "$2" ] && [ "$CURRENT_VERSION" != "$2" ]; then
+    echo "Updating python-docx from v$CURRENT_VERSION to v$2"
+    uv pip install "python-docx==$2"
+    echo "Installed python-docx v$2"
+  elif [ -z "$2" ] && [ "$CURRENT_VERSION" != "1.1.2" ]; then
+    echo "Updating python-docx from v$CURRENT_VERSION to v1.1.2"
+    uv pip install "python-docx==1.1.2"
+    echo "Installed python-docx v1.1.2"
+  else
+    echo "python-docx already at correct version (v$CURRENT_VERSION)"
+  fi
 fi
 
 # Check if pyyaml is installed, install it if not
@@ -59,7 +72,21 @@ if ! python -c "import yaml" &> /dev/null; then
 		echo "Installed pyyaml v6.0.2"
   fi
 else
-	echo "pyyaml already installed"
+	# Already installed, check if version matches requested
+  CURRENT_VERSION=$(python -c "import yaml; print(yaml.__version__)" 2>/dev/null)
+  echo "Current pyyaml version: $CURRENT_VERSION"
+  
+  if [ -n "$3" ] && [ "$CURRENT_VERSION" != "$3" ]; then
+    echo "Updating pyyaml from v$CURRENT_VERSION to v$3"
+    uv pip install "pyyaml==$3"
+    echo "Installed pyyaml v$3"
+  elif [ -z "$3" ] && [ "$CURRENT_VERSION" != "6.0.2" ]; then
+    echo "Updating pyyaml from v$CURRENT_VERSION to v6.0.2"
+    uv pip install "pyyaml==6.0.2"
+    echo "Installed pyyaml v6.0.2"
+  else
+    echo "pyyaml already at correct version (v$CURRENT_VERSION)"
+  fi
 fi
 
 # check if Pillow is installed, install it if not
@@ -72,5 +99,19 @@ if ! python -c "import PIL" &> /dev/null; then
 		echo "Installed pillow v11.1"
 	fi
 else 
-	echo "pillow already installed"
+	# Already installed, check if version matches requested
+  CURRENT_VERSION=$(python -c "import PIL; print(PIL.__version__)" 2>/dev/null)
+  echo "Current pillow version: $CURRENT_VERSION"
+  
+  if [ -n "$4" ] && [ "$CURRENT_VERSION" != "$4" ]; then
+    echo "Updating pillow from v$CURRENT_VERSION to v$4"
+    uv pip install "Pillow==$4"
+    echo "Installed pillow v$4"
+  elif [ -z "$4" ] && [ "$CURRENT_VERSION" != "11.1.0" ]; then
+    echo "Updating pillow from v$CURRENT_VERSION to v11.1.0"
+    uv pip install "Pillow==11.1.0"
+    echo "Installed pillow v11.1.0"
+  else
+    echo "pillow already at correct version (v$CURRENT_VERSION)"
+  fi
 fi
