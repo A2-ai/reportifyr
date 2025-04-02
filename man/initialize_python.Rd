@@ -6,6 +6,9 @@
 \usage{
 initialize_python()
 }
+\value{
+invisibly the metadata_file path
+}
 \description{
 Initializes python virtual environment
 }
