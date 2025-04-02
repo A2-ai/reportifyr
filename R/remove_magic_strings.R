@@ -116,7 +116,8 @@ remove_magic_strings <- function(docx_in, docx_out) {
     uv_path <- get_uv_path()
     if (is.null(uv_path)) {
       log4r::error(
-        .le$logger, "uv not found. Please install with initialize_python"
+        .le$logger,
+        "uv not found. Please install with initialize_python"
       )
       stop("Please install uv with initialize_python")
     }

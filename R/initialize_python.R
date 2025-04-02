@@ -103,7 +103,7 @@ initialize_python <- function() {
   metadata_file <- write_package_version_metadata(args, args_name, venv_dir)
 
   log4r::debug(.le$logger, "Exiting initialize_python function")
-	invisible(metadata_file)
+  invisible(metadata_file)
 } #' Grabs python version for .venv
 #'
 #' @param venv_dir Path to .venv directory
