@@ -52,31 +52,31 @@ Figure 2: Some caption for multiple figures
     ```
 
 * Messaging around venv/uv/python dependencies has been reworked:
-```
-> initialize_report_project(here::here())
-If uv, Python, and Python dependencies (python-docx, PyYAML, Pillow)
+    ```
+    > initialize_report_project(here::here())
+    If uv, Python, and Python dependencies (python-docx, PyYAML, Pillow)
 
-are not installed, this will install them.
+    are not installed, this will install them.
 
-Otherwise, the installed versions will be used.
+    Otherwise, the installed versions will be used.
 
-Are you sure you want to continue? [Y/n]
-y
-Creating python virtual environment with the following settings:
-        venv_dir: /path/to/project/
-        python-docx.version: 1.1.2
-        pyyaml.version: 6.0.2
-        pillow.version: 11.1.0
-        uv.version: 0.6.3
-        python.version:  3.13.2
-uv already installed
-Created venv at /path/to/project/.venv
-Installed python-docx v1.1.2
-Installed pyyaml v6.0.2
-Installed pillow v11.1.0
+    Are you sure you want to continue? [Y/n]
+    y
+    Creating python virtual environment with the following settings:
+            venv_dir: /path/to/project/
+            python-docx.version: 1.1.2
+            pyyaml.version: 6.0.2
+            pillow.version: 11.1.0
+            uv.version: 0.6.3
+            python.version:  3.13.2
+    uv already installed
+    Created venv at /path/to/project/.venv
+    Installed python-docx v1.1.2
+    Installed pyyaml v6.0.2
+    Installed pillow v11.1.0
 
-copied standard_footnotes.yaml into /path/to/project/report
-copied config.yaml into /path/to/project/report
-```
+    copied standard_footnotes.yaml into /path/to/project/report
+    copied config.yaml into /path/to/project/report
+    ```
 
 * Footnotes now support subscript and superscript using latex-like syntax: `AUC_{0-24}` will show up in the rendered docx with `0-24` as a subscript, and `kg/m^{2}` will show up with the `2` as a superscript.
