@@ -1,2 +1,10 @@
 footnotes_font: "Arial Narrow"
 footnotes_font_size: 10
+
+use_object_path_as_source: FALSE
+wrap_path_in_[]: FALSE
+footnote_order:
+  - Source
+  - Object
+  - Notes
+  - Abbreviations
