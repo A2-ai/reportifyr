@@ -79,7 +79,7 @@ remove_magic_strings <- function(docx_in, docx_out) {
       "This will remove magic strings from the document. This severs link between the document and reportifyr. Are you sure you want to continue? [Y/n]\n"
     )
   } else {
-    continue <- 'Y'
+    continue <- "Y"
     log4r::info(
       .le$logger,
       "Non-interactive session detected, proceeding with bookmark removal."
@@ -114,12 +114,12 @@ remove_magic_strings <- function(docx_in, docx_out) {
     }
 
     uv_path <- get_uv_path()
-		if (is.null(uv_path)) {
-			log4r::error(
-				.le$logger, "uv not found. Please install with initialize_python"
-			)
-			stop("Please install uv with initialize_python")
-		}
+    if (is.null(uv_path)) {
+      log4r::error(
+        .le$logger, "uv not found. Please install with initialize_python"
+      )
+      stop("Please install uv with initialize_python")
+    }
 
     script <- system.file(
       "scripts/remove_magic_strings.py",

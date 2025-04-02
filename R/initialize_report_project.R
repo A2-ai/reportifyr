@@ -82,7 +82,7 @@ initialize_report_project <- function(project_dir) {
     file.copy(
       from = metadata_path,
       to = file.path(report_dir, basename(metadata_path)),
-			overwrite = TRUE
+      overwrite = TRUE
     )
   }
 

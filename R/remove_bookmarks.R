@@ -113,12 +113,12 @@ remove_bookmarks <- function(docx_in, docx_out) {
     }
 
     uv_path <- get_uv_path()
-		if (is.null(uv_path)) {
-			log4r::error(
-				.le$logger, "uv not found. Please install with initialize_python"
-			)
-			stop("Please install uv with initialize_python")
-		}
+    if (is.null(uv_path)) {
+      log4r::error(
+        .le$logger, "uv not found. Please install with initialize_python"
+      )
+      stop("Please install uv with initialize_python")
+    }
 
     script <- system.file("scripts/remove_bookmarks.py", package = "reportifyr")
     args <- c("run", script, "-i", docx_in, "-o", docx_out)

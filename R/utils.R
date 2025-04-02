@@ -152,15 +152,15 @@ get_uv_path <- function() {
   uv_path
 }
 
-#' Gets the version of uv 
+#' Gets the version of uv
 #'
 #' @param uv_path path to uv
 #' @keywords internal
 #' @noRd
 get_uv_version <- function(uv_path) {
-	result <- processx::run(uv_path, "--version")
+  result <- processx::run(uv_path, "--version")
   # output should be "uv version (commit date)\n"
   uv_version <- strsplit(result$stdout, " ")[[1]][2]
-	
-	uv_version
+
+  uv_version
 }

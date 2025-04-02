@@ -59,16 +59,15 @@
 #' )
 #' }
 add_footnotes <- function(
-  docx_in,
-  docx_out,
-  figures_path,
-  tables_path,
-  standard_footnotes_yaml = NULL,
-  config_yaml = NULL,
-  include_object_path = FALSE,
-  footnotes_fail_on_missing_metadata = TRUE,
-  debug = FALSE
-) {
+    docx_in,
+    docx_out,
+    figures_path,
+    tables_path,
+    standard_footnotes_yaml = NULL,
+    config_yaml = NULL,
+    include_object_path = FALSE,
+    footnotes_fail_on_missing_metadata = TRUE,
+    debug = FALSE) {
   log4r::debug(.le$logger, "Starting add_footnotes function")
 
   tictoc::tic()
@@ -165,6 +164,9 @@ add_footnotes <- function(
   tab_args <- c(tab_args, "-f", standard_footnotes_yaml)
 
   if (!is.null(config_yaml)) {
+    if (!validate_config(config_yaml)) {
+      stop("Invalid confi yaml. Please fix")
+    }
     log4r::info(
       .le$logger,
       paste0("Using provided config file: ", config_yaml)
@@ -200,12 +202,12 @@ add_footnotes <- function(
   }
 
   uv_path <- get_uv_path()
-	if (is.null(uv_path)) {
-		log4r::error(
-			.le$logger, "uv not found. Please install with initialize_python"
-		)
-		stop("Please install uv with initialize_python")
-	}
+  if (is.null(uv_path)) {
+    log4r::error(
+      .le$logger, "uv not found. Please install with initialize_python"
+    )
+    stop("Please install uv with initialize_python")
+  }
   log4r::debug(.le$logger, "Running figure footnotes script")
   fig_results <- tryCatch(
     {

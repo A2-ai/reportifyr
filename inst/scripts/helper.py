@@ -111,7 +111,7 @@ def create_meta_text_lines(
         abbrev_text += "N/A"
     meta_text_lines["Abbreviations"] = abbrev_text
     
-    if config["use_object_path_as_source"]:
+    if config.get("use_object_path_as_source", False):
         meta_text_lines["Source"] = meta_text_lines["Object"]
         del meta_text_lines['Object']
         return meta_text_lines
@@ -131,12 +131,12 @@ def format_metadata_line(meta_key, meta_value, config):
     # if present in config
     match meta_key:
         case "Source":
-            if config["wrap_path_in_[]"]:
+            if config.get("wrap_path_in_[]", True):
                 return f"[Source: {meta_value}]"
             else:
                 return f"Source: {meta_value}"
         case "Object":
-            if config["wrap_path_in_[]"]:
+            if config.get("wrap_path_in_[]", True):
                 return f"[Object: {meta_value}]"
             else:
                 return f"Object: {meta_value}"
@@ -164,9 +164,9 @@ def create_formatted_run(
     # Set formatting properties
     rPr = OxmlElement("w:rPr")
     rFonts = OxmlElement("w:rFonts")
-    rFonts.set(qn("w:ascii"), config["footnotes_font"])
+    rFonts.set(qn("w:ascii"), config.get("footnotes_font", "Arial Narrow"))
     sz = OxmlElement("w:sz")
-    sz.set(qn("w:val"), str(2 * config["footnotes_font_size"]))
+    sz.set(qn("w:val"), str(2 * config.get("footnotes_font_size", "10")))
     rPr.append(rFonts)
     rPr.append(sz)
     
@@ -247,12 +247,9 @@ def create_footnote_paragraph(
     new_paragraph.append(bookmark_start)
 
     # Add metadata lines - this assumes ordered dict which should be fine
-    if config["footnote_order"]:
-        # Reorder meta_text_dict based on config
-        # skips object path if include_object_path is false.
-        meta_text_dict = {key: meta_text_dict[key] 
-            for key in config["footnote_order"]
-            if key in meta_text_dict.keys()}
+    meta_text_dict = {key: meta_text_dict[key] 
+        for key in config.get("footnote_order", ['Source', 'Object', 'Notes', 'Abbreviations'])
+        if key in meta_text_dict.keys()}
 
     for line_idx, (meta, value) in enumerate(meta_text_dict.items()):
         # Format the line based on metadata type
