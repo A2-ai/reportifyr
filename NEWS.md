@@ -1,8 +1,9 @@
 # reportifyr 0.3.0
 
 * multiple figures with single combined footnote can now be added with the following syntax: 
-Figure 1: Multiple figures with single footnote.
-`{rpfy}:[figure_1.png, figure_2.png]`. 
+
+    Figure 1: Multiple figures with single footnote.
+    `{rpfy}:[figure_1.png, figure_2.png]`. 
 
     * The resulting document after `build_report()` will look like the following:
     Figure 1: Multiple figures with single footnote.
@@ -15,10 +16,11 @@ Figure 1: Multiple figures with single footnote.
 
     * This will draw an A on figure_1 and a B on figure_2 in the upper left corner and combine the footnotes labelling them with A/B. This will work for any number of figures, with the labels wrapping to AA, AB after Z if necessary.
     
-* multiple figures with multiple footnotes can also be inserted under a figure caption with 
-Figure 2: Some caption for multiple figures
-`{rpfy}:figure_1.png
-{rpfy}:figure_2.png`
+* multiple figures with multiple footnotes can also be inserted under a figure caption with:
+
+    Figure 2: Some caption for multiple figures
+    `{rpfy}:figure_1.png
+    {rpfy}:figure_2.png`
 
     * The resulting document after `build_report()` will look like:
     Figure 2: Some caption for multiple figures
