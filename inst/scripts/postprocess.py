@@ -45,5 +45,9 @@ tables_path = os.path.join(outputs_dir, "tables")
 from add_figure_footnotes import add_figure_footnotes
 from add_table_footnotes import add_table_footnotes
 
-add_figure_footnotes(input_file_path, input_file_path, figure_path, footnotes_path, config_path)
-add_table_footnotes(input_file_path, input_file_path, tables_path, footnotes_path, config_path)
+add_figure_footnotes(
+    input_file_path, input_file_path, figure_path, footnotes_path, config_path
+)
+add_table_footnotes(
+    input_file_path, input_file_path, tables_path, footnotes_path, config_path
+)

@@ -62,11 +62,7 @@ def add_figure_footnotes(
 
                     if metadata is not None:
                         meta_text_dict = helper.create_meta_text_lines(
-                            footnotes, 
-                            metadata, 
-                            include_object_path, 
-                            "figure",
-                            config
+                            footnotes, metadata, include_object_path, "figure", config
                         )
                     else:
                         missing_metadata = True
@@ -131,11 +127,7 @@ if __name__ == "__main__":
         help="path to standard footnotes yaml",
     )
     parser.add_argument(
-        "-c",
-        "--config",
-        type=str,
-        required=True,
-        help="path to config.yaml file"
+        "-c", "--config", type=str, required=True, help="path to config.yaml file"
     )
     parser.add_argument(
         "-b",

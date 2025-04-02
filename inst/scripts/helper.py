@@ -25,10 +25,12 @@ def create_label(index: int) -> str:
 
     return label
 
+
 def load_yaml(yaml_file: str) -> dict:
     """Load contents from a YAML file."""
     with open(yaml_file, "r") as y:
         return yaml.safe_load(y)
+
 
 def load_metadata(artifact_dir: str, artifact_file: str) -> dict | None:
     """Load metadata for a table."""
@@ -36,7 +38,7 @@ def load_metadata(artifact_dir: str, artifact_file: str) -> dict | None:
     metadata_file = os.path.join(
         artifact_dir, f"{object_name}_{extension[1::]}_metadata.json"
     )
-    
+
     try:
         with open(metadata_file, "r") as m:
             return json.load(m)
@@ -44,12 +46,13 @@ def load_metadata(artifact_dir: str, artifact_file: str) -> dict | None:
         print(f"Metadata file not found: {metadata_file}", file=sys.stderr)
         return None
 
+
 def create_meta_text_lines(
-    footnotes: dict, 
-    metadata: dict, 
-    include_object_path: bool, 
+    footnotes: dict,
+    metadata: dict,
+    include_object_path: bool,
     artifact_type: str,
-    config: dict
+    config: dict,
 ) -> dict[str, str]:
     assert artifact_type in ["figure", "table"]
 
@@ -62,7 +65,6 @@ def create_meta_text_lines(
         source_text += f"{source} {latest_time}"
     meta_text_lines["Source"] = source_text
 
-    
     object_source = ""
     obj_path = metadata["object_meta"]["path"]
     obj_creation_time = metadata["object_meta"]["creation_time"]
@@ -73,9 +75,9 @@ def create_meta_text_lines(
     # Add notes metadata
     notes_text = ""
     meta_type = metadata["object_meta"]["meta_type"]
-    notes_list = (
-        metadata["object_meta"]["footnotes"]["notes"]
-    )  # If empty this might be a list -- should be ok because len will still work.
+    notes_list = metadata["object_meta"]["footnotes"][
+        "notes"
+    ]  # If empty this might be a list -- should be ok because len will still work.
 
     if type(meta_type) == str and meta_type != "NA":
         n = footnotes[f"{artifact_type}_footnotes"][meta_type]
@@ -102,7 +104,7 @@ def create_meta_text_lines(
     abbrev_list = metadata["object_meta"]["footnotes"]["abbreviations"]
     if len(abbrev_list) > 0:
         for abbrev in abbrev_list:
-            full_form = footnotes['abbreviations'][abbrev]
+            full_form = footnotes["abbreviations"][abbrev]
             if full_form.endswith("."):
                 abbrev_text += f"{abbrev}: {full_form} "
             else:
@@ -110,24 +112,24 @@ def create_meta_text_lines(
     else:
         abbrev_text += "N/A"
     meta_text_lines["Abbreviations"] = abbrev_text
-    
+
     if config.get("use_object_path_as_source", False):
         meta_text_lines["Source"] = meta_text_lines["Object"]
-        del meta_text_lines['Object']
+        del meta_text_lines["Object"]
         return meta_text_lines
-    
+
     else:
         if include_object_path:
             return meta_text_lines
-        
+
         else:
-            del meta_text_lines['Object']
+            del meta_text_lines["Object"]
             return meta_text_lines
 
 
 def format_metadata_line(meta_key, meta_value, config):
     """Format a metadata line based on its key."""
-    # TODO: update [Source: {meta_value}] to include [] 
+    # TODO: update [Source: {meta_value}] to include []
     # if present in config
     match meta_key:
         case "Source":
@@ -149,14 +151,11 @@ def format_metadata_line(meta_key, meta_value, config):
 
 
 def create_formatted_run(
-    text: str, 
-    config: dict,
-    subscript: bool = False,
-    superscript: bool = False
+    text: str, config: dict, subscript: bool = False, superscript: bool = False
 ) -> run.CT_R:
     """Create a single formatted run with specified text."""
     run_element = OxmlElement("w:r")
-    
+
     # Asserting that text is not both sub and super-script
     # shouldn't happen, but if it does...
     assert not (subscript and superscript)
@@ -169,13 +168,13 @@ def create_formatted_run(
     sz.set(qn("w:val"), str(2 * config.get("footnotes_font_size", "10")))
     rPr.append(rFonts)
     rPr.append(sz)
-    
+
     # Add subscript or superscript property if needed
     vertAlign = OxmlElement("w:vertAlign")
     if subscript:
         vertAlign.set(qn("w:val"), "subscript")
         rPr.append(vertAlign)
-    
+
     elif superscript:
         vertAlign.set(qn("w:val"), "superscript")
         rPr.append(vertAlign)
@@ -184,11 +183,11 @@ def create_formatted_run(
 
     # Set text
     text_element = OxmlElement("w:t")
-    
+
     # Preserve spaces if text starts or ends with space
     if text.startswith(" ") or text.endswith(" "):
         text_element.set(qn("xml:space"), "preserve")
-        
+
     text_element.text = text
     run_element.append(text_element)
 
@@ -199,11 +198,11 @@ def create_formatted_runs(text: str, config: dict) -> list[run.CT_R]:
     """Create a formatted run with specified text."""
     if "_{" not in text and "^{" not in text:
         return [create_formatted_run(text, config)]
-    
+
     # here text has _{text} or ^{text} so we'll split
-    # with re and then add a bunch of runs 
+    # with re and then add a bunch of runs
     # based on the split
-    parts = re.split(r'(_\{[^}]*\}|\^\{[^}]*\})', text)
+    parts = re.split(r"(_\{[^}]*\}|\^\{[^}]*\})", text)
     runs = []
 
     for part in parts:
@@ -214,28 +213,26 @@ def create_formatted_runs(text: str, config: dict) -> list[run.CT_R]:
             # Extract subscript text (remove _{} notation)
             subscript_text = part[2:-1]
             # Create subscript run
-            sub_run = create_formatted_run(subscript_text, config, subscript = True)
+            sub_run = create_formatted_run(subscript_text, config, subscript=True)
             runs.append(sub_run)
-        
+
         elif part.startswith("^{") and part.endswith("}"):
-            # Extract superscript text (remove ^{}) 
+            # Extract superscript text (remove ^{})
             superscript_text = part[2:-1]
             # create superscript run
-            sup_run = create_formatted_run(superscript_text, config, superscript = True)
+            sup_run = create_formatted_run(superscript_text, config, superscript=True)
             runs.append(sup_run)
-        
+
         else:
             # Regular text run
             reg_run = create_formatted_run(part, config)
-            runs.append(reg_run)    
+            runs.append(reg_run)
 
     return runs
 
+
 def create_footnote_paragraph(
-    meta_text_dict: dict[str, str], 
-    name: str, 
-    paragraph_id: int,
-    config: dict
+    meta_text_dict: dict[str, str], name: str, paragraph_id: int, config: dict
 ) -> paragraph.CT_P:
     """Create a paragraph element containing formatted footnote text with bookmarks."""
     new_paragraph = OxmlElement("w:p")
@@ -247,9 +244,13 @@ def create_footnote_paragraph(
     new_paragraph.append(bookmark_start)
 
     # Add metadata lines - this assumes ordered dict which should be fine
-    meta_text_dict = {key: meta_text_dict[key] 
-        for key in config.get("footnote_order", ['Source', 'Object', 'Notes', 'Abbreviations'])
-        if key in meta_text_dict.keys()}
+    meta_text_dict = {
+        key: meta_text_dict[key]
+        for key in config.get(
+            "footnote_order", ["Source", "Object", "Notes", "Abbreviations"]
+        )
+        if key in meta_text_dict.keys()
+    }
 
     for line_idx, (meta, value) in enumerate(meta_text_dict.items()):
         # Format the line based on metadata type
