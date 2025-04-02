@@ -1,36 +1,36 @@
 # reportifyr 0.3.0
 
-* multiple figures with single combined footnote can now be added with the following syntax: 
-
-    Figure 1: Multiple figures with single footnote.
-    `{rpfy}:[figure_1.png, figure_2.png]`. 
-
+* multiple figures with single combined footnote can now be added with the following syntax:
+  
+    Figure 1: Multiple figures with single footnote.<br>
+    `{rpfy}:[figure_1.png, figure_2.png]`.<br>
+  
     * The resulting document after `build_report()` will look like the following:
-    Figure 1: Multiple figures with single footnote.
-    `{rpfy}:[figure_1.png, figure_2.png]`. 
-    A<Figure 1>
-    B<Figure 2>
-    Source: A: path/to/figure_1.png Timestamp. B: path/to/figure_2.png Timestamp.
-    Notes: A: notes for figure A. B: notes for figure B.
-    Abbreviations: A: N/A, B: N/A.
+      
+        Figure 1: Multiple figures with single footnote.<br>
+        `{rpfy}:[figure_1.png, figure_2.png]`.<br>
+        A<Figure 1><br>
+        B<Figure 2><br>
+        Source: A: path/to/figure_1.png Timestamp. B: path/to/figure_2.png Timestamp.<br>
+        Notes: A: notes for figure A. B: notes for figure B.<br>
+        Abbreviations: A: N/A, B: N/A.<br>
 
     * This will draw an A on figure_1 and a B on figure_2 in the upper left corner and combine the footnotes labelling them with A/B. This will work for any number of figures, with the labels wrapping to AA, AB after Z if necessary.
     
-* multiple figures with multiple footnotes can also be inserted under a figure caption with:
-
-    Figure 2: Some caption for multiple figures
-    `{rpfy}:figure_1.png
-    {rpfy}:figure_2.png`
-
+* multiple figures with multiple footnotes can also be inserted under a figure caption with:<br>
+    Figure 2: Some caption for multiple figures<br>
+    `{rpfy}:figure_1.png`<br>
+    `{rpfy}:figure_2.png`<br>
+  
     * The resulting document after `build_report()` will look like:
-    Figure 2: Some caption for multiple figures
-    `{rpfy}:figure_1.png`
-    <Figure 1>
-    [Footnote for Figure 1]
-
-    `{rpfy}:file_2.png`
-    <Figure 2>
-    [Footnote for Figure 2]
+    
+        Figure 2: Some caption for multiple figures.<br>
+        `{rpfy}:figure_1.png`<br>
+        Figure 1<br>
+        [Footnote for Figure 1]<br>
+        `{rpfy}:figure_2.png`<br>
+        Figure 2<br>
+        [Footnote for Figure 2]<br>
 
 * Config file is now included with reportifyr to set footnote options. Available configuration is:
     * footnote font, default Arial Narrow
@@ -80,5 +80,4 @@
     copied standard_footnotes.yaml into /path/to/project/report
     copied config.yaml into /path/to/project/report
     ```
-
 * Footnotes now support subscript and superscript using latex-like syntax: `AUC_{0-24}` will show up in the rendered docx with `0-24` as a subscript, and `kg/m^{2}` will show up with the `2` as a superscript.
