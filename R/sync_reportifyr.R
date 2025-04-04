@@ -37,7 +37,8 @@ sync_reportifyr_project <- function(project_dir, report_dir_name) {
   }
   # Check config
   config <- yaml::read_yaml(
-    file.path(project_dir, report_dir_name, "config.yaml")
+    file.path(project_dir, report_dir_name, "config.yaml"),
+		handlers = list(logical = yaml::verbatim_logical)
   )
 
   if (!identical(config, init$config)) {
