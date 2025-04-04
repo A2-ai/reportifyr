@@ -2,13 +2,15 @@
 
 #' Updates the logging level for functions. Default is set to WARN
 #'
+#' @param quiet suppresses messaging about log level.
+#'
 #' @export
 #'
 #' @examples \dontrun{
 #' Sys.setenv("RPFY_VERBOSE" = "DEBUG")
 #' toggle_logger()
 #' }
-toggle_logger <- function() {
+toggle_logger <- function(quiet = FALSE) {
   LEVEL_NAMES <- c("DEBUG", "INFO", "WARN", "ERROR", "FATAL")
   verbosity <- Sys.getenv("RPFY_VERBOSE", unset = "WARN")
   if (!(verbosity %in% LEVEL_NAMES)) {
@@ -24,7 +26,7 @@ toggle_logger <- function() {
     appenders = log4r::console_appender(my_layout)
   )
   assign("logger", logger, envir = .le)
-  message(paste("logging now at", verbosity, "level"))
+  if (!quiet) {message(paste("logging now at", verbosity, "level"))}
 }
 
 my_layout <- function(level, ...) {

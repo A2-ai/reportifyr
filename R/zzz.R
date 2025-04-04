@@ -1,5 +1,5 @@
 .onLoad <- function(libname, pkgname) {
-  toggle_logger()
+  toggle_logger(quiet = TRUE)
 }
 
 .onAttach <- function(libname, pkgname) {
