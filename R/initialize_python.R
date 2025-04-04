@@ -2,15 +2,20 @@
 #'
 #' @export
 #'
+#' @param continue Optional argument to bypass asking user for
+#' confirmation to install python deps
+#'
 #' @return invisibly the metadata_file path
 #'
 #' @examples \dontrun{
 #' initialize_python()
 #' }
-initialize_python <- function() {
+initialize_python <- function(continue = NULL) {
   log4r::debug(.le$logger, "Starting initialize_python function")
   # ask user to continue
-  continue <- continue()
+  if (is.null(continue)) {
+    continue <- continue()
+  }
 
   if (tolower(continue) != "y") {
     if (continue == "n") {

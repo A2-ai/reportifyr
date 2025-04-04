@@ -24,6 +24,7 @@ toggle_logger <- function() {
     appenders = log4r::console_appender(my_layout)
   )
   assign("logger", logger, envir = .le)
+  message(paste("logging now at", verbosity, "level"))
 }
 
 my_layout <- function(level, ...) {

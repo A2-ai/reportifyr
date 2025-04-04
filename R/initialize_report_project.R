@@ -14,9 +14,10 @@
 #' initialize_report_project(project_dir = tempdir())
 #' }
 initialize_report_project <- function(
-    project_dir,
-    report_dir_name = NULL,
-    outputs_dir_name = NULL) {
+  project_dir,
+  report_dir_name = NULL,
+  outputs_dir_name = NULL
+) {
   log4r::debug(.le$logger, "Starting initialize_report_project function")
 
   if (!dir.exists(project_dir)) {
@@ -61,7 +62,7 @@ initialize_report_project <- function(
     message(
       "reportifyr has already been initialized. Syncing with config file now."
     )
-    sync_reportifyr_project()
+    sync_reportifyr_project(project_dir, report_dir_name)
   }
 
   log4r::debug(.le$logger, "Exiting initialize_report_project function")
@@ -78,28 +79,44 @@ create_report_directories <- function(project_dir, report_dir_name) {
   dir.create(report_dir, showWarnings = FALSE, recursive = TRUE)
   log4r::info(.le$logger, paste0("Report directory created at: ", report_dir))
 
-  dir.create(file.path(report_dir, "draft"), showWarnings = FALSE, recursive = TRUE)
+  dir.create(
+    file.path(report_dir, "draft"),
+    showWarnings = FALSE,
+    recursive = TRUE
+  )
   log4r::debug(.le$logger, "Draft directory created")
   writeLines(
     "Directory for reportifyr draft documents",
     file.path(report_dir, "draft/readme.txt")
   )
 
-  dir.create(file.path(report_dir, "final"), showWarnings = FALSE, recursive = TRUE)
+  dir.create(
+    file.path(report_dir, "final"),
+    showWarnings = FALSE,
+    recursive = TRUE
+  )
   log4r::debug(.le$logger, "Final directory created")
   writeLines(
     "Directory for reportifyr final document",
     file.path(report_dir, "final/readme.txt")
   )
 
-  dir.create(file.path(report_dir, "scripts"), showWarnings = FALSE, recursive = TRUE)
+  dir.create(
+    file.path(report_dir, "scripts"),
+    showWarnings = FALSE,
+    recursive = TRUE
+  )
   log4r::debug(.le$logger, "Scripts directory created")
   writeLines(
     "Directory for R and Rmd scripts for creating reportifyr documents",
     file.path(report_dir, "scripts/readme.txt")
   )
 
-  dir.create(file.path(report_dir, "shell"), showWarnings = FALSE, recursive = TRUE)
+  dir.create(
+    file.path(report_dir, "shell"),
+    showWarnings = FALSE,
+    recursive = TRUE
+  )
   log4r::debug(.le$logger, "Shell directory created")
   writeLines(
     "Directory for reportifyr shell",
@@ -221,7 +238,10 @@ create_init_file <- function(project_dir, report_dir, outputs_dir) {
     user = user
   )
 
-  log4r::debug(.le$logger, paste0("Reading ", report_dir, "/config.yaml"))
+  log4r::debug(
+    .le$logger,
+    paste0("Reading ", file.path(report_dir, "config.yaml"))
+  )
   config <- yaml::read_yaml(file.path(report_dir, "config.yaml"))
   data$config <- config
 
@@ -251,8 +271,4 @@ create_init_file <- function(project_dir, report_dir, outputs_dir) {
   log4r::info(.le$logger, paste0("metadata written to file: ", init_file))
 
   log4r::debug(.le$logger, "Exiting write_package_version_metadata function")
-}
-
-sync_reportifyr_project <- function() {
-  2 + 2
 }
