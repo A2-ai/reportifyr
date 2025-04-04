@@ -62,7 +62,7 @@ initialize_report_project <- function(
     message(
       "reportifyr has already been initialized. Syncing with config file now."
     )
-    sync_reportifyr_project(project_dir, report_dir_name)
+    sync_report_project(project_dir, report_dir_name)
   }
 
   log4r::debug(.le$logger, "Exiting initialize_report_project function")

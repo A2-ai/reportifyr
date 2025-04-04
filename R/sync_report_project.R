@@ -1,4 +1,7 @@
-sync_reportifyr_project <- function(project_dir, report_dir_name) {
+
+sync_report_project <- function(project_dir, report_dir_name = NULL) {
+  log4r::debug(.le$logger, "Starting sync_report_project function")
+
   # read in init.json files
   if (!is.null(report_dir_name)) {
     path_name <- sub("/", "_", report_dir_name)
@@ -6,10 +9,28 @@ sync_reportifyr_project <- function(project_dir, report_dir_name) {
     path_name <- "report"
   }
   init_file <- file.path(project_dir, paste0(".", path_name, "_init.json"))
+  log4r::debug(
+    .le$logger,
+    paste0("Using ", init_file, " as project initialization file.")
+  )
+
+  if (!file.exists(init_file)) {
+    log4r::debug(.le$logger, paste0(init_file, " does not exist."))
+    stop(
+      paste(init_file, "file does not exist. "),
+      "Are you sure you supplied the correct report_dir_name?"
+    )
+  }
+
+  log4r::debug(.le$logger, paste0(init_file, "exists and being read now"))
   init <- jsonlite::read_json(init_file, simplifyVector = TRUE)
   # bool for later use
   update_init_file <- FALSE
 
+  log4r::debug(
+    .le$logger,
+    "Grabbing python deps info from options and filesystem"
+  )
   # Grab python dep info
   uv_path <- get_uv_path()
   args <- get_args(uv_path)
@@ -24,21 +45,31 @@ sync_reportifyr_project <- function(project_dir, report_dir_name) {
     "python.version"
   )
   py_version_data <- stats::setNames(as.list(args), args_name)
+  log4r::debug(
+    .le$logger,
+    paste0(
+      "Obtained the following python deps: ",
+      paste0(py_version_data, collapse = ",")
+    )
+  )
+
   # check init against current py dep requests
   if (!identical(init$python_versions, py_version_data)) {
+    log4r::debug(.le$logger, "init file and py version deps out of sync.")
     message(
       paste0(
         "Python dependency versions have been changed, updating ",
         init_file
       )
     )
+    log4r::debug(.le$logger, "Calling initialize_python now")
     initialize_python(continue = "Y")
     update_init_file <- TRUE
   }
   # Check config
   config <- yaml::read_yaml(
     file.path(project_dir, report_dir_name, "config.yaml"),
-		handlers = list(logical = yaml::verbatim_logical)
+    handlers = list(logical = yaml::verbatim_logical)
   )
 
   if (!identical(config, init$config)) {
