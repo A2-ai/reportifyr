@@ -29,6 +29,7 @@ Imports:
     digest,
     dplyr,
     flextable,
+    fs,
     gert,
     ggplot2,
     here,
