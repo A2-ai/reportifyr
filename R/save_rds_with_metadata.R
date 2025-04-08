@@ -27,15 +27,16 @@
 #' )
 #' }
 save_rds_with_metadata <- function(
-    object,
-    file = "",
-    config_yaml = NULL,
-    meta_type = "NA",
-    meta_equations = NULL,
-    meta_notes = NULL,
-    meta_abbrevs = NULL,
-    table1_format = FALSE,
-    ...) {
+  object,
+  file = "",
+  config_yaml = NULL,
+  meta_type = "NA",
+  meta_equations = NULL,
+  meta_notes = NULL,
+  meta_abbrevs = NULL,
+  table1_format = FALSE,
+  ...
+) {
   log4r::debug(.le$logger, "Starting save_rds_with_metadata function")
 
   base::saveRDS(object = object, file = file, ...)
@@ -50,7 +51,7 @@ save_rds_with_metadata <- function(
     table1_format = table1_format
   )
 
-	log4r::debug(.le$logger, "Reading config for RTF saving now")
+  log4r::debug(.le$logger, "Reading config for RTF saving now")
   if (!is.null(config_yaml)) {
     log4r::debug(.le$logger, paste0("Reading config.yaml: ", config_yaml))
     config <- yaml::read_yaml(config_yaml)

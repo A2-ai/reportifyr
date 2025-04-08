@@ -43,13 +43,14 @@
 #' )
 #' }
 add_plots <- function(
-    docx_in,
-    docx_out,
-    figures_path,
-    config_yaml = NULL,
-    fig_width = NULL,
-    fig_height = NULL,
-    debug = FALSE) {
+  docx_in,
+  docx_out,
+  figures_path,
+  config_yaml = NULL,
+  fig_width = NULL,
+  fig_height = NULL,
+  debug = FALSE
+) {
   log4r::debug(.le$logger, "Starting add_plots function")
 
   tictoc::tic()

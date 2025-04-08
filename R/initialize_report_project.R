@@ -195,7 +195,11 @@ update_config <- function(config_path, report_dir_name, outputs_dir_name) {
   }
 
   # Write the updated config back to the file
-  yaml::write_yaml(config, config_path, handlers = list(logical = yaml::verbatim_logical))
+  yaml::write_yaml(
+    config,
+    config_path,
+    handlers = list(logical = yaml::verbatim_logical)
+  )
 }
 
 #'  internal

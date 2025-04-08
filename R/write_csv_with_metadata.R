@@ -28,15 +28,16 @@
 #' )
 #' }
 write_csv_with_metadata <- function(
-    object,
-    file,
-    config_yaml = NULL,
-    meta_type = "NA",
-    meta_equations = NULL,
-    meta_notes = NULL,
-    meta_abbrevs = NULL,
-    table1_format = FALSE,
-    ...) {
+  object,
+  file,
+  config_yaml = NULL,
+  meta_type = "NA",
+  meta_equations = NULL,
+  meta_notes = NULL,
+  meta_abbrevs = NULL,
+  table1_format = FALSE,
+  ...
+) {
   log4r::debug(.le$logger, "Starting write_csv_with_metadata function")
 
   utils::write.csv(x = object, file = file, ...)
