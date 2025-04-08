@@ -1,28 +1,26 @@
 import argparse
 from docx import Document
 
-
 def remove_figures(docx_in, docx_out):
     doc = Document(docx_in)
     paragraphs = doc.paragraphs
-    namespace = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 
     for i, paragraph in enumerate(paragraphs):
-        if paragraph.text.startswith("{rpfy}:"):
-            if any(paragraph._element.xpath(".//w:drawing")):
-                for drawing in paragraph._element.xpath(".//w:drawing"):
-                    drawing.getparent().remove(drawing)
-
-                # Also remove any line breaks that might have been added
-                for br in paragraph._element.xpath(".//w:br"):
-                    br.getparent().remove(br)
-                
-            elif i + 1 < len(paragraphs):
-                next_paragraph = paragraphs[i + 1]
-                if not next_paragraph.text.strip() and next_paragraph._element.xpath(
-                    ".//w:drawing"
-                ):
-                    next_paragraph._element.getparent().remove(next_paragraph._element)
+        text = paragraph.text.strip()
+        if text.startswith("{rpfy}:"):
+            figure_name = text.replace("{rpfy}:", "").strip()
+            figure_name = figure_name.replace("[", "").replace("]", "")
+            figures = [fig.strip() for fig in figure_name.split(",")]
+            
+            paragraphs_to_remove = []
+            for j in range(len(figures)):
+                if i + j + 1 < len(paragraphs):
+                    next_par = paragraphs[i + j + 1]
+                    if not next_par.text.strip() and next_par._element.xpath(".//w:drawing"):
+                        paragraphs_to_remove.append((i + j + 1, next_par))
+            
+            for idx, par in reversed(paragraphs_to_remove):
+                par._element.getparent().remove(par._element)
 
     doc.save(docx_out)
     print(f"Processed file saved at '{docx_out}'.")
