@@ -10,5 +10,6 @@ inst/doc
 docs
 .venv
 report
+*_init.json
 
 inst/scripts/__pycache__
