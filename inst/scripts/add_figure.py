@@ -72,7 +72,7 @@ def add_figure(
                     image_path = os.path.join(figure_dir, figure)
                     if os.path.exists(image_path):
                         if add_label:
-                            labeled_image = add_label_to_image(image_path, fig_idx)
+                            labeled_image = add_label_to_image(image_path, len(figures) - fig_idx - 1)
                         else:
                             labeled_image = image_path
                        
