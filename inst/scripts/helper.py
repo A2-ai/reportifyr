@@ -8,7 +8,6 @@ from docx.oxml.text import run, paragraph
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
-
 def create_label(index: int) -> str:
     """
     This function takes in an index and returns
@@ -125,6 +124,39 @@ def create_meta_text_lines(
         else:
             del meta_text_lines["Object"]
             return meta_text_lines
+
+def parse_magic_string(input_string: str) -> (list, dict):
+    # Initialize empty list for files and dict for args
+    files = []
+    args = {}
+    
+    # Extract files part (everything before the first '<' or the whole string if no '<')
+    files_part = re.search(r'^(.*?)(?:<|$)', input_string).group(1)
+    
+    # Extract arguments part (everything between '<' and '>')
+    args_match = re.search(r'<(.*?)>', input_string)
+    args_part = args_match.group(1) if args_match else ""
+    
+    # Parse files
+    if files_part.startswith('[') and files_part.endswith(']'):
+        # Multiple files within brackets
+        files_content = files_part[1:-1].strip()
+        if files_content:
+            files = [file.strip() for file in files_content.split(',')]
+    else:
+        # Single file without brackets
+        files = [files_part.strip()]
+    
+    # Parse arguments
+    if args_part:
+        arg_pairs = args_part.split(',')
+        for pair in arg_pairs:
+            if ':' in pair:
+                key, value = pair.split(':', 1)
+                args[key.strip()] = value.strip()
+    
+    return files, args
+
 
 
 def format_metadata_line(meta_key, meta_value, config):

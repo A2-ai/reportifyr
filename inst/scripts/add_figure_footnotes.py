@@ -47,16 +47,8 @@ def add_figure_footnotes(
         for match in matches:
             # generalized extraction of the figure name
             figure_name = match.replace("{rpfy}:", "").strip()
+            figures, _ = helper.parse_magic_string(figure_name)
 
-            if "[" not in figure_name:
-                figures = figure_name.split(",")
-            else:
-                figures = (
-                    figure_name.replace(" ", "")
-                    .replace("[", "")
-                    .replace("]", "")
-                    .split(",")
-                )
             # create empty dict for combining all metadata
             combined_footnotes = {}
             # enumerating here so i can use f to get label for

@@ -1,7 +1,7 @@
 import os
 import re
 
-from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_TAB_ALIGNMENT
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 import helper
 import tempfile
 import argparse
@@ -29,9 +29,8 @@ def add_figure(
         config = {}
 
     # Define magic string pattern
-    start_pattern = (
-        r"\{rpfy\}\:"  # Matches "{rpfy}:" and any directory structure following it
-    )
+    # Matches "{rpfy}:" and any directory structure following it
+    start_pattern = r"\{rpfy\}\:"  
     end_pattern = r"\.[^.]+$"
     magic_pattern = re.compile(start_pattern + ".*?" + end_pattern)
     found_magic_strings = []
@@ -45,21 +44,11 @@ def add_figure(
 
             for match in matches:
                 # Extract the image directory from the match
+                # figure_name now contains potentially a list
+                # of file names and args. like
+                # [file.ext, file2.ext]<width: 4, height: 6>
                 figure_name = match.replace("{rpfy}:", "").strip()
-
-                # If figure name isn't list like, add it to
-                # found_magic_strings
-                if "[" not in figure_name:
-                    figures = figure_name.split(",")
-                # Else remove brackets and create list for iterating through
-                # figures to add to paragraph.
-                else:
-                    figures = (
-                        figure_name.replace(" ", "")
-                        .replace("[", "")
-                        .replace("]", "")
-                        .split(",")
-                    )
+                figures, args = helper.parse_magic_string(figure_name)
 
                 if len(figures) > 1:
                     figures = list(reversed(figures))
@@ -73,6 +62,9 @@ def add_figure(
                     image_path = os.path.join(figure_dir, figure)
                     if os.path.exists(image_path):
                         if add_label:
+                            # since list is reversed need to use correct
+                            # index, index 0 corresponds to the last
+                            # element in list so len(figures) - 1 for 1-index
                             labeled_image = add_label_to_image(
                                 image_path, len(figures) - fig_idx - 1
                             )
@@ -82,14 +74,49 @@ def add_figure(
                         # Create new paragraph and add to list
                         new_par = document.add_paragraph()
                         run = new_par.add_run()
+                        # +2 because word paragraphs are 1-indexed
+                        # and we are adding the paragraph after the
+                        # current paragraph
                         new_paragraphs.append((i + 2, new_par))
+                        # can only use embedded_size if the args are there
+                        if config.get("use_embedded_size", True) and set(
+                            args.keys()
+                        ).intersection(["width", "height"]):
+                            run.add_picture(
+                                labeled_image,
+                                width=(
+                                    Inches(float(args.get("width")))
+                                    if "width" in args
+                                    else None
+                                ),
+                                height=(
+                                    Inches(float(args.get("height")))
+                                    if "height" in args
+                                    else None
+                                ),
+                            )
 
-                        if config.get("use_artifact_size", False):
+                        elif config.get("use_artifact_size", False):
                             run.add_picture(labeled_image)
 
                         else:
                             default_width = config.get("default_fig_width", 6)
-                            if fig_width is not None and fig_height is not None:
+                            if set(args.keys()).intersection(["width", "height"]):
+                                run.add_picture(
+                                    labeled_image,
+                                    width=(
+                                        Inches(float(args.get("width")))
+                                        if "width" in args
+                                        else None
+                                    ),
+                                    height=(
+                                        Inches(float(args.get("height")))
+                                        if "height" in args
+                                        else None
+                                    ),
+                                )
+
+                            elif fig_width is not None and fig_height is not None:
                                 run.add_picture(
                                     labeled_image,
                                     width=Inches(fig_width),
