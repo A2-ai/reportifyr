@@ -11,6 +11,7 @@ from docx import Document
 from docx.shared import Inches
 from PIL import Image, ImageDraw, ImageFont
 
+
 def add_figure(
     docx_in: str,
     docx_out: str,
@@ -20,11 +21,11 @@ def add_figure(
     fig_height: Optional[float] = None,
 ):
     document = Document(docx_in)
-   
+
     # load config.yaml or set empty dict for defaults.
     if config_yaml is not None:
         config = helper.load_yaml(config_yaml)
-    else: 
+    else:
         config = {}
 
     # Define magic string pattern
@@ -64,7 +65,7 @@ def add_figure(
                     figures = list(reversed(figures))
 
                 for fig_idx, figure in enumerate(figures):
-                    add_label = False 
+                    add_label = False
                     if len(figures) > 1 and config.get("label_multi_figures", False):
                         add_label = True
 
@@ -72,12 +73,14 @@ def add_figure(
                     image_path = os.path.join(figure_dir, figure)
                     if os.path.exists(image_path):
                         if add_label:
-                            labeled_image = add_label_to_image(image_path, len(figures) - fig_idx - 1)
+                            labeled_image = add_label_to_image(
+                                image_path, len(figures) - fig_idx - 1
+                            )
                         else:
                             labeled_image = image_path
-                       
+
                         # Create new paragraph and add to list
-                        new_par = document.add_paragraph() 
+                        new_par = document.add_paragraph()
                         run = new_par.add_run()
                         new_paragraphs.append((i + 2, new_par))
 
@@ -113,7 +116,7 @@ def add_figure(
                             case _:
                                 new_par.alignment = WD_ALIGN_PARAGRAPH.CENTER
     # Insert new paragraphs
-    new_paragraphs.sort(reverse = True, key = lambda x: x[0])
+    new_paragraphs.sort(reverse=True, key=lambda x: x[0])
     for par_idx, par in new_paragraphs:
         parent = document.paragraphs[0]._element.getparent()
         par._element.getparent().remove(par._element)
@@ -188,4 +191,6 @@ if __name__ == "__main__":
     parser.add_argument("-g", "--height", type=str, default=None, help="Figure height")
     args = parser.parse_args()
 
-    add_figure(args.input, args.output, args.figure_dir, args.config, args.width, args.height)
+    add_figure(
+        args.input, args.output, args.figure_dir, args.config, args.width, args.height
+    )

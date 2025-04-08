@@ -1,6 +1,7 @@
 import argparse
 from docx import Document
 
+
 def remove_figures(docx_in, docx_out):
     doc = Document(docx_in)
     paragraphs = doc.paragraphs
@@ -11,14 +12,16 @@ def remove_figures(docx_in, docx_out):
             figure_name = text.replace("{rpfy}:", "").strip()
             figure_name = figure_name.replace("[", "").replace("]", "")
             figures = [fig.strip() for fig in figure_name.split(",")]
-            
+
             paragraphs_to_remove = []
             for j in range(len(figures)):
                 if i + j + 1 < len(paragraphs):
                     next_par = paragraphs[i + j + 1]
-                    if not next_par.text.strip() and next_par._element.xpath(".//w:drawing"):
+                    if not next_par.text.strip() and next_par._element.xpath(
+                        ".//w:drawing"
+                    ):
                         paragraphs_to_remove.append((i + j + 1, next_par))
-            
+
             for idx, par in reversed(paragraphs_to_remove):
                 par._element.getparent().remove(par._element)
 

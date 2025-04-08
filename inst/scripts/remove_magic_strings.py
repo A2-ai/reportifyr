@@ -2,6 +2,7 @@ import argparse
 from docx import Document
 from docx.oxml import OxmlElement
 
+
 def remove_magic_strings(docx_in, docx_out):
     sentinel = "{rpfy}:"  # Magic String
 
@@ -28,8 +29,12 @@ def remove_magic_strings(docx_in, docx_out):
             fld_elements = para._element.xpath(".//w:fldSimple")
             for fld in fld_elements:
                 # w:instr is in the WordprocessingML namespace
-                instr_value = fld.get("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}instr")
-                if instr_value and ("SEQ Table" in instr_value or "SEQ Figure" in instr_value):
+                instr_value = fld.get(
+                    "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}instr"
+                )
+                if instr_value and (
+                    "SEQ Table" in instr_value or "SEQ Figure" in instr_value
+                ):
                     is_caption = True
                     break
 
@@ -41,10 +46,17 @@ def remove_magic_strings(docx_in, docx_out):
     doc.save(docx_out)
     print(f"Processed file saved at {docx_out}.")
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Remove magic strings from input docx document")
-    parser.add_argument("-i", "--input", type=str, required=True, help="input docx file path")
-    parser.add_argument("-o", "--output", type=str, required=True, help="Output docx file")
+    parser = argparse.ArgumentParser(
+        description="Remove magic strings from input docx document"
+    )
+    parser.add_argument(
+        "-i", "--input", type=str, required=True, help="input docx file path"
+    )
+    parser.add_argument(
+        "-o", "--output", type=str, required=True, help="Output docx file"
+    )
     args = parser.parse_args()
 
     remove_magic_strings(args.input, args.output)

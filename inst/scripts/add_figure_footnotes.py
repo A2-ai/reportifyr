@@ -91,16 +91,19 @@ def add_figure_footnotes(
                     if f == len(figures) - 1:
                         footnote_inserted = False
                         figure_paragraphs = []
-                
+
                         # Find the paragraphs containing the figures
-                        for j in range(i+1, len(paragraphs)):
+                        for j in range(i + 1, len(paragraphs)):
                             paragraph = paragraphs[j]
-                            if any(run.element.xpath(".//pic:pic") for run in paragraph.runs):
+                            if any(
+                                run.element.xpath(".//pic:pic")
+                                for run in paragraph.runs
+                            ):
                                 figure_paragraphs.append((j, paragraph))
                                 # For single-figure or if we've collected enough figures for multi-figure
                                 if len(figure_paragraphs) >= len(figures):
                                     break
-                        
+
                         # Insert footnote after the last figure paragraph if we found any
                         if figure_paragraphs and not footnote_inserted:
                             # Get the last figure paragraph found
@@ -110,7 +113,7 @@ def add_figure_footnotes(
                             )
                             fig_paragraph._element.addnext(new_paragraph)
                             footnote_inserted = True
-                        
+
     # save the processed document
     if missing_metadata and fail_on_missing_metadata:
         print(
