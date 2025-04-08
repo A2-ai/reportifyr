@@ -1,4 +1,3 @@
-
 #' Synchronizes report project with config and python
 #' dependencies set through options. Uses .report_dir_name_init.json
 #' to track differences.
@@ -37,7 +36,7 @@ sync_report_project <- function(project_dir, report_dir_name = NULL) {
     )
   }
 
-  log4r::debug(.le$logger, paste0(init_file, "exists and being read now"))
+  log4r::debug(.le$logger, paste0(init_file, " exists and being read now"))
   init <- jsonlite::read_json(init_file, simplifyVector = TRUE)
   # bool for later use
   update_init_file <- FALSE
@@ -60,11 +59,12 @@ sync_report_project <- function(project_dir, report_dir_name = NULL) {
     "python.version"
   )
   py_version_data <- stats::setNames(as.list(args), args_name)
+  formatted_deps <- paste0(names(py_version_data), "=", unlist(py_version_data), collapse = ", ")
   log4r::debug(
     .le$logger,
     paste0(
       "Obtained the following python deps: ",
-      paste0(py_version_data, collapse = ",")
+      formatted_deps
     )
   )
 
@@ -82,12 +82,21 @@ sync_report_project <- function(project_dir, report_dir_name = NULL) {
     update_init_file <- TRUE
   }
   # Check config
+	log4r::debug(.le$logger, "getting config path now")
+  if (!is.null(report_dir_name)) {
+    config_path <- file.path(project_dir, report_dir_name, "config.yaml")
+  } else {
+    config_path <- file.path(project_dir, "report", "config.yaml")
+  }
+	log4r::debug(.le$logger, paste0("using config path: ", config_path))
   config <- yaml::read_yaml(
-    file.path(project_dir, report_dir_name, "config.yaml"),
+    config_path,
     handlers = list(logical = yaml::verbatim_logical)
   )
+	log4r::debug(.le$logger, paste0("Read in config successfully"))
 
   if (!identical(config, init$config)) {
+		log4r::debug(.le$logger, "init file and config file out of sync.")
     message(
       paste0(
         "Configuration has changed, updating ",
@@ -127,6 +136,7 @@ sync_report_project <- function(project_dir, report_dir_name = NULL) {
   }
 
   if (update_init_file) {
+		log4r::debug(.le$logger, "Updating init file now")
     message("Updated")
     init$last_modified <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
     init$user <- Sys.info()[["user"]]

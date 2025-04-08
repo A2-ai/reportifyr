@@ -86,7 +86,7 @@ remove_magic_strings <- function(docx_in, docx_out) {
     )
   }
 
-  if (tolower(continue) == "Y") {
+  if (tolower(continue) == "y") {
     log4r::info(.le$logger, "User confirmed bookmark removal.")
 
     if (!file.exists(docx_in)) {

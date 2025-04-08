@@ -3,6 +3,7 @@ import re
 import sys
 import helper
 import argparse
+from typing import Optional
 from docx import Document
 
 
@@ -11,13 +12,18 @@ def add_figure_footnotes(
     docx_out: str,
     figure_dir: str,
     footnotes_yaml: str,
-    config_yaml: str,
+    config_yaml: Optional[str],
     include_object_path: bool = False,
     fail_on_missing_metadata: bool = True,
 ):
     # load standard footnotes from a yaml file
     footnotes = helper.load_yaml(footnotes_yaml)
-    config = helper.load_yaml(config_yaml)
+
+    # load config.yaml or set empty dict for defaults.
+    if config_yaml is not None:
+        config = helper.load_yaml(config_yaml)
+    else:
+        config = {}
 
     document = Document(docx_in)
 
@@ -56,7 +62,6 @@ def add_figure_footnotes(
             # enumerating here so i can use f to get label for
             # helper.create_label(f)
             for f, figure_name in enumerate(figures):
-
                 if figure_name in os.listdir(figure_dir):
                     metadata = helper.load_metadata(figure_dir, figure_name)
 
@@ -69,32 +74,43 @@ def add_figure_footnotes(
 
                     if len(figures) > 1:
                         for key in meta_text_dict.keys():
-                            try:
-                                combined_footnotes[
-                                    key
-                                ] += f"{helper.create_label(f)}: {meta_text_dict[key]} "
-                            except:
-                                combined_footnotes[key] = (
+                            if config.get("label_multi_figures", False):
+                                new_footnote_text = (
                                     f"{helper.create_label(f)}: {meta_text_dict[key]} "
                                 )
+                            else:
+                                new_footnote_text = f"{meta_text_dict[key]} "
+                            try:
+                                combined_footnotes[key] += new_footnote_text
+                            except:
+                                combined_footnotes[key] = new_footnote_text
+
                     else:
                         combined_footnotes = meta_text_dict
 
                     if f == len(figures) - 1:
                         footnote_inserted = False
-                        for j in range(i, len(paragraphs)):
+                        figure_paragraphs = []
+                
+                        # Find the paragraphs containing the figures
+                        for j in range(i+1, len(paragraphs)):
                             paragraph = paragraphs[j]
-                            if any(
-                                run.element.xpath(".//pic:pic")
-                                for run in paragraph.runs
-                            ):
-                                if not footnote_inserted:
-                                    new_paragraph = helper.create_footnote_paragraph(
-                                        combined_footnotes, figure_name, i, config
-                                    )
-                                    paragraph._element.addnext(new_paragraph)
-                                    footnote_inserted = True
-
+                            if any(run.element.xpath(".//pic:pic") for run in paragraph.runs):
+                                figure_paragraphs.append((j, paragraph))
+                                # For single-figure or if we've collected enough figures for multi-figure
+                                if len(figure_paragraphs) >= len(figures):
+                                    break
+                        
+                        # Insert footnote after the last figure paragraph if we found any
+                        if figure_paragraphs and not footnote_inserted:
+                            # Get the last figure paragraph found
+                            fig_index, fig_paragraph = figure_paragraphs[-1]
+                            new_paragraph = helper.create_footnote_paragraph(
+                                combined_footnotes, figures[0], i, config
+                            )
+                            fig_paragraph._element.addnext(new_paragraph)
+                            footnote_inserted = True
+                        
     # save the processed document
     if missing_metadata and fail_on_missing_metadata:
         print(

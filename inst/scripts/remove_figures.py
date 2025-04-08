@@ -13,6 +13,10 @@ def remove_figures(docx_in, docx_out):
                 for drawing in paragraph._element.xpath(".//w:drawing"):
                     drawing.getparent().remove(drawing)
 
+                # Also remove any line breaks that might have been added
+                for br in paragraph._element.xpath(".//w:br"):
+                    br.getparent().remove(br)
+                
             elif i + 1 < len(paragraphs):
                 next_paragraph = paragraphs[i + 1]
                 if not next_paragraph.text.strip() and next_paragraph._element.xpath(

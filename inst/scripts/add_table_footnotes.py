@@ -3,6 +3,7 @@ import re
 import sys
 import helper
 import argparse
+from typing import Optional
 from docx import Document
 from docx.oxml.ns import qn
 
@@ -12,13 +13,18 @@ def add_table_footnotes(
     docx_out: str,
     table_dir: str,
     footnotes_yaml: str,
-    config_yaml: str,
+    config_yaml: Optional[str],
     include_object_path: bool = False,
     fail_on_missing_metadata: bool = True,
 ):
     # Load standard footnotes from a JSON file
     footnotes = helper.load_yaml(footnotes_yaml)
-    config = helper.load_yaml(config_yaml)
+
+    # load config.yaml or set empty dict for defaults.
+    if config_yaml is not None:
+        config = helper.load_yaml(config_yaml)
+    else:
+        config = {}
 
     document = Document(docx_in)
 

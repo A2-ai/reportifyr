@@ -11,3 +11,11 @@ footnote_order:
   - Object
   - Notes
   - Abbreviations
+
+save_table_rtf: FALSE
+
+fig_alignment: "center"
+use_artifact_size: TRUE
+default_fig_width: 6
+
+label_multi_figures: FALSE
