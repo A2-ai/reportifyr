@@ -12,7 +12,9 @@ def remove_figures(docx_in, docx_out):
             figure_name = text.replace("{rpfy}:", "").strip()
             figure_name = figure_name.replace("[", "").replace("]", "")
             figures = [fig.strip() for fig in figure_name.split(",")]
-
+            # if config.get("use_
+            # update paragraph text
+            # f"{text}<width: {helper.get_width()}, height: {helper.get_height()}>" 
             paragraphs_to_remove = []
             for j in range(len(figures)):
                 if i + j + 1 < len(paragraphs):
@@ -22,7 +24,7 @@ def remove_figures(docx_in, docx_out):
                     ):
                         paragraphs_to_remove.append((i + j + 1, next_par))
 
-            for idx, par in reversed(paragraphs_to_remove):
+            for _, par in reversed(paragraphs_to_remove):
                 par._element.getparent().remove(par._element)
 
     doc.save(docx_out)

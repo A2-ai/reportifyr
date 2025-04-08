@@ -33,6 +33,7 @@ def add_figure(
     start_pattern = r"\{rpfy\}\:"  
     end_pattern = r"\.[^.]+$"
     magic_pattern = re.compile(start_pattern + ".*?" + end_pattern)
+
     found_magic_strings = []
     new_paragraphs = []
 

@@ -43,7 +43,7 @@ def add_table_footnotes(
             continue
 
         if len(matches) > len(set(matches)):
-            print(f"Duplicate figure names found in paragraph {i+1}")
+            print(f"Duplicate table names found in paragraph {i+1}")
 
         for match in matches:
             # Generalized extraction of the table name
@@ -62,30 +62,20 @@ def add_table_footnotes(
                     )
 
                 if add_footnote:
-                    # Find the table and insert the meta_text after it
-                    found_magic_string = False
-                    for element in document.element.body:
-                        if element.tag == qn("w:p"):
-                            para_text = "".join(
-                                node.text or ""
-                                for node in element.iter()
-                                if node.tag == qn("w:t")
-                            )
-                            if match in para_text:  # Use the original match string
-                                found_magic_string = True
+                    # this gets xml index rather than paragraph index
+                    current_p = par._p
+                    body_elements = list(document.element.body)
+                    p_index = body_elements.index(current_p)
 
-                        if found_magic_string and element.tag == qn("w:tbl"):
-                            table = element
-                            new_paragraph = helper.create_footnote_paragraph(
-                                meta_text_dict, table_name, i, config
-                            )
-
-                            # Insert the new paragraph after the table
-                            document.element.body.insert(
-                                document.element.body.index(table) + 1,
-                                new_paragraph,
-                            )
-                            found_magic_string = False
+                    # w:tbl is directly after matching magic string
+                    table = body_elements[p_index + 1]
+                    if table.tag == qn("w:tbl"):
+                        new_paragraph = helper.create_footnote_paragraph(
+                            meta_text_dict, table_name, i, config
+                        )
+                        document.element.body.insert(
+                            document.element.body.index(table) + 1, new_paragraph
+                        )
 
     # Save the processed document
     if missing_metadata and fail_on_missing_metadata:

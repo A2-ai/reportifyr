@@ -59,16 +59,15 @@
 #' )
 #' }
 add_footnotes <- function(
-  docx_in,
-  docx_out,
-  figures_path,
-  tables_path,
-  standard_footnotes_yaml = NULL,
-  config_yaml = NULL,
-  include_object_path = FALSE,
-  footnotes_fail_on_missing_metadata = TRUE,
-  debug = FALSE
-) {
+    docx_in,
+    docx_out,
+    figures_path,
+    tables_path,
+    standard_footnotes_yaml = NULL,
+    config_yaml = NULL,
+    include_object_path = FALSE,
+    footnotes_fail_on_missing_metadata = TRUE,
+    debug = FALSE) {
   log4r::debug(.le$logger, "Starting add_footnotes function")
 
   tictoc::tic()
@@ -213,6 +212,7 @@ add_footnotes <- function(
     )
     stop("Please install uv with initialize_python")
   }
+
   log4r::debug(.le$logger, "Running figure footnotes script")
   fig_results <- tryCatch(
     {
