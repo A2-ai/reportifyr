@@ -125,39 +125,72 @@ def create_meta_text_lines(
             del meta_text_lines["Object"]
             return meta_text_lines
 
-def parse_magic_string(input_string: str) -> (list, dict):
-    # Initialize empty list for files and dict for args
+def parse_magic_string(input_string: str) -> tuple[list, dict[str, dict[str, str]]]:
+    """
+    Parse the magic string format where arguments can be tied to individual files.
+    Returns a tuple of (list of files, arguments dictionary keyed by file name).
+    
+    The function handles formats like:
+    - [file1.ext<width: 5, height: 8>, file2.ext<width: 4>, file3.ext]
+    - [file1.ext, file2.ext]
+    - file.ext<height: 6>
+    - file.ext
+    """
+    # Initialize structure to hold files and their arguments
     files = []
     args = {}
     
-    # Extract files part (everything before the first '<' or the whole string if no '<')
-    files_part = re.search(r'^(.*?)(?:<|$)', input_string).group(1)
-    
-    # Extract arguments part (everything between '<' and '>')
-    args_match = re.search(r'<(.*?)>', input_string)
-    args_part = args_match.group(1) if args_match else ""
-    
-    # Parse files
-    if files_part.startswith('[') and files_part.endswith(']'):
+    # Check if it's a list of files
+    if input_string.startswith('[') and input_string.endswith(']'):
         # Multiple files within brackets
-        files_content = files_part[1:-1].strip()
-        if files_content:
-            files = [file.strip() for file in files_content.split(',')]
+        content = input_string[1:-1].strip()
+        
+        # Split by commas, but not those inside angle brackets
+        entries = []
+        current_entry = ""
+        bracket_depth = 0
+        
+        for char in content:
+            if char == '<':
+                bracket_depth += 1
+                current_entry += char
+            elif char == '>':
+                bracket_depth -= 1
+                current_entry += char
+            elif char == ',' and bracket_depth == 0:
+                # Only split on commas outside of angle brackets
+                entries.append(current_entry.strip())
+                current_entry = ""
+            else:
+                current_entry += char
+        
+        if current_entry.strip():
+            entries.append(current_entry.strip())
     else:
-        # Single file without brackets
-        files = [files_part.strip()]
+        # Single file
+        entries = [input_string]
     
-    # Parse arguments
-    if args_part:
-        arg_pairs = args_part.split(',')
-        for pair in arg_pairs:
-            if ':' in pair:
-                key, value = pair.split(':', 1)
-                args[key.strip()] = value.strip()
+    # Parse each file entry
+    for entry in entries:
+        file_match = re.match(r'^(.*?)(?:<|$)', entry)
+        file_name = file_match.group(1).strip() if file_match else ""
+        
+        args_match = re.search(r'<(.*?)>', entry)
+        file_args = {}
+        
+        if args_match:
+            args_str = args_match.group(1)
+            arg_pairs = args_str.split(',')
+            
+            for pair in arg_pairs:
+                if ':' in pair:
+                    key, value = pair.split(':', 1)
+                    file_args[key.strip()] = value.strip()
+        
+        files.append(file_name)
+        args[file_name] = file_args
     
     return files, args
-
-
 
 def format_metadata_line(meta_key, meta_value, config):
     """Format a metadata line based on its key."""
