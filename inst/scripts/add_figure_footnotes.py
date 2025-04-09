@@ -101,7 +101,7 @@ def add_figure_footnotes(
                             # Get the last figure paragraph found
                             fig_index, fig_paragraph = figure_paragraphs[-1]
                             new_paragraph = helper.create_footnote_paragraph(
-                                combined_footnotes, figures[0], i, config
+                                combined_footnotes, "".join(figures), i, config
                             )
                             fig_paragraph._element.addnext(new_paragraph)
                             footnote_inserted = True
