@@ -214,7 +214,7 @@ add_footnotes <- function(
   }
 
   log4r::debug(.le$logger, "Running figure footnotes script")
-  fig_results <- tryCatch(
+  tryCatch(
     {
       result <- processx::run(
         command = uv_path,
@@ -228,6 +228,9 @@ add_footnotes <- function(
           paste0("Figure footnotes script stderr: ", result$stderr)
         )
       }
+      log4r::info(.le$logger, paste0("Returning status: ", result$status))
+      log4r::info(.le$logger, paste0("Returning stderr: ", result$stderr))
+      log4r::info(.le$logger, paste0("Returning stdout: ", result$stdout))
     },
     error = function(e) {
       log4r::error(
@@ -254,12 +257,8 @@ add_footnotes <- function(
     }
   )
 
-  log4r::info(.le$logger, paste0("Returning status: ", fig_results$status))
-  log4r::info(.le$logger, paste0("Returning stderr: ", fig_results$stderr))
-  log4r::info(.le$logger, paste0("Returning stdout: ", fig_results$stdout))
-
   log4r::debug(.le$logger, "Running table footnotes script")
-  tab_results <- tryCatch(
+  tryCatch(
     {
       result <- processx::run(
         command = uv_path,
@@ -273,6 +272,10 @@ add_footnotes <- function(
           paste0("Table footnotes script stderr: ", result$stderr)
         )
       }
+
+      log4r::info(.le$logger, paste0("Returning status: ", result$status))
+      log4r::info(.le$logger, paste0("Returning stderr: ", result$stderr))
+      log4r::info(.le$logger, paste0("Returning stdout: ", result$stdout))
     },
     error = function(e) {
       log4r::error(
@@ -299,9 +302,6 @@ add_footnotes <- function(
     }
   )
 
-  log4r::info(.le$logger, paste0("Returning status: ", tab_results$status))
-  log4r::info(.le$logger, paste0("Returning stderr: ", tab_results$stderr))
-  log4r::info(.le$logger, paste0("Returning stdout: ", tab_results$stdout))
 
   tictoc::toc()
   log4r::debug(.le$logger, "Exiting add_footnotes function")
