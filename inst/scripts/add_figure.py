@@ -79,20 +79,27 @@ def add_figure(
                         # and we are adding the paragraph after the
                         # current paragraph
                         new_paragraphs.append((i + 2, new_par))
+
                         # can only use embedded_size if the args are there
+                        # args = {
+                        #    'file.ext': {'width': '5', 'height': '8'},
+                        #    'file2.ext': {'height': '8'},
+                        #    'file3.ext': {'width': '5'},
+                        #    'file4.ext': {}
+                        # }
                         if config.get("use_embedded_size", True) and set(
-                            args.keys()
+                            args[figure].keys()
                         ).intersection(["width", "height"]):
                             run.add_picture(
                                 labeled_image,
                                 width=(
-                                    Inches(float(args.get("width")))
-                                    if "width" in args
+                                    Inches(float(args[figure].get("width")))
+                                    if "width" in args[figure]
                                     else None
                                 ),
                                 height=(
-                                    Inches(float(args.get("height")))
-                                    if "height" in args
+                                    Inches(float(args[figure].get("height")))
+                                    if "height" in args[figure]
                                     else None
                                 ),
                             )
@@ -102,17 +109,17 @@ def add_figure(
 
                         else:
                             default_width = config.get("default_fig_width", 6)
-                            if set(args.keys()).intersection(["width", "height"]):
+                            if set(args[figure].keys()).intersection(["width", "height"]):
                                 run.add_picture(
                                     labeled_image,
                                     width=(
-                                        Inches(float(args.get("width")))
-                                        if "width" in args
+                                        Inches(float(args[figure].get("width")))
+                                        if "width" in args[figure]
                                         else None
                                     ),
                                     height=(
-                                        Inches(float(args.get("height")))
-                                        if "height" in args
+                                        Inches(float(args[figure].get("height")))
+                                        if "height" in args[figure]
                                         else None
                                     ),
                                 )
