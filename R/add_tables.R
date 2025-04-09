@@ -167,18 +167,19 @@ process_table_file <- function(table_file, document) {
     flextable <- format_flextable(data_in, metadata$object_meta$table1)
   }
 
-  # document$officer_cursor$which <- paragraph_idx
   document <- officer::cursor_reach(
     document,
     paste0("\\{rpfy\\}:", basename(table_file))
-  ) |>
-    flextable::body_add_flextable(
-      value = flextable,
-      pos = "after",
-      align = "center",
-      split = FALSE,
-      keepnext = FALSE
-    )
+  )
+
+  flextable::body_add_flextable(
+    document,
+    value = flextable,
+    pos = "after",
+    align = "center",
+    split = FALSE,
+    keepnext = FALSE
+  )
 
   log4r::info(.le$logger, paste0("Inserted table for: ", table_file))
   # save to tmp docx file for next iteration
