@@ -38,16 +38,15 @@
 #' )
 #' }
 build_report <- function(
-  docx_in,
-  docx_out = NULL,
-  figures_path,
-  tables_path,
-  standard_footnotes_yaml = NULL,
-  config_yaml = NULL,
-  add_footnotes = TRUE,
-  include_object_path = FALSE,
-  footnotes_fail_on_missing_metadata = TRUE
-) {
+    docx_in,
+    docx_out = NULL,
+    figures_path,
+    tables_path,
+    standard_footnotes_yaml = NULL,
+    config_yaml = NULL,
+    add_footnotes = TRUE,
+    include_object_path = FALSE,
+    footnotes_fail_on_missing_metadata = TRUE) {
   log4r::debug(.le$logger, "Starting build_report function")
 
   if (!file.exists(docx_in)) {
@@ -99,7 +98,8 @@ build_report <- function(
   # Save over input docx without tfls
   remove_tables_figures_footnotes(
     docx_in = docx_in,
-    docx_out = doc_dirs$doc_clean
+    docx_out = doc_dirs$doc_clean,
+    config_yaml = config_yaml
   )
 
   add_tables(
@@ -118,7 +118,7 @@ build_report <- function(
     docx_in = doc_dirs$doc_tables,
     docx_out = docx_out_figs,
     figures_path = figures_path,
-    config_yaml = config_yaml
+    config_yaml 
   )
 
   if (add_footnotes) {

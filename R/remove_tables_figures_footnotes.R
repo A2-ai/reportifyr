@@ -3,6 +3,7 @@
 #' @description Reads in a `.docx` file and returns a new version with tables, figures, and footnotes removed from the document.
 #' @param docx_in The file path to the input `.docx` file.
 #' @param docx_out The file path to the output `.docx` file to save to.
+#' @param config_yaml The file path to the `config.yaml`. Default is `NULL`, a default `config.yaml` bundled with the `reportifyr` package is used.
 #'
 #' @export
 #'
@@ -22,7 +23,7 @@
 #'   docx_out = doc_dirs$doc_clean
 #' )
 #' }
-remove_tables_figures_footnotes <- function(docx_in, docx_out) {
+remove_tables_figures_footnotes <- function(docx_in, docx_out, config_yaml) {
   log4r::debug(.le$logger, "Starting remove_tables_figures_footnotes function")
 
   if (!file.exists(docx_in)) {
@@ -152,6 +153,11 @@ remove_tables_figures_footnotes <- function(docx_in, docx_out) {
   # input file is output of previous step
   fig_script <- system.file("scripts/remove_figures.py", package = "reportifyr")
   fig_args <- c("run", fig_script, "-i", docx_out, "-o", docx_out)
+
+  if (!is.null(config_yaml)) {
+    fig_args <- c(fig_args, "-c", config_yaml)
+    log4r::info(.le$logger, paste0("config yaml set: ", config_yaml))
+  }
 
   log4r::debug(.le$logger, "Running remove figures script")
   fig_result <- tryCatch(
