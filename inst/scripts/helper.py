@@ -319,8 +319,8 @@ def create_footnote_paragraph(
 
     for line_idx, (meta, value) in enumerate(meta_text_dict.items()):
         # Format the line based on metadata type
-        formatted_line = format_metadata_line(meta, value, config)
-
+        formatted_line = format_metadata_line(meta, "".join(value), config)
+        
         # Create run with formatted text
         runs = create_formatted_runs(formatted_line, config)
         for run in runs:

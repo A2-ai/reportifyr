@@ -50,7 +50,7 @@ def add_figure_footnotes(
             figures, _ = helper.parse_magic_string(figure_name)
 
             # create empty dict for combining all metadata
-            combined_footnotes = {}
+            combined_footnotes: dict[str, list] = {}
             # enumerating here so i can use f to get label for
             # helper.create_label(f)
             for f, figure_name in enumerate(figures):
@@ -66,20 +66,35 @@ def add_figure_footnotes(
 
                     if len(figures) > 1:
                         for key in meta_text_dict.keys():
+                            # Initialize the list for this key if it doesn't exist yet
+                            if key not in combined_footnotes:
+                                combined_footnotes[key] = []
+
                             if config.get("label_multi_figures", False):
                                 new_footnote_text = (
                                     f"{helper.create_label(f)}: {meta_text_dict[key]} "
                                 )
                             else:
                                 new_footnote_text = f"{meta_text_dict[key]} "
-                            try:
-                                combined_footnotes[key] += new_footnote_text
-                            except:
-                                combined_footnotes[key] = new_footnote_text
+                           
+                            if config.get("combine_duplicate_footnotes", True):
+                                                                
+                                if new_footnote_text not in combined_footnotes[key]:
+                                    combined_footnotes[key].append(new_footnote_text) 
 
+                            else:
+                                combined_footnotes[key].append(new_footnote_text)
+                        
                     else:
-                        combined_footnotes = meta_text_dict
+                        combined_footnotes = {key: [value] for key, value in meta_text_dict.items()}
+                    
+                    for key, value in combined_footnotes.items():
+                            if len(value) > 1:
+                                if "N/A " in value:
+                                    value.remove("N/A ")
+                                combined_footnotes[key] = value
 
+                    print(combined_footnotes)
                     if f == len(figures) - 1:
                         footnote_inserted = False
                         figure_paragraphs = []
