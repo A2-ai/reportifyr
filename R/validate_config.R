@@ -199,6 +199,20 @@ validate_config <- function(path_to_config_yaml) {
     }
   }
 
+  log4r::debug(.le$logger, "Checking strict now")
+  if (!is.null(config$strict)) {
+    if (typeof(config$strict) != "logical") {
+      log4r::error(
+        .le$logger,
+        paste0(
+          "strict should be logical, not: ",
+          typeof(config$label_multi_figures)
+        )
+      )
+      valid <- FALSE
+    }
+  }
+
   if (valid) {
     log4r::debug(.le$logger, "No issues found")
   }

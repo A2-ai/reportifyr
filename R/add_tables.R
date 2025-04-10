@@ -4,6 +4,7 @@
 #' @param docx_in The file path to the input `.docx` file.
 #' @param docx_out The file path to the output `.docx` file to save to.
 #' @param tables_path The file path to the tables and associated metadata directory.
+#' @param config_yaml The path to config.yaml file that controls figure dimensions
 #' @param debug Debug.
 #'
 #' @export
@@ -29,25 +30,21 @@
 #'   tables_path = tables_path
 #' )
 #' }
-add_tables <- function(docx_in, docx_out, tables_path, debug = FALSE) {
+add_tables <- function(
+  docx_in,
+  docx_out,
+  tables_path,
+  config_yaml = NULL,
+  debug = FALSE
+) {
   log4r::debug(.le$logger, "Starting add_tables function")
   tictoc::tic()
 
-  if (!file.exists(docx_in)) {
-    log4r::error(
-      .le$logger,
-      paste("The input document does not exist:", docx_in)
-    )
-    stop(paste("The input document does not exist:", docx_in))
-  }
-  log4r::info(.le$logger, paste0("Input document found: ", docx_in))
+  validate_docx(docx_in, config_yaml)
 
-  if (
-    !(tools::file_ext(docx_in) == "docx") ||
-      !(tools::file_ext(docx_out) == "docx")
-  ) {
-    log4r::error(.le$logger, "Both input and output files must be .docx")
-    stop("Both input and output files must be .docx")
+  if (!(tools::file_ext(docx_out) == "docx")) {
+    log4r::error(.le$logger, "Output file must be .docx")
+    stop("Output file must be .docx")
   }
 
   if (debug) {
@@ -125,7 +122,8 @@ process_table_file <- function(table_file, document) {
   )
 
   # Load the table data
-  data_in <- switch(tools::file_ext(table_file),
+  data_in <- switch(
+    tools::file_ext(table_file),
     "csv" = utils::read.csv(table_file),
     "RDS" = readRDS(table_file),
     stop("Unsupported file type")

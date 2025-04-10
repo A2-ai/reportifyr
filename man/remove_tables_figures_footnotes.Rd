@@ -4,7 +4,7 @@
 \alias{remove_tables_figures_footnotes}
 \title{Removes Tables, Figures, and Footnotes from a Word file}
 \usage{
-remove_tables_figures_footnotes(docx_in, docx_out, config_yaml)
+remove_tables_figures_footnotes(docx_in, docx_out, config_yaml = NULL)
 }
 \arguments{
 \item{docx_in}{The file path to the input \code{.docx} file.}

@@ -4,7 +4,7 @@
 \alias{add_tables}
 \title{Inserts Tables in appropriate places in a Microsoft Word file}
 \usage{
-add_tables(docx_in, docx_out, tables_path, debug = FALSE)
+add_tables(docx_in, docx_out, tables_path, config_yaml = NULL, debug = FALSE)
 }
 \arguments{
 \item{docx_in}{The file path to the input \code{.docx} file.}
@@ -12,6 +12,8 @@ add_tables(docx_in, docx_out, tables_path, debug = FALSE)
 \item{docx_out}{The file path to the output \code{.docx} file to save to.}
 
 \item{tables_path}{The file path to the tables and associated metadata directory.}
+
+\item{config_yaml}{The path to config.yaml file that controls figure dimensions}
 
 \item{debug}{Debug.}
 }

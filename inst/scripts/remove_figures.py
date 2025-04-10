@@ -5,6 +5,7 @@ from docx import Document
 from typing import Optional
 from parse_magic_string import parse_magic_string
 
+
 def remove_figures(
     docx_in: str,
     docx_out: str,

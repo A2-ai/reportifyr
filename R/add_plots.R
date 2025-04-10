@@ -51,25 +51,9 @@ add_plots <- function(
     fig_height = NULL,
     debug = FALSE) {
   log4r::debug(.le$logger, "Starting add_plots function")
-
   tictoc::tic()
 
-  if (!file.exists(docx_in)) {
-    log4r::error(
-      .le$logger,
-      paste("The input document does not exist:", docx_in)
-    )
-    stop(paste("The input document does not exist:", docx_in))
-  }
-  log4r::info(.le$logger, paste0("Input document found: ", docx_in))
-
-  if (!(tools::file_ext(docx_in) == "docx")) {
-    log4r::error(
-      .le$logger,
-      paste("The file must be a docx file, not:", tools::file_ext(docx_in))
-    )
-    stop(paste("The file must be a docx file not:", tools::file_ext(docx_in)))
-  }
+  validate_docx(docx_in, config_yaml)
 
   if (!(tools::file_ext(docx_out) == "docx")) {
     log4r::error(

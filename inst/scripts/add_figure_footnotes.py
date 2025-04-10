@@ -93,7 +93,6 @@ def add_figure_footnotes(
                                     value.remove("N/A ")
                                 combined_footnotes[key] = value
 
-                    print(combined_footnotes)
                     if f == len(figure_args) - 1:
                         footnote_inserted = False
                         figure_paragraphs = []

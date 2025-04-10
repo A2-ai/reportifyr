@@ -49,14 +49,7 @@ build_report <- function(
     footnotes_fail_on_missing_metadata = TRUE) {
   log4r::debug(.le$logger, "Starting build_report function")
 
-  if (!file.exists(docx_in)) {
-    log4r::error(
-      .le$logger,
-      paste("The input document does not exist:", docx_in)
-    )
-    stop(paste("The input document does not exist:", docx_in))
-  }
-  log4r::info(.le$logger, paste0("Input document found: ", docx_in))
+  validate_docx(docx_in, config_yaml)
 
   doc_dirs <- make_doc_dirs(docx_in = docx_in)
   if (is.null(docx_out)) {
@@ -105,7 +98,8 @@ build_report <- function(
   add_tables(
     docx_in = doc_dirs$doc_clean,
     docx_out = doc_dirs$doc_tables,
-    tables_path = tables_path
+    tables_path = tables_path,
+    config_yaml
   )
 
   if (add_footnotes) {
