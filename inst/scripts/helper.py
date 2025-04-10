@@ -125,73 +125,6 @@ def create_meta_text_lines(
             del meta_text_lines["Object"]
             return meta_text_lines
 
-def parse_magic_string(input_string: str) -> tuple[list, dict[str, dict[str, str]]]:
-    """
-    Parse the magic string format where arguments can be tied to individual files.
-    Returns a tuple of (list of files, arguments dictionary keyed by file name).
-    
-    The function handles formats like:
-    - [file1.ext<width: 5, height: 8>, file2.ext<width: 4>, file3.ext]
-    - [file1.ext, file2.ext]
-    - file.ext<height: 6>
-    - file.ext
-    """
-    # Initialize structure to hold files and their arguments
-    files = []
-    args = {}
-    
-    # Check if it's a list of files
-    if input_string.startswith('[') and input_string.endswith(']'):
-        # Multiple files within brackets
-        content = input_string[1:-1].strip()
-        
-        # Split by commas, but not those inside angle brackets
-        entries = []
-        current_entry = ""
-        bracket_depth = 0
-        
-        for char in content:
-            if char == '<':
-                bracket_depth += 1
-                current_entry += char
-            elif char == '>':
-                bracket_depth -= 1
-                current_entry += char
-            elif char == ',' and bracket_depth == 0:
-                # Only split on commas outside of angle brackets
-                entries.append(current_entry.strip())
-                current_entry = ""
-            else:
-                current_entry += char
-        
-        if current_entry.strip():
-            entries.append(current_entry.strip())
-    else:
-        # Single file
-        entries = [input_string]
-    
-    # Parse each file entry
-    for entry in entries:
-        file_match = re.match(r'^(.*?)(?:<|$)', entry)
-        file_name = file_match.group(1).strip() if file_match else ""
-        
-        args_match = re.search(r'<(.*?)>', entry)
-        file_args = {}
-        
-        if args_match:
-            args_str = args_match.group(1)
-            arg_pairs = args_str.split(',')
-            
-            for pair in arg_pairs:
-                if ':' in pair:
-                    key, value = pair.split(':', 1)
-                    file_args[key.strip()] = value.strip()
-        
-        files.append(file_name)
-        args[file_name] = file_args
-    
-    return files, args
-
 def format_metadata_line(meta_key, meta_value, config):
     """Format a metadata line based on its key."""
     # TODO: update [Source: {meta_value}] to include []
@@ -297,7 +230,7 @@ def create_formatted_runs(text: str, config: dict) -> list[run.CT_R]:
 
 
 def create_footnote_paragraph(
-    meta_text_dict: dict[str, str], name: str, paragraph_id: int, config: dict
+    meta_text_dict: dict[str, list], name: str, paragraph_id: int, config: dict
 ) -> paragraph.CT_P:
     """Create a paragraph element containing formatted footnote text with bookmarks."""
     new_paragraph = OxmlElement("w:p")

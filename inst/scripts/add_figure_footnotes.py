@@ -5,7 +5,7 @@ import helper
 import argparse
 from typing import Optional
 from docx import Document
-
+from parse_magic_string import parse_magic_string
 
 def add_figure_footnotes(
     docx_in: str,
@@ -46,14 +46,13 @@ def add_figure_footnotes(
 
         for match in matches:
             # generalized extraction of the figure name
-            figure_name = match.replace("{rpfy}:", "").strip()
-            figures, _ = helper.parse_magic_string(figure_name)
+            figure_args = parse_magic_string(match)
 
             # create empty dict for combining all metadata
-            combined_footnotes: dict[str, list] = {}
+            combined_footnotes: dict[str, list[str]] = {}
             # enumerating here so i can use f to get label for
             # helper.create_label(f)
-            for f, figure_name in enumerate(figures):
+            for f, figure_name in enumerate(figure_args.keys()):
                 if figure_name in os.listdir(figure_dir):
                     metadata = helper.load_metadata(figure_dir, figure_name)
 
@@ -64,7 +63,7 @@ def add_figure_footnotes(
                     else:
                         missing_metadata = True
 
-                    if len(figures) > 1:
+                    if len(figure_args) > 1:
                         for key in meta_text_dict.keys():
                             # Initialize the list for this key if it doesn't exist yet
                             if key not in combined_footnotes:
@@ -95,7 +94,7 @@ def add_figure_footnotes(
                                 combined_footnotes[key] = value
 
                     print(combined_footnotes)
-                    if f == len(figures) - 1:
+                    if f == len(figure_args) - 1:
                         footnote_inserted = False
                         figure_paragraphs = []
 
@@ -108,15 +107,15 @@ def add_figure_footnotes(
                             ):
                                 figure_paragraphs.append((j, paragraph))
                                 # For single-figure or if we've collected enough figures for multi-figure
-                                if len(figure_paragraphs) >= len(figures):
+                                if len(figure_paragraphs) >= len(figure_args):
                                     break
 
                         # Insert footnote after the last figure paragraph if we found any
                         if figure_paragraphs and not footnote_inserted:
                             # Get the last figure paragraph found
-                            fig_index, fig_paragraph = figure_paragraphs[-1]
+                            _, fig_paragraph = figure_paragraphs[-1]
                             new_paragraph = helper.create_footnote_paragraph(
-                                combined_footnotes, "".join(figures), i, config
+                                combined_footnotes, "".join(figure_args.keys()), i, config
                             )
                             fig_paragraph._element.addnext(new_paragraph)
                             footnote_inserted = True

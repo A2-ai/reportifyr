@@ -43,14 +43,13 @@
 #' )
 #' }
 add_plots <- function(
-  docx_in,
-  docx_out,
-  figures_path,
-  config_yaml = NULL,
-  fig_width = NULL,
-  fig_height = NULL,
-  debug = FALSE
-) {
+    docx_in,
+    docx_out,
+    figures_path,
+    config_yaml = NULL,
+    fig_width = NULL,
+    fig_height = NULL,
+    debug = FALSE) {
   log4r::debug(.le$logger, "Starting add_plots function")
 
   tictoc::tic()
@@ -162,7 +161,10 @@ add_plots <- function(
     }
   )
   if (grepl("Duplicate figure names found in the document", result$stdout)) {
-    warning("Duplicate figures found in magic strings of document.")
+    log4r::warn(
+      .le$logger,
+      "Duplicate figures found in magic strings of document."
+    )
   }
   log4r::info(.le$logger, paste0("Returning status: ", result$status))
   log4r::info(.le$logger, paste0("Returning stdout: ", result$stdout))

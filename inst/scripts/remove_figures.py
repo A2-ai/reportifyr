@@ -1,10 +1,9 @@
 import argparse
-from os import wait
 import helper
 from docx import Document
 
 from typing import Optional
-
+from parse_magic_string import parse_magic_string
 
 def remove_figures(
     docx_in: str,
@@ -23,14 +22,14 @@ def remove_figures(
     for i, paragraph in enumerate(paragraphs):
         text = paragraph.text.strip()
         if text.startswith("{rpfy}:"):
-            figures, args = helper.parse_magic_string(text.replace("{rpfy}:", ""))
+            figure_args = parse_magic_string(text)
             update_magic_string = False
 
             # if config.get("use_
             # update paragraph text
             # f"{text}<width: {helper.get_width()}, height: {helper.get_height()}>"
             paragraphs_to_remove = []
-            for j, figure in enumerate(figures):
+            for j, args in enumerate(figure_args.values()):
                 if i + j + 1 < len(paragraphs):
                     next_par = paragraphs[i + j + 1]
                     if not next_par.text.strip() and next_par._element.xpath(
@@ -41,12 +40,12 @@ def remove_figures(
                             dimensions = get_figure_dimensions(next_par)
                             # set width and height from emu to Inches
                             if dimensions["width"]:
-                                args[figure]["width"] = str(
+                                args["width"] = str(
                                     round(dimensions["width"] / 914400, 2)
                                 )
                                 update_magic_string = True
                             if dimensions["height"]:
-                                args[figure]["height"] = str(
+                                args["height"] = str(
                                     round(dimensions["height"] / 914400, 2)
                                 )
                                 update_magic_string = True
@@ -55,21 +54,21 @@ def remove_figures(
             # {rpfy}:[figure<args[figure]>]
             if update_magic_string:
                 new_magic_string = "{rpfy}:"
-                if len(figures) > 1:
+                if len(figure_args) > 1:
                     new_magic_string += "["
                     ending_string = "]"
                 else:
                     ending_string = ""
-                for fig_idx, fig in enumerate(figures):
+                for fig_idx, (fig, arg) in enumerate(figure_args.items()):
                     arg_string = "<"
-                    for p_idx, (prop, val) in enumerate(args[fig].items()):
+                    for p_idx, (prop, val) in enumerate(arg.items()):
                         arg_string += f"{prop}: {val}"
-                        if p_idx + 1 != len(args[fig]):
+                        if p_idx + 1 != len(arg):
                             arg_string += ", "
                     arg_string += ">"
 
                     new_magic_string += f"{fig}{arg_string}"
-                    if fig_idx + 1 != len(figures):
+                    if fig_idx + 1 != len(figure_args):
                         new_magic_string += ", "
 
                 new_magic_string += ending_string

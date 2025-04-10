@@ -1,7 +1,6 @@
 import os
 import re
 
-from docx.enum.text import WD_ALIGN_PARAGRAPH
 import helper
 import tempfile
 import argparse
@@ -9,8 +8,11 @@ from typing import Optional
 
 from docx import Document
 from docx.shared import Inches
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+
 from PIL import Image, ImageDraw, ImageFont
 
+from parse_magic_string import parse_magic_string
 
 def add_figure(
     docx_in: str,
@@ -48,12 +50,13 @@ def add_figure(
                 # figure_name now contains potentially a list
                 # of file names and args. like
                 # [file.ext, file2.ext]<width: 4, height: 6>
-                figure_name = match.replace("{rpfy}:", "").strip()
-                figures, args = helper.parse_magic_string(figure_name)
+                figure_args = parse_magic_string(match)
 
-                if len(figures) > 1:
-                    figures = list(reversed(figures))
-
+                if len(figure_args) > 1:
+                    figures = list(reversed(figure_args.keys()))
+                else:
+                    figures = list(figure_args.keys())
+                
                 for fig_idx, figure in enumerate(figures):
                     add_label = False
                     if len(figures) > 1 and config.get("label_multi_figures", False):
@@ -88,18 +91,18 @@ def add_figure(
                         #    'file4.ext': {}
                         # }
                         if config.get("use_embedded_size", True) and set(
-                            args[figure].keys()
+                            figure_args[figure].keys()
                         ).intersection(["width", "height"]):
                             run.add_picture(
                                 labeled_image,
                                 width=(
-                                    Inches(float(args[figure].get("width")))
-                                    if "width" in args[figure]
+                                    Inches(float(figure_args[figure].get("width")))
+                                    if "width" in figure_args[figure]
                                     else None
                                 ),
                                 height=(
-                                    Inches(float(args[figure].get("height")))
-                                    if "height" in args[figure]
+                                    Inches(float(figure_args[figure].get("height")))
+                                    if "height" in figure_args[figure]
                                     else None
                                 ),
                             )
@@ -109,17 +112,17 @@ def add_figure(
 
                         else:
                             default_width = config.get("default_fig_width", 6)
-                            if set(args[figure].keys()).intersection(["width", "height"]):
+                            if set(figure_args[figure].keys()).intersection(["width", "height"]):
                                 run.add_picture(
                                     labeled_image,
                                     width=(
-                                        Inches(float(args[figure].get("width")))
-                                        if "width" in args[figure]
+                                        Inches(float(figure_args[figure].get("width")))
+                                        if "width" in figure_args[figure]
                                         else None
                                     ),
                                     height=(
-                                        Inches(float(args[figure].get("height")))
-                                        if "height" in args[figure]
+                                        Inches(float(figure_args[figure].get("height")))
+                                        if "height" in figure_args[figure]
                                         else None
                                     ),
                                 )
