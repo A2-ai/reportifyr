@@ -1,5 +1,8 @@
 # reportifyr 0.3.0
-
+## New Features
+* config.yaml
+* per-figure options
+* document validation
 * multiple figures with single combined footnote can now be added with the following syntax:
   
     Figure 1: Multiple figures with single footnote.<br>
