@@ -113,7 +113,7 @@ write_object_metadata(
 # Save a simple table
 # ------------------------------------------------------------------------------
 tables_path <- here::here("OUTPUTS", "tables")
-outfile_name <- "01-12345-pk-theoph.csv"
+out_name <- "01-12345-pk-theoph.csv"
 
 write_csv_with_metadata(
   object = Theoph,
