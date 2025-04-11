@@ -6,21 +6,21 @@
     * Report configuration:
       * `report_dir_name` captures the report directory name when calling `initialize_report_project()`
       * `outputs_dir_name` captures the OUTPUTS directory name when calling `initialize_report_project()`
-      * `strict` if true disallows duplicate figures/tables from being inserted into document. if false attempts for inserting multiple figures/tables are made, but insertion is not guaranteed 
+      * `strict` if `true` disallows duplicate figures/tables from being inserted into document. if `false` attempts for inserting multiple figures/tables are made, but insertion is not guaranteed 
     * Table configuration:
-      * `save_table_rtf` if true, additionally saves table artifacts as .RTF
+      * `save_table_rtf` if `true`, additionally saves table artifacts as .RTF
     * Figure configuration:
       * `fig_alignment` [center/left/right] sets the alignment of the figure inserted into the document
-      * `use_artifact_size` if true uses the size of the saved artifact for dimensions when inserting the figure
-      * `use_embedded_dimensions` if true, captures the size of the reportifyr figures within the document and maintains this size when updating artifact
-      * `defualt_fig_width` sets the default width to use for figures. aspect ratio is maintained from saved artifact.
-      * `label_multi_figures` if true, writes figure labels with (A, B, C, etc.) before inserting the artifact
+      * `use_artifact_size` if `true` uses the size of the saved artifact for dimensions when inserting the figure
+      * `use_embedded_dimensions` if `true`, captures the size of the reportifyr figures within the document and maintains this size when updating artifact
+      * `default_fig_width` sets the default width to use for figures. aspect ratio is maintained from saved artifact.
+      * `label_multi_figures` if `true`, writes figure labels with (A, B, C, etc.) before inserting the artifact
     * Footnote configuration:
       * font can be set through the `footnotes_font` field
       * font size can be set through the `footnotes_font_size` field
       * `use_object_path_as_source` sets the source footnote to use the path to the artifact instead of the script that generated it
-      * `wrap_path_in_[]` controls whether source/object footnotes are written as `[path/to/source.R]` (true) or `path/to/source.R` (false)
-      * `combine_duplicate_footnotes` if using a inserting a multi-artifact figure (more below) this controls if duplicated footnotes will be combined. Only effects figures if `label_multi_figures` is false
+      * `wrap_path_in_[]` controls whether source/object footnotes are written as `[path/to/source.R]` (`true`) or `path/to/source.R` (`false`)
+      * `combine_duplicate_footnotes` if inserting a multi-artifact figure (more below) this controls whether duplicated footnotes will be combined or not. Only effects figures if `label_multi_figures` is `false`
       * `footnote_order` sets the ordering of footnotes within the document
 
   * `validate_config(path_to_config_yaml)` function is included to ensure config is compatible with reportifyr
@@ -36,7 +36,7 @@
         fixing the capitalization on `footnote_order`, setting `fig_alignment` to one of [center/left/right], and making `footnotes_font_size` numeric gives the following result:
         ```{r}
         > validate_config(here::here("inst/extdata/config.yaml"))
-        [1] TRUE
+        [1] `true`
         ```
 
 * `initialize_report_project` has two new arguments `report_dir_name` and `outputs_dir_name`
@@ -188,7 +188,7 @@
      Notes: A: notes for figure A. B: notes for figure B.<br>
      Abbreviations: A: N/A, B: N/A.<br>
  
-     * If `label_multi_figures` is set to true in config.yaml, this will draw an A on figure_1 and a B on figure_2 in the upper left corner and combine the footnotes labelling them with A/B. This will work for any number of figures, with the labels wrapping to AA, AB after Z if necessary. If `label_multi_figures` is not in config.yaml the default is false, and the images will not be labeled. Additionally, when multi-figures aren't labeled the footnotes will not have the A/B/etc label. If `combine_duplicate_footnotes` is true then the abbove look like:
+     * If `label_multi_figures` is set to `true` in config.yaml, this will draw an A on figure_1 and a B on figure_2 in the upper left corner and combine the footnotes labelling them with A/B. This will work for any number of figures, with the labels wrapping to AA, AB after Z if necessary. If `label_multi_figures` is not in config.yaml the default is `false`, and the images will not be labeled. Additionally, when multi-figures aren't labeled the footnotes will not have the A/B/etc label. If `combine_duplicate_footnotes` is true then the abbove look like:
         
         Figure 1: Multiple figures with single footnote.<br>
         {rpfy}:[figure_1.png, figure_2.png].<br>
@@ -216,10 +216,11 @@
           [Footnote for Figure 2]<br>
        
  * you can now supply per-figure sizing options with angled brackets: {rpfy}:figure.png<width: 3.67, height: 5.32> this syntax will cause reportifyr to insert figure.png into the document and resize to 3.67 in by 5.32 in. You can also specify options in multi-figure input {rpfy}:[figure1.png<width: 3, height: 4>, figure2.png<width: 4, height: 4>] and each figure will be inserted at the specified dimensions.
- * with `use_embedded_dimensions` set to true in your config.yaml, upon updating a report, when figures are removed their size is captured and added to the magic string and used on insertion of the updated figure. You can then resize an image from its saved dimension and the resizing will persist throughout the document lifecycle.
+ * with `use_embedded_dimensions` set to `true` in your config.yaml, upon updating a report, when figures are removed their size is captured and added to the magic string and used on insertion of the updated figure. You can then resize an image from its saved dimension and the resizing will persist throughout the document lifecycle.
 
 ### Footnotes updates
 * Footnotes now support subscript and superscript using latex-like syntax: `AUC_{0-24}` will show up in the rendered docx with `0-24` as a subscript, and `kg/m^{2}` will show up with the `2` as a superscript.
+* The source footnote now reports the last time the source was committed to git. If you are not using git it will use the time the time the footnote is inserted. Object footnote reports the time the artifact was created.
   
 ## Minor Improvements
 * Messaging on package load has been reworked:
@@ -275,4 +276,5 @@
     "python.version": "3.13.2"
   }
   ```
-
+* `toggle_logger()` now prints the level logging is recorded at when called.
+* `finalize_document()` now keeps the artifact caption on the same page of the artifact instead of being broken across page breaks in some situations.
