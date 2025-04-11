@@ -44,7 +44,6 @@ validate_docx <- function(docx_in, config_yaml) {
   end_pattern <- "\\.[^.]+$" # matches the file extension (e.g., ".csv", ".rds")
   magic_pattern <- paste0(start_pattern, ".*?", end_pattern)
 
-
   doc <- officer::read_docx(docx_in)
   doc_summary <- officer::docx_summary(doc)
   magic_indices <- grep(magic_pattern, doc_summary$text)
@@ -91,6 +90,28 @@ validate_docx <- function(docx_in, config_yaml) {
 
     j <- jsonlite::fromJSON(result$stdout)
     file_names <- c(file_names, names(j))
+  }
+
+  # check for unsupported file extensions:
+  unsupported_files <- file_names[
+    !(tolower(tools::file_ext(file_names)) %in% c("csv", "rds", "png"))
+  ]
+
+  if (length(unsupported_files) != 0) {
+    message <- paste0(
+      "Unsupported file types found in document: ",
+      paste0(unsupported_files, collapse = ", ")
+    )
+    if (strict_mode) {
+      log4r::error(.le$logger, message)
+      stop(paste0(
+        "Fix artifact extensions to contunue. ",
+        "Currently .csv, .RDS are accepted for tables ",
+        "and .png is accepted for figures."
+      ))
+    } else {
+      log4r::warn(.le$logger, message)
+    }
   }
 
   duplicated_files <- file_names[duplicated(file_names)]

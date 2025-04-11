@@ -150,6 +150,13 @@ add_plots <- function(
       "Duplicate figures found in magic strings of document."
     )
   }
+
+  if (grepl("Unsupported", result$stdout)) {
+    stdout_lines <- strsplit(result$stdout, "\n")[[1]]
+    matching_lines <- stdout_lines[grepl("Unsupported", stdout_lines)]
+    log4r::warn(.le$logger, matching_lines)
+  }
+
   log4r::info(.le$logger, paste0("Returning status: ", result$status))
   log4r::info(.le$logger, paste0("Returning stdout: ", result$stdout))
   log4r::info(.le$logger, paste0("Returning stderr: ", result$stderr))

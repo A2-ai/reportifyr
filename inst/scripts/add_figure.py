@@ -58,6 +58,10 @@ def add_figure(
                     figures = list(figure_args.keys())
                 
                 for fig_idx, figure in enumerate(figures):
+                    if not figure.endswith("png"):
+                        print(f"Unsupported figure file extension: {figure}. Please save as .png")
+                        continue
+
                     add_label = False
                     if len(figures) > 1 and config.get("label_multi_figures", False):
                         add_label = True
