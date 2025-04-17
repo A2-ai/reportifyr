@@ -4,6 +4,9 @@ report_dir_name: "report"
 # outputs directory options
 outputs_dir_name: "OUTPUTS"
 
+# strict mode - duplicate artifacts
+strict: true
+
 # Footnotes options
 footnotes_font: "Arial Narrow"
 footnotes_font_size: 10
