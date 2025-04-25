@@ -42,6 +42,14 @@ add_tables <- function(
 
   validate_docx(docx_in, config_yaml)
 
+  intermediate_docx <- gsub(".docx", "-int.docx", docx_out)
+  log4r::info(
+    .le$logger,
+    paste0("Intermediate document path set: ", intermediate_docx)
+  )
+
+  keep_caption_next(docx_in, intermediate_docx)
+
   if (!(tools::file_ext(docx_out) == "docx")) {
     log4r::error(.le$logger, "Output file must be .docx")
     stop("Output file must be .docx")
@@ -57,7 +65,7 @@ add_tables <- function(
   end_pattern <- "\\.[^.]+$" # matches the file extension (e.g., ".csv", ".rds")
   magic_pattern <- paste0(start_pattern, ".*?", end_pattern)
 
-  document <- officer::read_docx(docx_in)
+  document <- officer::read_docx(intermediate_docx)
 
   # Extract the document summary, which includes text for paragraphs
   doc_summary <- officer::docx_summary(document)
@@ -111,6 +119,8 @@ add_tables <- function(
   # Save the final document
   print(document, target = docx_out)
   log4r::info(.le$logger, paste0("Final document saved to: ", docx_out))
+  unlink(intermediate_docx)
+  log4r::debug(.le$logger, "Deleting intermediate document")
   tictoc::toc()
 }
 

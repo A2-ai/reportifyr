@@ -55,6 +55,14 @@ add_plots <- function(
 
   validate_docx(docx_in, config_yaml)
 
+  intermediate_docx <- gsub(".docx", "-int.docx", docx_out)
+  log4r::info(
+    .le$logger,
+    paste0("Intermediate document path set: ", intermediate_docx)
+  )
+
+  keep_caption_next(docx_in, intermediate_docx)
+
   if (!(tools::file_ext(docx_out) == "docx")) {
     log4r::error(
       .le$logger,
@@ -71,7 +79,7 @@ add_plots <- function(
     browser()
   }
   script <- system.file("scripts/add_figure.py", package = "reportifyr")
-  args <- c("run", script, "-i", docx_in, "-o", docx_out, "-d", figures_path)
+  args <- c("run", script, "-i", intermediate_docx, "-o", docx_out, "-d", figures_path)
 
   if (!is.null(config_yaml)) {
     args <- c(args, "-c", config_yaml)
@@ -144,6 +152,9 @@ add_plots <- function(
       ))
     }
   )
+  unlink(intermediate_docx)
+  log4r::debug(.le$logger, "Deleting intermediate document")
+
   if (grepl("Duplicate figure names found in the document", result$stdout)) {
     log4r::warn(
       .le$logger,
