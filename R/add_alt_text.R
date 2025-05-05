@@ -6,71 +6,37 @@ add_table_alt_text <- function(
   log4r::debug(.le$logger, "Starting add_plots function")
   tictoc::tic()
 
-  if (!(tools::file_ext(docx_out) == "docx")) {
-    log4r::error(
-      .le$logger,
-      paste(
-        "The output file must be a docx file, not:",
-        tools::file_ext(docx_out)
-      )
-    )
-    stop(paste("The file must be a docx file not:", tools::file_ext(docx_out)))
-  }
-
   if (debug) {
     log4r::debug(.le$logger, "Debug mode enabled")
     browser()
   }
-  script <- system.file("scripts/add_figure.py", package = "reportifyr")
-  args <- c("run", script, "-i", intermediate_docx, "-o", docx_out, "-d", figures_path)
+
+  validate_input_args(docx_in, docx_out, config_yaml)
+  validate_docx(docx_in, config_yaml)
+  log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
+
+  intermediate_docx <- gsub(".docx", "-int.docx", docx_out)
+  log4r::info(
+    .le$logger,
+    paste0("Intermediate document path set: ", intermediate_docx)
+  )
+
+  script <- system.file("scripts/add_table_alt_text.py", package = "reportifyr")
+  args <- c("run", script, "-i", intermediate_docx, "-o", docx_out)
 
   if (!is.null(config_yaml)) {
     args <- c(args, "-c", config_yaml)
     log4r::info(.le$logger, paste0("config yaml set: ", config_yaml))
   }
+  paths <- get_venv_uv_paths()
 
-  if (!is.null(fig_width)) {
-    args <- c(args, "-w", fig_width)
-    log4r::info(.le$logger, paste0("Figure width set: ", fig_width))
-  }
-
-  if (!is.null(fig_height)) {
-    args <- c(args, "-g", fig_height)
-    log4r::info(.le$logger, paste0("Figure height set: ", fig_height))
-  }
-
-  if (is.null(getOption("venv_dir"))) {
-    log4r::info(.le$logger, "Setting options('venv_dir') to project root.")
-
-    message("Setting options('venv_dir') to project root.")
-    options("venv_dir" = here::here())
-  }
-
-  venv_path <- file.path(getOption("venv_dir"), ".venv")
-
-  if (!dir.exists(venv_path)) {
-    log4r::error(
-      .le$logger,
-      "Virtual environment not found. Please initialize with initialize_python."
-    )
-    stop("Create virtual environment with initialize_python")
-  }
-
-  uv_path <- get_uv_path()
-  if (is.null(uv_path)) {
-    log4r::error(
-      .le$logger,
-      "uv not found. Please install with initialize_python"
-    )
-    stop("Please install uv with initialize_python")
-  }
   log4r::debug(.le$logger, "Running add plots script")
   result <- tryCatch(
     {
       processx::run(
-        command = uv_path,
+        command = paths$uv,
         args = args,
-        env = c("current", VIRTUAL_ENV = venv_path),
+        env = c("current", VIRTUAL_ENV = paths$venv),
         error_on_status = TRUE
       )
     },

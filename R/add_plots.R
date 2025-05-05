@@ -60,6 +60,7 @@ add_plots <- function(
 
   validate_input_args(docx_in, docx_out, config_yaml)
   validate_docx(docx_in, config_yaml)
+  log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
 
   intermediate_docx <- gsub(".docx", "-int.docx", docx_out)
   log4r::info(
@@ -96,39 +97,15 @@ add_plots <- function(
     log4r::info(.le$logger, paste0("Figure height set: ", fig_height))
   }
 
-  if (is.null(getOption("venv_dir"))) {
-    log4r::info(.le$logger, "Setting options('venv_dir') to project root.")
-
-    message("Setting options('venv_dir') to project root.")
-    options("venv_dir" = here::here())
-  }
-
-  venv_path <- file.path(getOption("venv_dir"), ".venv")
-
-  if (!dir.exists(venv_path)) {
-    log4r::error(
-      .le$logger,
-      "Virtual environment not found. Please initialize with initialize_python."
-    )
-    stop("Create virtual environment with initialize_python")
-  }
-
-  uv_path <- get_uv_path()
-  if (is.null(uv_path)) {
-    log4r::error(
-      .le$logger,
-      "uv not found. Please install with initialize_python"
-    )
-    stop("Please install uv with initialize_python")
-  }
+  paths <- get_venv_uv_paths()
 
   log4r::debug(.le$logger, "Running add plots script")
   result <- tryCatch(
     {
       processx::run(
-        command = uv_path,
+        command = paths$uv,
         args = args,
-        env = c("current", VIRTUAL_ENV = venv_path),
+        env = c("current", VIRTUAL_ENV = paths$venv),
         error_on_status = TRUE
       )
     },

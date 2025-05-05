@@ -5,17 +5,25 @@
 #' @param config_yaml optional path to config yaml
 #'
 #' @return ()
-#' @export 
+#' @export
 #'
 #' @examples \dontrun{
 #' validate_input_args(
-#'   "template.docx", 
-#'   "template-figs.docx", 
+#'   "template.docx",
+#'   "template-figs.docx",
 #'   "path/to/config.yaml"
 #' )
 #' }
 validate_input_args <- function(docx_in, docx_out, config_yaml = NULL) {
   log4r::debug(.le$logger, "Starting validate_input_args function")
+
+  if (!file.exists(docx_in)) {
+    log4r::error(
+      .le$logger,
+      paste("The input document does not exist:", docx_in)
+    )
+    stop(paste("The input document does not exist:", docx_in))
+  }
 
   if (docx_in == docx_out) {
     log4r::error(.le$logger, "Input and output files cannot be the same")

@@ -52,8 +52,8 @@ finalize_document <- function(docx_in, docx_out = NULL) {
       paste0("Docx_out is null, setting docx_out to: ", docx_out)
     )
   }
-	
-	validate_input_args(docx_in, docx_out)
+
+  validate_input_args(docx_in, docx_out)
   validate_docx(docx_in)
   log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
 
