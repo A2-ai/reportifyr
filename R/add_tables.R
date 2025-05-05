@@ -31,16 +31,22 @@
 #' )
 #' }
 add_tables <- function(
-  docx_in,
-  docx_out,
-  tables_path,
-  config_yaml = NULL,
-  debug = FALSE
-) {
+    docx_in,
+    docx_out,
+    tables_path,
+    config_yaml = NULL,
+    debug = FALSE) {
   log4r::debug(.le$logger, "Starting add_tables function")
   tictoc::tic()
 
+  if (debug) {
+    log4r::debug(.le$logger, "Debug mode enabled")
+    browser()
+  }
+
+  validate_input_args(docx_in, docx_out, config_yaml)
   validate_docx(docx_in, config_yaml)
+  log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
 
   intermediate_docx <- gsub(".docx", "-int.docx", docx_out)
   log4r::info(
@@ -49,16 +55,6 @@ add_tables <- function(
   )
 
   keep_caption_next(docx_in, intermediate_docx)
-
-  if (!(tools::file_ext(docx_out) == "docx")) {
-    log4r::error(.le$logger, "Output file must be .docx")
-    stop("Output file must be .docx")
-  }
-
-  if (debug) {
-    log4r::debug(.le$logger, "Debug mode enabled")
-    browser()
-  }
 
   # define magic string pattern
   start_pattern <- "\\{rpfy\\}:" # matches "{rpfy}:"
@@ -132,8 +128,7 @@ process_table_file <- function(table_file, document) {
   )
 
   # Load the table data
-  data_in <- switch(
-    tools::file_ext(table_file),
+  data_in <- switch(tools::file_ext(table_file),
     "csv" = utils::read.csv(table_file),
     "RDS" = readRDS(table_file),
     stop("Unsupported file type")

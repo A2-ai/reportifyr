@@ -23,9 +23,11 @@
 #'   docx_out = doc_dirs$doc_clean
 #' )
 #' }
-remove_tables_figures_footnotes <- function(docx_in,
-                                            docx_out,
-                                            config_yaml = NULL) {
+remove_tables_figures_footnotes <- function(
+  docx_in,
+  docx_out,
+  config_yaml = NULL
+) {
   log4r::debug(.le$logger, "Starting remove_tables_figures_footnotes function")
 
   if (!file.exists(docx_in)) {

@@ -102,7 +102,7 @@ keep_caption_next <- function(docx_in, docx_out) {
         "Stderr: ",
         e$stderr
       ))
-      }
+    }
   )
 
   log4r::info(.le$logger, paste0("Returning status: ", result$status))

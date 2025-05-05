@@ -59,54 +59,29 @@
 #' )
 #' }
 add_footnotes <- function(
-  docx_in,
-  docx_out,
-  figures_path,
-  tables_path,
-  standard_footnotes_yaml = NULL,
-  config_yaml = NULL,
-  include_object_path = FALSE,
-  footnotes_fail_on_missing_metadata = TRUE,
-  debug = FALSE
-) {
+    docx_in,
+    docx_out,
+    figures_path,
+    tables_path,
+    standard_footnotes_yaml = NULL,
+    config_yaml = NULL,
+    include_object_path = FALSE,
+    footnotes_fail_on_missing_metadata = TRUE,
+    debug = FALSE) {
   log4r::debug(.le$logger, "Starting add_footnotes function")
 
   tictoc::tic()
-
-  if (!file.exists(docx_in)) {
-    log4r::error(
-      .le$logger,
-      paste("The input document does not exist:", docx_in)
-    )
-    stop(paste("The input document does not exist:", docx_in))
-  }
-  log4r::info(.le$logger, paste0("Input document found: ", docx_in))
-
-  if (!(tools::file_ext(docx_in) == "docx")) {
-    log4r::error(
-      .le$logger,
-      paste("The file must be a docx file, not:", tools::file_ext(docx_in))
-    )
-    stop(paste("The file must be a docx file not:", tools::file_ext(docx_in)))
-  }
-
-  if (!(tools::file_ext(docx_out) == "docx")) {
-    log4r::error(
-      .le$logger,
-      paste(
-        "The output file must be a docx file, not:",
-        tools::file_ext(docx_out)
-      )
-    )
-    stop(paste("The file must be a docx file not:", tools::file_ext(docx_out)))
-  }
 
   if (debug) {
     log4r::debug(.le$logger, "Debug mode enabled")
     browser()
   }
 
-  fig_script <- system.file(
+  validate_input_args(docx_in, docx_out, config_yaml)
+  validate_docx(docx_in, config_yaml)
+  log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
+  
+	fig_script <- system.file(
     "scripts/add_figure_footnotes.py",
     package = "reportifyr"
   )

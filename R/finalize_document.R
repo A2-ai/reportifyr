@@ -44,12 +44,6 @@
 finalize_document <- function(docx_in, docx_out = NULL) {
   log4r::debug(.le$logger, "Starting finalize_document function")
 
-  if (!file.exists(docx_in)) {
-    log4r::error(.le$logger, paste("Input file does not exist:", docx_in))
-    stop("Input file does not exist.")
-  }
-  log4r::info(.le$logger, paste0("Input document found: ", docx_in))
-
   if (is.null(docx_out)) {
     doc_dirs <- make_doc_dirs(docx_in = docx_in)
     docx_out <- doc_dirs$doc_final
@@ -58,34 +52,10 @@ finalize_document <- function(docx_in, docx_out = NULL) {
       paste0("Docx_out is null, setting docx_out to: ", docx_out)
     )
   }
-
-  if (docx_in == docx_out) {
-    log4r::error(.le$logger, "Input and output files cannot be the same")
-    stop("You must save the output document as a new file.")
-  }
+	
+	validate_input_args(docx_in, docx_out)
+  validate_docx(docx_in)
   log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
-
-  if (!(tools::file_ext(docx_in) == "docx")) {
-    log4r::error(
-      .le$logger,
-      paste(
-        "The input file must be a .docx file, not:",
-        tools::file_ext(docx_in)
-      )
-    )
-    stop(paste("The file must be a docx file not:", tools::file_ext(docx_in)))
-  }
-
-  if (!(tools::file_ext(docx_out) == "docx")) {
-    log4r::error(
-      .le$logger,
-      paste(
-        "The output file must be a .docx file, not:",
-        tools::file_ext(docx_out)
-      )
-    )
-    stop(paste("The file must be a docx file not:", tools::file_ext(docx_out)))
-  }
 
   intermediate_docx <- gsub(".docx", "-int.docx", docx_out)
   log4r::info(
