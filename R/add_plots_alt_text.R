@@ -1,7 +1,17 @@
+#' add_plots_alt_text()
+#'
+#' @param docx_in path to document
+#' @param docx_out path to output document with figures alt text
+#' @param debug boolean turns on browser
+#'
+#' @export
+#'
+#' @examples \dontrun{
+#' add_plots_alt_text("doc-figs.docx", "doc-draft.docx")
+#' }
 add_plots_alt_text <- function(
     docx_in,
     docx_out,
-    config_yaml = NULL,
     debug = FALSE) {
   log4r::debug(.le$logger, "Starting add_plots_alt_text function")
   tictoc::tic()
@@ -11,8 +21,8 @@ add_plots_alt_text <- function(
     browser()
   }
 
-  validate_input_args(docx_in, docx_out, config_yaml)
-  validate_docx(docx_in, config_yaml)
+  validate_input_args(docx_in, docx_out, NULL)
+  validate_docx(docx_in, NULL)
   log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
 
   intermediate_docx <- gsub(".docx", "-int.docx", docx_out)

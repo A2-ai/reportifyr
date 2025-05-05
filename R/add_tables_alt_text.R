@@ -2,7 +2,6 @@
 #'
 #' @param docx_in path to input document
 #' @param docx_out path to output document
-#' @param config_yaml path to config.yaml
 #' @param debug boolean for turning on debugging
 #'
 #' @export
@@ -13,7 +12,6 @@
 add_tables_alt_text <- function(
     docx_in,
     docx_out,
-    config_yaml = NULL,
     debug = FALSE) {
   log4r::debug(.le$logger, "Starting add_plots function")
   tictoc::tic()
@@ -23,8 +21,8 @@ add_tables_alt_text <- function(
     browser()
   }
 
-  validate_input_args(docx_in, docx_out, config_yaml)
-  validate_docx(docx_in, config_yaml)
+  validate_input_args(docx_in, docx_out, NULL)
+  validate_docx(docx_in, NULL)
   log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
 
   intermediate_docx <- gsub(".docx", "-int.docx", docx_out)
