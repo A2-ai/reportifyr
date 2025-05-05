@@ -3,8 +3,9 @@
 #' @return list of paths to uv and venv directory for calling py scripts
 #' @export
 #'
-#' @examples
+#' @examples \dontrun{
 #' get_venv_uv_paths()
+#' }
 get_venv_uv_paths <- function() {
   if (is.null(getOption("venv_dir"))) {
     log4r::info(.le$logger, "Setting options('venv_dir') to project root.")
