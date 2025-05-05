@@ -85,7 +85,7 @@ reportifyr_options_message <- function() {
   if (is.null(pillow_vers)) {
     optional_options <- c(
       optional_options,
-      "Using default v11.1.0, set options('pillow.version') to change"
+      "Using pillow v11.1.0, set options('pillow.version') to change"
     )
   } else {
     set_options <- c(set_options, paste("pillow.version:", pillow_vers))

@@ -1,9 +1,9 @@
-add_table_alt_text <- function(
+add_plots_alt_text <- function(
     docx_in,
     docx_out,
     config_yaml = NULL,
     debug = FALSE) {
-  log4r::debug(.le$logger, "Starting add_plots function")
+  log4r::debug(.le$logger, "Starting add_plots_alt_text function")
   tictoc::tic()
 
   if (debug) {
@@ -21,16 +21,17 @@ add_table_alt_text <- function(
     paste0("Intermediate document path set: ", intermediate_docx)
   )
 
-  script <- system.file("scripts/add_table_alt_text.py", package = "reportifyr")
+  keep_caption_next(docx_in, intermediate_docx)
+
+  script <- system.file(
+    "scripts/add_figure_alt_text.py",
+    package = "reportifyr"
+  )
   args <- c("run", script, "-i", intermediate_docx, "-o", docx_out)
 
-  if (!is.null(config_yaml)) {
-    args <- c(args, "-c", config_yaml)
-    log4r::info(.le$logger, paste0("config yaml set: ", config_yaml))
-  }
   paths <- get_venv_uv_paths()
 
-  log4r::debug(.le$logger, "Running add plots script")
+  log4r::debug(.le$logger, "Running add plots alt text script")
   result <- tryCatch(
     {
       processx::run(
@@ -43,18 +44,18 @@ add_table_alt_text <- function(
     error = function(e) {
       log4r::error(
         .le$logger,
-        paste0("Add plots script failed. Status: ", e$status)
+        paste0("Add plots alt text script failed. Status: ", e$status)
       )
       log4r::error(
         .le$logger,
-        paste0("Add plots script failed. Stderr: ", e$stderr)
+        paste0("Add plots alt text script failed. Stderr: ", e$stderr)
       )
       log4r::info(
         .le$logger,
-        paste0("Add plots script failed. Stdout: ", e$stdout)
+        paste0("Add plots alt text script failed. Stdout: ", e$stdout)
       )
       stop(paste(
-        "Add plots script failed. Status: ",
+        "Add table plots text script failed. Status: ",
         e$status,
         "Stderr: ",
         e$stderr
@@ -83,5 +84,5 @@ add_table_alt_text <- function(
 
   tictoc::toc()
 
-  log4r::debug(.le$logger, "Exiting add_plots function")
+  log4r::debug(.le$logger, "Exiting add_plot_alt_text function")
 }

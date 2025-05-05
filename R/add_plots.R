@@ -77,7 +77,7 @@ add_plots <- function(
     "-i",
     intermediate_docx,
     "-o",
-    docx_out,
+    gsub(".docx", "-figs.docx", docx_out),
     "-d",
     figures_path
   )
@@ -129,6 +129,11 @@ add_plots <- function(
         e$stderr
       ))
     }
+  )
+
+  add_plots_alt_text(
+    gsub(".docx", "-figs.docx", docx_out),
+    docx_out
   )
 
   unlink(intermediate_docx)

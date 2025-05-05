@@ -4,27 +4,28 @@ from docx import Document
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
+
 def set_table_alt_text(table, alt_text):
     """
     Set both the Alt Text title and description of a python-docx Table.
     """
-    tblPr = table._tbl.tblPr  # ensures there's a <w:tblPr>
-    # caption
+    tblPr = table._tbl.tblPr
+
     cap = OxmlElement("w:tblCaption")
     cap.set(qn("w:val"), alt_text)
     tblPr.append(cap)
-    # description
+
     desc = OxmlElement("w:tblDescription")
     desc.set(qn("w:val"), alt_text)
-    tblPr.append(desc)   
+    tblPr.append(desc)
 
-def tag_tables_with_magic(docx_in, docx_out):
-    """
-    For each table in the document, look at the paragraph immediately before it,
-    extract a magic string of the form "{rpfy}:filename.ext", and set the table's
-    Alt Text to that string. Saves to docx_out.
-    """
-    magic_re = re.compile(r"\{rpfy\}:.*?\.[^.]+$")
+
+def tag_tables_with_magic(docx_in: str, docx_out: str):
+    # Define magic string pattern
+    # Matches "{rpfy}:" and any directory structure following it
+    start_pattern = r"\{rpfy\}\:"
+    end_pattern = r"\.[^.]+$"
+    magic_pattern = re.compile(start_pattern + ".*?" + end_pattern)
     doc = Document(docx_in)
 
     # Map raw <w:tbl> elements back to their Table objects
@@ -35,20 +36,16 @@ def tag_tables_with_magic(docx_in, docx_out):
     siblings = list(body)
 
     for idx, el in enumerate(siblings):
-        # if this child is a table...
         if not el.tag.endswith("}tbl"):
             continue
-        # find the preceding paragraph
-        if idx == 0 or not siblings[idx-1].tag.endswith("}p"):
+        if idx == 0 or not siblings[idx - 1].tag.endswith("}p"):
             continue
-        para_el = siblings[idx-1]
+        para_el = siblings[idx - 1]
 
-        # extract all text runs from that paragraph
         texts = [t.text for t in para_el.xpath(".//w:t") if t.text]
         para_text = "".join(texts).strip()
 
-        # if it matches our magic pattern, tag the table
-        if magic_re.search(para_text):
+        if magic_pattern.search(para_text):
             table = tbl_map.get(el)
             if table:
                 set_table_alt_text(table, para_text)
@@ -58,16 +55,13 @@ def tag_tables_with_magic(docx_in, docx_out):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Add magic string alt text to input docx tables")
+    parser = argparse.ArgumentParser(
+        description="Add magic string alt text to input docx tables"
+    )
     parser.add_argument(
         "-i", "--input", type=str, required=True, help="input docx file path"
     )
     parser.add_argument("-o", "--output", type=str, required=True, help="output docx")
-    parser.add_argument(
-        "-c", "--config", type=str, default=None, help="Config yaml path"
-    )
     args = parser.parse_args()
 
-    tag_tables_with_magic(
-        args.input, args.output 
-    )
+    tag_tables_with_magic(args.input, args.output)

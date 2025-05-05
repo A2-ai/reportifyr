@@ -112,8 +112,13 @@ add_tables <- function(
     }
   }
 
-  # Save the final document
-  print(document, target = docx_out)
+  print(document, target = gsub(".docx", "-tabs.docx", docx_out))
+
+  add_tables_alt_text(
+    gsub(".docx", "-tabs.docx", docx_out),
+    docx_out
+  )
+
   log4r::info(.le$logger, paste0("Final document saved to: ", docx_out))
   unlink(intermediate_docx)
   log4r::debug(.le$logger, "Deleting intermediate document")
