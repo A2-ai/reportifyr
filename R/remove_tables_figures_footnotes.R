@@ -27,6 +27,7 @@ remove_tables_figures_footnotes <- function(
     docx_in,
     docx_out,
     config_yaml = NULL) {
+	tictoc::tic()
   log4r::debug(.le$logger, "Starting remove_tables_figures_footnotes function")
 
   validate_input_args(docx_in, docx_out, config_yaml)
@@ -159,4 +160,5 @@ remove_tables_figures_footnotes <- function(
   log4r::info(.le$logger, paste0("Returning stderr: ", fig_result$stderr))
 
   log4r::debug(.le$logger, "Exiting remove_tables_figures_footnotes function")
+	tictoc::toc()
 }

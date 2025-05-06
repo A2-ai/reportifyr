@@ -42,6 +42,7 @@
 #' )
 #' }
 finalize_document <- function(docx_in, docx_out = NULL) {
+  tictoc::tic()
   log4r::debug(.le$logger, "Starting finalize_document function")
 
   if (is.null(docx_out)) {
@@ -72,6 +73,6 @@ finalize_document <- function(docx_in, docx_out = NULL) {
   log4r::debug(.le$logger, "Deleting intermediate document")
 
   write_object_metadata(object_file = docx_out)
-
   log4r::debug(.le$logger, "Exiting finalize_document function")
+  tictoc::toc()
 }
