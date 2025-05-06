@@ -6,66 +6,10 @@
 #' @noRd
 keep_caption_next <- function(docx_in, docx_out) {
   log4r::debug(.le$logger, "Starting keep_caption_next function")
+  validate_input_args(docx_in, docx_out, NULL)
+  validate_docx(docx_in, NULL)
 
-  if (docx_in == docx_out) {
-    log4r::error(.le$logger, "Input and output file paths cannot be the same.")
-    stop("You must save the output document as a new file.")
-  }
-
-  if (!(tools::file_ext(docx_in) == "docx")) {
-    log4r::error(
-      .le$logger,
-      paste(
-        "The input file must be a docx file, not:",
-        tools::file_ext(docx_in)
-      )
-    )
-    stop(paste("The file must be a docx file not:", tools::file_ext(docx_in)))
-  }
-
-  if (!(tools::file_ext(docx_out) == "docx")) {
-    log4r::error(
-      .le$logger,
-      paste(
-        "The output file must be a docx file, not:",
-        tools::file_ext(docx_out)
-      )
-    )
-    stop(paste("The file must be a docx file not:", tools::file_ext(docx_out)))
-  }
-
-  if (!file.exists(docx_in)) {
-    log4r::error(
-      .le$logger,
-      paste("The input document does not exist:", docx_in)
-    )
-    stop(paste("The input document does not exist:", docx_in))
-  }
-
-  if (is.null(getOption("venv_dir"))) {
-    log4r::info(.le$logger, "Setting options('venv_dir') to project root.")
-    message("Setting options('venv_dir') to project root.")
-    options("venv_dir" = here::here())
-  }
-
-  venv_path <- file.path(getOption("venv_dir"), ".venv")
-
-  if (!dir.exists(venv_path)) {
-    log4r::error(
-      .le$logger,
-      "Virtual environment not found. Please initialize with initialize_python."
-    )
-    stop("Create virtual environment with initialize_python")
-  }
-
-  uv_path <- get_uv_path()
-  if (is.null(uv_path)) {
-    log4r::error(
-      .le$logger,
-      "uv not found. Please install with initialize_python"
-    )
-    stop("Please install uv with initialize_python")
-  }
+  paths <- get_venv_uv_paths()
 
   script <- system.file(
     "scripts/keep_caption_next.py",
@@ -77,9 +21,9 @@ keep_caption_next <- function(docx_in, docx_out) {
   result <- tryCatch(
     {
       processx::run(
-        command = uv_path,
+        command = paths$uv,
         args = args,
-        env = c("current", VIRTUAL_ENV = venv_path),
+        env = c("current", VIRTUAL_ENV = paths$venv),
         error_on_status = TRUE
       )
     },
@@ -102,7 +46,7 @@ keep_caption_next <- function(docx_in, docx_out) {
         "Stderr: ",
         e$stderr
       ))
-      }
+    }
   )
 
   log4r::info(.le$logger, paste0("Returning status: ", result$status))

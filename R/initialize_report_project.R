@@ -251,10 +251,10 @@ create_init_file <- function(project_dir, report_dir, outputs_dir) {
 
   log4r::debug(
     .le$logger,
-    paste0("Reading ", report_dir, "/python_dependency_versions.json")
+    paste0("Reading ", report_dir, "/.python_dependency_versions.json")
   )
   py_versions <- jsonlite::read_json(
-    file.path(report_dir, "python_dependency_versions.json")
+    file.path(report_dir, ".python_dependency_versions.json")
   )
   data$python_versions <- py_versions
 
