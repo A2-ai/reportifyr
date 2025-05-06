@@ -53,7 +53,7 @@ build_report <- function(
   validate_docx(docx_in, config_yaml)
   log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
 
-  doc_dirs <- make_doc_dirs(docx_in = docx_in)
+	doc_dirs <- make_doc_dirs(docx_in = docx_in)
   if (is.null(docx_out)) {
     docx_out <- doc_dirs$doc_draft
     log4r::info(
