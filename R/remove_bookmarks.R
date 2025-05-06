@@ -40,7 +40,8 @@
 #' )
 #' }
 remove_bookmarks <- function(docx_in, docx_out) {
-  log4r::debug(.le$logger, "Starting remove_bookmarks function")
+	tictoc::tic()
+	log4r::debug(.le$logger, "Starting remove_bookmarks function")
 
   validate_input_args(docx_in, docx_out, NULL)
 
@@ -121,4 +122,5 @@ remove_bookmarks <- function(docx_in, docx_out) {
     stop("Must enter Y or n")
   }
   log4r::debug(.le$logger, "Exiting remove_bookmarks function")
+	tictoc::toc()
 }
