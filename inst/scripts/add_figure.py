@@ -58,7 +58,8 @@ def add_figure(
                     figures = list(figure_args.keys())
                 
                 for fig_idx, figure in enumerate(figures):
-                    if not figure.endswith("png"):
+                    extension = os.path.splitext(figure)[1].lower()
+                    if extension not in [".png", ".csv", ".rds"]: 
                         print(f"Unsupported figure file extension: {figure}. Please save as .png")
                         continue
 

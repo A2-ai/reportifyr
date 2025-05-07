@@ -233,7 +233,7 @@
     ▇ Using system python version, set options('python.version') to change
     ▇ Using python-docx version 1.1.2, set options('python-docx.version') to change
     ▇ Using pyyaml version 6.0.2, set options('pyyaml.version') to change
-    ▇ Using default v11.1.0, set options('pillow.version') to change    
+    ▇ Using pillow v11.1.0, set options('pillow.version') to change    
     ```
 
 * Messaging around venv/uv/python dependencies has been reworked:
