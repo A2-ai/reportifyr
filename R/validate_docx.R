@@ -105,7 +105,7 @@ validate_docx <- function(docx_in, config_yaml) {
     if (strict_mode) {
       log4r::error(.le$logger, message)
       stop(paste0(
-        "Fix artifact extensions to contunue. ",
+        "Fix artifact extensions to continue. ",
         "Currently .csv, .RDS are accepted for tables ",
         "and .png is accepted for figures."
       ))
