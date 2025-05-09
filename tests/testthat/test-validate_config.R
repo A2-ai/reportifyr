@@ -1,7 +1,7 @@
 make_config_file <- function(config_list) {
-  path <- tempfile(fileext = ".yaml")  # use tempfile directly
+  path <- tempfile(fileext = ".yaml")
   writeLines(yaml::as.yaml(config_list), path)
-  withr::defer(unlink(path), envir = parent.frame())  # ensures cleanup
+  withr::defer(unlink(path), envir = parent.frame())
   path
 }
 
