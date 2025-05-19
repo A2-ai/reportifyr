@@ -25,17 +25,11 @@ add_plots_alt_text <- function(
 
   log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
 
-  intermediate_docx <- gsub(".docx", "-int.docx", docx_out)
-  log4r::info(
-    .le$logger,
-    paste0("Intermediate document path set: ", intermediate_docx)
-  )
-
   script <- system.file(
     "scripts/add_figure_alt_text.py",
     package = "reportifyr"
   )
-  args <- c("run", script, "-i", intermediate_docx, "-o", docx_out)
+  args <- c("run", script, "-i", docx_in, "-o", docx_out)
 
   paths <- get_venv_uv_paths()
 
@@ -70,8 +64,6 @@ add_plots_alt_text <- function(
       ))
     }
   )
-  unlink(intermediate_docx)
-  log4r::debug(.le$logger, "Deleting intermediate document")
 
   if (grepl("Duplicate figure names found in the document", result$stdout)) {
     log4r::warn(
