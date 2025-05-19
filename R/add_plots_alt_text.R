@@ -22,7 +22,7 @@ add_plots_alt_text <- function(
   }
 
   validate_input_args(docx_in, docx_out, NULL)
-  validate_docx(docx_in, NULL)
+
   log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
 
   intermediate_docx <- gsub(".docx", "-int.docx", docx_out)
@@ -30,8 +30,6 @@ add_plots_alt_text <- function(
     .le$logger,
     paste0("Intermediate document path set: ", intermediate_docx)
   )
-
-  keep_caption_next(docx_in, intermediate_docx)
 
   script <- system.file(
     "scripts/add_figure_alt_text.py",
