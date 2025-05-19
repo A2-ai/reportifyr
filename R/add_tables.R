@@ -111,17 +111,22 @@ add_tables <- function(
       }
     }
   }
+  intermediate_tabs_docx <- gsub(".docx", "-inttabs.docx", docx_out)
 
-  print(document, target = gsub(".docx", "-tabs.docx", docx_out))
+  print(document, target = intermediate_tabs_docx)
 
   add_tables_alt_text(
-    gsub(".docx", "-tabs.docx", docx_out),
+    intermediate_tabs_docx,
     docx_out
   )
 
-  log4r::info(.le$logger, paste0("Final document saved to: ", docx_out))
   unlink(intermediate_docx)
   log4r::debug(.le$logger, "Deleting intermediate document")
+
+  unlink(intermediate_tabs_docx)
+  log4r::debug(.le$logger, "Deleting intermediate tabs document")
+
+  log4r::info(.le$logger, paste0("Final document saved to: ", docx_out))
   tictoc::toc()
 }
 

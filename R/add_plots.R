@@ -70,6 +70,8 @@ add_plots <- function(
 
   keep_caption_next(docx_in, intermediate_docx)
 
+  intermediate_figs_docx <- gsub(".docx", "-intfigs.docx", docx_out)
+
   script <- system.file("scripts/add_figure.py", package = "reportifyr")
   args <- c(
     "run",
@@ -77,7 +79,7 @@ add_plots <- function(
     "-i",
     intermediate_docx,
     "-o",
-    gsub(".docx", "-figs.docx", docx_out),
+    intermediate_figs_docx,
     "-d",
     figures_path
   )
@@ -132,12 +134,15 @@ add_plots <- function(
   )
 
   add_plots_alt_text(
-    gsub(".docx", "-figs.docx", docx_out),
+    intermediate_figs_docx,
     docx_out
   )
 
   unlink(intermediate_docx)
   log4r::debug(.le$logger, "Deleting intermediate document")
+
+  unlink(intermediate_figs_docx)
+  log4r::debug(.le$logger, "Deleting intermediate tabs document")
 
   if (grepl("Duplicate figure names found in the document", result$stdout)) {
     log4r::warn(
