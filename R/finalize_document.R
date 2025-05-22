@@ -3,6 +3,7 @@
 #' @description Reads in a `.docx` file and returns a finalized version with magic strings and bookmarks removed.
 #' @param docx_in The file path to the input `.docx` file.
 #' @param docx_out The file path to the output `.docx` file to save to. Default is `NULL`. If `NULL`, `docx_out` is assigned `doc_dirs$doc_final` using `make_doc_dirs(docx_in = docx_in)`.
+#' @param config_yaml The file path to the `config.yaml`.
 #'
 #' @export
 #'
@@ -41,7 +42,10 @@
 #'   docx_out = doc_dirs$doc_final
 #' )
 #' }
-finalize_document <- function(docx_in, docx_out = NULL) {
+finalize_document <- function(
+    docx_in,
+    docx_out = NULL,
+    config_yaml) {
   tictoc::tic()
   log4r::debug(.le$logger, "Starting finalize_document function")
 
@@ -54,8 +58,8 @@ finalize_document <- function(docx_in, docx_out = NULL) {
     )
   }
 
-  validate_input_args(docx_in, docx_out)
-  validate_docx(docx_in)
+  validate_input_args(docx_in, docx_out, config_yaml)
+  validate_docx(docx_in, config_yaml)
   log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
 
   intermediate_docx <- gsub(".docx", "-int.docx", docx_out)
