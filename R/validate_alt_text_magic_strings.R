@@ -69,7 +69,7 @@ validate_alt_text_magic_strings <- function(
   if (grepl("Magic mismatch!", result$stdout)) {
     log4r::warn(
       .le$logger,
-      "mismatching magic strings found"
+      "Mismatching magic strings found!"
     )
   }
 
