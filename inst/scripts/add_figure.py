@@ -14,7 +14,6 @@ from PIL import Image, ImageDraw, ImageFont
 
 from parse_magic_string import parse_magic_string
 
-
 def add_figure(
     docx_in: str,
     docx_out: str,
@@ -33,20 +32,21 @@ def add_figure(
 
     # Define magic string pattern
     # Matches "{rpfy}:" and any directory structure following it
-    start_pattern = r"\{rpfy\}\:"
+    start_pattern = r"\{rpfy\}\:"  
     end_pattern = r"\.[^.]+$"
     magic_pattern = re.compile(start_pattern + ".*?" + end_pattern)
 
     found_magic_strings = []
-    new_paragraphs = []
 
-    num_figs_processed = 0
-
-    for i, par in enumerate(document.paragraphs):
+    # Process paragraphs in reverse order to avoid index shifting issues
+    for i, par in enumerate(reversed(document.paragraphs)):
+        # Calculate the actual index in the original document
+        actual_index = len(document.paragraphs) - 1 - i
+        
         matches = magic_pattern.findall(par.text)
         if matches:
             if len(matches) > len(set(matches)):
-                print(f"Duplicate figure names found in paragraph {i+1}.")
+                print(f"Duplicate figure names found in paragraph {actual_index+1}.")
 
             for match in matches:
                 # Extract the image directory from the match
@@ -59,13 +59,11 @@ def add_figure(
                     figures = list(reversed(figure_args.keys()))
                 else:
                     figures = list(figure_args.keys())
-
+                
                 for fig_idx, figure in enumerate(figures):
                     extension = os.path.splitext(figure)[1].lower()
-                    if extension not in [".png", ".csv", ".rds"]:
-                        print(
-                            f"Unsupported figure file extension: {figure}. Please save as .png"
-                        )
+                    if extension not in [".png", ".csv", ".rds"]: 
+                        print(f"Unsupported figure file extension: {figure}. Please save as .png")
                         continue
 
                     add_label = False
@@ -85,15 +83,9 @@ def add_figure(
                         else:
                             labeled_image = image_path
 
-                        # Create new paragraph and add to list
+                        # Insert new paragraph after the current paragraph
                         new_par = document.add_paragraph()
                         run = new_par.add_run()
-                        # +2 because word paragraphs are 1-indexed
-                        # and we are adding the paragraph after the
-                        # current paragraph
-                        num_figs_processed += 1
-                        new_paragraphs.append((i + num_figs_processed, new_par))
-
                         # can only use embedded_size if the args are there
                         # args = {
                         #    'file.ext': {'width': '5', 'height': '8'},
@@ -101,6 +93,14 @@ def add_figure(
                         #    'file3.ext': {'width': '5'},
                         #    'file4.ext': {}
                         # }
+                        
+                        # Move paragraph to correct position (after current paragraph)
+                        parent = par._element.getparent()
+                        new_par._element.getparent().remove(new_par._element)
+                        target_index = list(parent).index(par._element)
+                        parent.insert(target_index + 1, new_par._element)
+
+                        # Configure image size
                         if config.get("use_embedded_size", True) and set(
                             figure_args[figure].keys()
                         ).intersection(["width", "height"]):
@@ -123,9 +123,7 @@ def add_figure(
 
                         else:
                             default_width = config.get("default_fig_width", 6)
-                            if set(figure_args[figure].keys()).intersection(
-                                ["width", "height"]
-                            ):
+                            if set(figure_args[figure].keys()).intersection(["width", "height"]):
                                 run.add_picture(
                                     labeled_image,
                                     width=(
@@ -157,6 +155,7 @@ def add_figure(
                                     labeled_image, width=Inches(default_width)
                                 )
 
+                        # Set alignment
                         match config.get("fig_alignment", "center").lower():
                             case "center":
                                 new_par.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -166,17 +165,11 @@ def add_figure(
                                 new_par.alignment = WD_ALIGN_PARAGRAPH.RIGHT
                             case _:
                                 new_par.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    # Insert new paragraphs
-    new_paragraphs.sort(reverse=True, key=lambda x: x[0])
-    for par_idx, par in new_paragraphs:
-        parent = document.paragraphs[0]._element.getparent()
-        par._element.getparent().remove(par._element)
-        parent.insert(par_idx, par._element)
 
     if len(set(found_magic_strings)) != len(found_magic_strings):
         print("Duplicate figure names found in the document.")
     document.save(docx_out)
-    print(f"Processed file saved at '{docx_out}'.")
+    print(f"Processed file saved at '{docx_out}'.") 
 
 
 def add_label_to_image(image_path: str, index: int) -> str:
@@ -201,8 +194,6 @@ def add_label_to_image(image_path: str, index: int) -> str:
     font = ImageFont.load_default(size=56)
 
     img_width, img_height = img.size
-    original_format = img.format or os.path.splitext(image_path)[1][1:].upper()
-    original_dpi = img.info.get("dpi", (72, 72))
     # aspect_ratio = img_width / img_height
 
     left_corner_position = (20, 20)
@@ -224,7 +215,7 @@ def add_label_to_image(image_path: str, index: int) -> str:
     temp_path = temp_file.name
     temp_file.close()
 
-    img.save(temp_path, format=original_format, dpi=original_dpi)
+    img.save(temp_path)
     return temp_path
 
 
