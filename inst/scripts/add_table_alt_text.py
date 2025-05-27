@@ -11,10 +11,6 @@ def set_table_alt_text(table, alt_text):
     """
     tblPr = table._tbl.tblPr
 
-    cap = OxmlElement("w:tblCaption")
-    cap.set(qn("w:val"), alt_text)
-    tblPr.append(cap)
-
     desc = OxmlElement("w:tblDescription")
     desc.set(qn("w:val"), alt_text)
     tblPr.append(desc)
