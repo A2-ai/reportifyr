@@ -51,6 +51,11 @@ def check_table_alt_text(table, para_text: str):
     tbl_pr = table._tbl.tblPr
     
     desc = tbl_pr.find(qn("w:tblDescription"))
+    
+    if desc is None:
+        print("Table found but it has no alt text description or title.")
+        return
+    
     alt_text = desc.get(qn("w:val"))
 
     if alt_text != para_text:
