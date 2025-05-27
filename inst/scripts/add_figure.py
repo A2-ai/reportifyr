@@ -14,6 +14,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 from parse_magic_string import parse_magic_string
 
+
 def add_figure(
     docx_in: str,
     docx_out: str,
@@ -32,12 +33,14 @@ def add_figure(
 
     # Define magic string pattern
     # Matches "{rpfy}:" and any directory structure following it
-    start_pattern = r"\{rpfy\}\:"  
+    start_pattern = r"\{rpfy\}\:"
     end_pattern = r"\.[^.]+$"
     magic_pattern = re.compile(start_pattern + ".*?" + end_pattern)
 
     found_magic_strings = []
     new_paragraphs = []
+
+    num_figs_processed = 0
 
     for i, par in enumerate(document.paragraphs):
         matches = magic_pattern.findall(par.text)
@@ -56,11 +59,13 @@ def add_figure(
                     figures = list(reversed(figure_args.keys()))
                 else:
                     figures = list(figure_args.keys())
-                
+
                 for fig_idx, figure in enumerate(figures):
                     extension = os.path.splitext(figure)[1].lower()
-                    if extension not in [".png", ".csv", ".rds"]: 
-                        print(f"Unsupported figure file extension: {figure}. Please save as .png")
+                    if extension not in [".png", ".csv", ".rds"]:
+                        print(
+                            f"Unsupported figure file extension: {figure}. Please save as .png"
+                        )
                         continue
 
                     add_label = False
@@ -86,7 +91,8 @@ def add_figure(
                         # +2 because word paragraphs are 1-indexed
                         # and we are adding the paragraph after the
                         # current paragraph
-                        new_paragraphs.append((i + 2, new_par))
+                        num_figs_processed += 1
+                        new_paragraphs.append((i + num_figs_processed, new_par))
 
                         # can only use embedded_size if the args are there
                         # args = {
@@ -117,7 +123,9 @@ def add_figure(
 
                         else:
                             default_width = config.get("default_fig_width", 6)
-                            if set(figure_args[figure].keys()).intersection(["width", "height"]):
+                            if set(figure_args[figure].keys()).intersection(
+                                ["width", "height"]
+                            ):
                                 run.add_picture(
                                     labeled_image,
                                     width=(
