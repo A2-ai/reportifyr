@@ -10,9 +10,12 @@ test_that("get_venv_uv_path sets venv_dir if unset", {
 
   mockery::stub(get_venv_uv_paths, "log4r::info", function(...) invisible(NULL))
 
-  expect_message({
-    result <- get_venv_uv_paths()
-  }, "Setting options\\('venv_dir'\\) to project root")
+  expect_message(
+    {
+      result <- get_venv_uv_paths()
+    },
+    "Setting options\\('venv_dir'\\) to project root"
+  )
 
   expect_equal(getOption("venv_dir"), temp_dir)
 })
@@ -23,7 +26,11 @@ test_that("get_venv_uv_path throws error when .venv directory is missing", {
 
   unlink(file.path(temp_dir, ".venv"), recursive = TRUE, force = TRUE)
 
-  mockery::stub(get_venv_uv_paths, "log4r::error", function(...) invisible(NULL))
+  mockery::stub(
+    get_venv_uv_paths,
+    "log4r::error",
+    function(...) invisible(NULL)
+  )
 
   expect_error(
     get_venv_uv_paths(),
@@ -40,7 +47,11 @@ test_that("get_venv_uv_path throws error when uv path is NULL", {
 
   mockery::stub(get_venv_uv_paths, "get_uv_path", function() NULL)
 
-  mockery::stub(get_venv_uv_paths, "log4r::error", function(...) invisible(NULL))
+  mockery::stub(
+    get_venv_uv_paths,
+    "log4r::error",
+    function(...) invisible(NULL)
+  )
 
   expect_error(
     get_venv_uv_paths(),

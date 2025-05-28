@@ -1,5 +1,5 @@
 test_that("toggle_logger sets default log level to WARN when RPFY_VERBOSE is unset", {
-  withr::local_envvar(c(RPFY_VERBOSE = NA))  # Unset the env var
+  withr::local_envvar(c(RPFY_VERBOSE = NA)) # Unset the env var
   toggle_logger(quiet = TRUE)
   logger <- get("logger", envir = .le)
   level_name <- as.character(log4r::level(logger))

@@ -41,7 +41,7 @@
 #' )
 #' }
 remove_magic_strings <- function(docx_in, docx_out) {
-	tictoc::tic()
+  tictoc::tic()
   log4r::debug(.le$logger, "Starting remove_magic_strings function")
   validate_input_args(docx_in, docx_out, NULL)
 
@@ -126,5 +126,5 @@ remove_magic_strings <- function(docx_in, docx_out) {
     stop("You must enter Y or n")
   }
   log4r::debug(.le$logger, "Exiting remove_bookmarks function")
-	tictoc::toc()
+  tictoc::toc()
 }

@@ -10,9 +10,10 @@
 #' add_tables_alt_text("document-tabs.docx", "document-tabs_at.docx")
 #' }
 add_tables_alt_text <- function(
-    docx_in,
-    docx_out,
-    debug = FALSE) {
+  docx_in,
+  docx_out,
+  debug = FALSE
+) {
   log4r::debug(.le$logger, "Starting add_plots function")
   tictoc::tic()
 

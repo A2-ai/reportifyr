@@ -10,9 +10,10 @@
 #' validate_alt_text_magic_strings("template.docx")
 #' }
 validate_alt_text_magic_strings <- function(
-    docx_in,
-    config_yaml = NULL,
-    debug = FALSE) {
+  docx_in,
+  config_yaml = NULL,
+  debug = FALSE
+) {
   log4r::debug(.le$logger, "Starting validate_alt_text_magic_strings function")
   tictoc::tic()
 

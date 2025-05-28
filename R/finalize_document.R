@@ -43,9 +43,10 @@
 #' )
 #' }
 finalize_document <- function(
-    docx_in,
-    docx_out = NULL,
-    config_yaml) {
+  docx_in,
+  docx_out = NULL,
+  config_yaml
+) {
   tictoc::tic()
   log4r::debug(.le$logger, "Starting finalize_document function")
 

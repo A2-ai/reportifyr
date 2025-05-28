@@ -33,7 +33,7 @@ test_that("validate_docx errors if file extension is invalid", {
   config <- create_config_yaml(strict = TRUE)
 
   mockery::stub(validate_docx, "file.exists", function(x) TRUE)
-  mockery:: stub(validate_docx, "dir.exists", function(x) TRUE)
+  mockery::stub(validate_docx, "dir.exists", function(x) TRUE)
   mockery::stub(validate_docx, "get_uv_path", function() "~/.local/bin/uv")
 
   mockery::stub(validate_docx, "processx::run", function(...) {
@@ -89,7 +89,10 @@ test_that("validate_docx errors if .venv directory is missing", {
   mockery::stub(validate_docx, "file.exists", function(x) TRUE)
   mockery::stub(validate_docx, "dir.exists", function(x) FALSE)
 
-  expect_error(validate_docx(docx, NULL), "Create virtual environment with initialize_python")
+  expect_error(
+    validate_docx(docx, NULL),
+    "Create virtual environment with initialize_python"
+  )
 })
 
 test_that("validate_docx errors if uv path is NULL", {
@@ -99,5 +102,8 @@ test_that("validate_docx errors if uv path is NULL", {
   mockery::stub(validate_docx, "dir.exists", function(x) TRUE)
   mockery::stub(validate_docx, "get_uv_path", function() NULL)
 
-  expect_error(validate_docx(docx, NULL), "Please install uv with initialize_python")
+  expect_error(
+    validate_docx(docx, NULL),
+    "Please install uv with initialize_python"
+  )
 })

@@ -10,7 +10,11 @@ test_that("get_git_info parses git log correctly", {
     sep = "\n"
   )
 
-  mockery::stub(get_git_info, "processx::run", function(...) list(stdout = fake_log))
+  mockery::stub(
+    get_git_info,
+    "processx::run",
+    function(...) list(stdout = fake_log)
+  )
 
   result <- get_git_info("some/file.R")
 
@@ -28,11 +32,15 @@ test_that("get_git_info handles untracked file (empty log)", {
   expect_equal(result$creation_author, "FILE NOT TRACKED BY GIT")
   expect_equal(result$latest_author, "FILE NOT TRACKED BY GIT")
   expect_equal(result$creation_time, "FILE NOT TRACKED BY GIT")
-  expect_match(result$latest_time, "^\\d{4}-\\d{2}-\\d{2}")  # current time
+  expect_match(result$latest_time, "^\\d{4}-\\d{2}-\\d{2}") # current time
 })
 
 test_that("get_git_info returns fallback values on error", {
-  mockery::stub(get_git_info, "processx::run", function(...) stop("git not available"))
+  mockery::stub(
+    get_git_info,
+    "processx::run",
+    function(...) stop("git not available")
+  )
 
   result <- get_git_info("some/file.R")
 

@@ -38,22 +38,23 @@
 #' )
 #' }
 build_report <- function(
-    docx_in,
-    docx_out = NULL,
-    figures_path,
-    tables_path,
-    standard_footnotes_yaml = NULL,
-    config_yaml = NULL,
-    add_footnotes = TRUE,
-    include_object_path = FALSE,
-    footnotes_fail_on_missing_metadata = TRUE) {
+  docx_in,
+  docx_out = NULL,
+  figures_path,
+  tables_path,
+  standard_footnotes_yaml = NULL,
+  config_yaml = NULL,
+  add_footnotes = TRUE,
+  include_object_path = FALSE,
+  footnotes_fail_on_missing_metadata = TRUE
+) {
   log4r::debug(.le$logger, "Starting build_report function")
 
   validate_input_args(docx_in, docx_out, config_yaml)
   validate_docx(docx_in, config_yaml)
   log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
 
-	doc_dirs <- make_doc_dirs(docx_in = docx_in)
+  doc_dirs <- make_doc_dirs(docx_in = docx_in)
   if (is.null(docx_out)) {
     docx_out <- doc_dirs$doc_draft
     log4r::info(

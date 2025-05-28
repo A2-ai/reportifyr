@@ -10,9 +10,10 @@
 #' add_plots_alt_text("doc-figs.docx", "doc-draft.docx")
 #' }
 add_plots_alt_text <- function(
-    docx_in,
-    docx_out,
-    debug = FALSE) {
+  docx_in,
+  docx_out,
+  debug = FALSE
+) {
   log4r::debug(.le$logger, "Starting add_plots_alt_text function")
   tictoc::tic()
 

@@ -145,13 +145,15 @@ get_uv_path <- function(quiet = FALSE) {
   # Find the first existing path, preferring ~/.local/bin/uv
   uv_paths <- uv_paths[nzchar(uv_paths) & file.exists(uv_paths)]
 
-  uv_path <- if (length(uv_paths)) uv_paths[[1]] else NULL   # return NULL, never NA
+  uv_path <- if (length(uv_paths)) uv_paths[[1]] else NULL
 
-  if (is.null(uv_path)) {
-    log4r::warn(
-      .le$logger,
-      "uv not found. Please install with initialize_python"
-    )
+  if (!quiet) {
+    if (is.null(uv_path)) {
+      log4r::warn(
+        .le$logger,
+        "uv not found. Please install with initialize_python"
+      )
+    }
   }
   uv_path
 }

@@ -31,8 +31,8 @@ reportifyr_options_message <- function() {
   } else {
     set_options <- c(set_options, paste("venv_dir:", root))
   }
-  
-	# NICE TO HAVES
+
+  # NICE TO HAVES
   uvversion <- getOption("uv.version")
   if (is.null(uvversion)) {
     uv_path <- get_uv_path(quiet = TRUE)

@@ -31,11 +31,12 @@
 #' )
 #' }
 add_tables <- function(
-    docx_in,
-    docx_out,
-    tables_path,
-    config_yaml = NULL,
-    debug = FALSE) {
+  docx_in,
+  docx_out,
+  tables_path,
+  config_yaml = NULL,
+  debug = FALSE
+) {
   log4r::debug(.le$logger, "Starting add_tables function")
   tictoc::tic()
 
@@ -138,7 +139,8 @@ process_table_file <- function(table_file, document) {
   )
 
   # Load the table data
-  data_in <- switch(tools::file_ext(table_file),
+  data_in <- switch(
+    tools::file_ext(table_file),
     "csv" = utils::read.csv(table_file),
     "RDS" = readRDS(table_file),
     stop("Unsupported file type")

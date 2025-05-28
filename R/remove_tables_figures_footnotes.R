@@ -24,14 +24,15 @@
 #' )
 #' }
 remove_tables_figures_footnotes <- function(
-    docx_in,
-    docx_out,
-    config_yaml = NULL) {
-	tictoc::tic()
+  docx_in,
+  docx_out,
+  config_yaml = NULL
+) {
+  tictoc::tic()
   log4r::debug(.le$logger, "Starting remove_tables_figures_footnotes function")
-	
+
   validate_input_args(docx_in, docx_out, config_yaml)
-	validate_alt_text_magic_strings(docx_in, config_yaml)
+  validate_alt_text_magic_strings(docx_in, config_yaml)
 
   paths <- get_venv_uv_paths()
   notes_script <- system.file(
@@ -161,5 +162,5 @@ remove_tables_figures_footnotes <- function(
   log4r::info(.le$logger, paste0("Returning stderr: ", fig_result$stderr))
 
   log4r::debug(.le$logger, "Exiting remove_tables_figures_footnotes function")
-	tictoc::toc()
+  tictoc::toc()
 }
