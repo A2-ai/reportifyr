@@ -108,7 +108,9 @@ initialize_python <- function(continue = NULL) {
 
   log4r::debug(.le$logger, "Exiting initialize_python function")
   invisible(metadata_file)
-} #' Grabs python version for .venv
+}
+
+#' Grabs python version for .venv
 #'
 #' @param venv_dir Path to .venv directory
 #'

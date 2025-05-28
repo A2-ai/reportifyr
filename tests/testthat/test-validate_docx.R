@@ -52,13 +52,14 @@ test_that("validate_docx errors on duplicated files in strict mode", {
   mockery::stub(validate_docx, "get_uv_path", function() "~/.local/bin/uv")
 
   mockery::stub(validate_docx, "processx::run", function(...) {
-    list(stdout = jsonlite::toJSON(list(
-      "example.csv" = list(),
-      "example.csv" = list()
-    )))
+    raw_json <- '{"example.csv": {}, "example.csv": {}}'
+    list(stdout = raw_json)
   })
 
-  expect_error(validate_docx(docx, config), "Fix artifact extensions to contunue. Currently .csv, .RDS are accepted for tables and .png is accepted for figures.")
+  expect_error(
+    validate_docx(docx, config),
+    "Using strict mode. Fix duplicate artifacts to continue."
+  )
 })
 
 test_that("validate_docx errors if input .docx does not exist", {
