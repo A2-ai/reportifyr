@@ -130,11 +130,13 @@ get_packages <- function() {
 
 #' /.cargo/bin post v0.5.0 to /.local/bin
 #'
+#' @param quite boolean to suppress log message
+#'
 #' @return path to uv
 #'
 #' @keywords internal
 #' @noRd
-get_uv_path <- function() {
+get_uv_path <- function(quiet = FALSE) {
   uv_paths <- c(
     normalizePath("~/.local/bin/uv", mustWork = FALSE),
     normalizePath("~/.cargo/bin/uv", mustWork = FALSE)
@@ -142,12 +144,13 @@ get_uv_path <- function() {
 
   # Find the first existing path, preferring ~/.local/bin/uv
   uv_path <- uv_paths[file.exists(uv_paths)][1]
-
-  if (is.null(uv_path)) {
-    log4r::error(
-      .le$logger,
-      "uv not found. Please install with initialize_python"
-    )
+  if (!quiet) {
+    if (is.null(uv_path)) {
+      log4r::error(
+        .le$logger,
+        "uv not found. Please install with initialize_python"
+      )
+    }
   }
   uv_path
 }

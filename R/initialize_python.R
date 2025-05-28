@@ -40,7 +40,7 @@ initialize_python <- function(continue = NULL) {
     paste0("Command for setting up virtual environment: ", cmd)
   )
 
-  uv_path <- get_uv_path()
+  uv_path <- get_uv_path(quiet = TRUE)
   log4r::info(.le$logger, paste0("uv path: ", uv_path))
 
   args <- get_args(uv_path)
