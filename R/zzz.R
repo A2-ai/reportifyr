@@ -39,7 +39,7 @@ reportifyr_options_message <- function() {
     if (is.null(uv_path)) {
       optional_options <- c(
         optional_options,
-        "Using uv version 0.5.1, set options('uv.version') to change"
+        "Using uv version 0.7.8, set options('uv.version') to change"
       )
     } else {
       uv_version <- get_uv_version(uv_path)
