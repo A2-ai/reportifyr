@@ -10,14 +10,16 @@ else
 	echo "uv already installed"
 fi
 
-if [[ ":$PATH:" != *":$HOME/.cargo/bin:"* ]]; then
-    echo "$HOME/.cargo/bin is not in PATH, adding it now..."
-    export PATH="$HOME/.cargo/bin:$PATH"
-    # Optionally add it to .bashrc or .zshrc to make the change permanent
-    echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> $HOME/.bashrc
-    # For Zsh, uncomment the following line:
-    # echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.zshrc
-fi
+for dir in "$HOME/.local/bin" "$HOME/.cargo/bin"; do
+  if [[ ":$PATH:" != *":$dir:"* ]]; then
+    echo "$dir is not in PATH – adding it now…"
+    export PATH="$dir:$PATH"
+
+    if ! grep -qxF "export PATH=\"$dir:\$PATH\"" "$HOME/.bashrc"; then
+      echo "export PATH=\"$dir:\$PATH\"" >> "$HOME/.bashrc"
+    fi
+  fi
+done
 
 source $HOME/.bashrc
 
@@ -44,11 +46,11 @@ if ! python -c "import docx" &> /dev/null; then
     uv pip install "python-docx==1.1.2" # default version this branch should never run from R
 		echo "Installed python-docx v1.1.2"
   fi
-else 
+else
   # Already installed, check if version matches requested
   CURRENT_VERSION=$(python -c "import docx; print(docx.__version__)" 2>/dev/null)
   echo "Current python-docx version: $CURRENT_VERSION"
-  
+
   if [ -n "$2" ] && [ "$CURRENT_VERSION" != "$2" ]; then
     echo "Updating python-docx from v$CURRENT_VERSION to v$2"
     uv pip install "python-docx==$2"
@@ -75,7 +77,7 @@ else
 	# Already installed, check if version matches requested
   CURRENT_VERSION=$(python -c "import yaml; print(yaml.__version__)" 2>/dev/null)
   echo "Current pyyaml version: $CURRENT_VERSION"
-  
+
   if [ -n "$3" ] && [ "$CURRENT_VERSION" != "$3" ]; then
     echo "Updating pyyaml from v$CURRENT_VERSION to v$3"
     uv pip install "pyyaml==$3"
@@ -94,15 +96,15 @@ if ! python -c "import PIL" &> /dev/null; then
 	if [ -n "$4" ]; then
 		uv pip install "Pillow==$4"
 		echo "Installed pillow v$4"
-	else 
+	else
 		uv pip install "Pillow==11.1"
 		echo "Installed pillow v11.1"
 	fi
-else 
+else
 	# Already installed, check if version matches requested
   CURRENT_VERSION=$(python -c "import PIL; print(PIL.__version__)" 2>/dev/null)
   echo "Current pillow version: $CURRENT_VERSION"
-  
+
   if [ -n "$4" ] && [ "$CURRENT_VERSION" != "$4" ]; then
     echo "Updating pillow from v$CURRENT_VERSION to v$4"
     uv pip install "Pillow==$4"
