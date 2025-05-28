@@ -79,7 +79,7 @@ initialize_python <- function(continue = NULL) {
       "Creating python virtual environment with the following settings:\n",
       paste0("\t", args_name, ": ", args, collapse = "\n")
     ))
-  } else if (!file.exists(uv_path)) {
+  } else if (is.null(uv_path) || !file.exists(uv_path)) {
     message("installing uv")
   } else {
     log4r::info(
@@ -212,8 +212,8 @@ get_args <- function(uv_path) {
     args <- c(args, getOption("uv.version"))
   } else {
     if (is.null(uv_path)) {
-      args <- c(args, "0.5.1")
-      log4r::info(.le$logger, "Using default uv version: 0.5.1")
+      args <- c(args, "0.7.8")
+      log4r::info(.le$logger, "Using default uv version: 0.7.8")
     } else {
       uv_version <- get_uv_version(uv_path)
       args <- c(args, uv_version)
