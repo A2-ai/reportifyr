@@ -10,16 +10,23 @@ else
 	echo "uv already installed"
 fi
 
-for dir in "$HOME/.local/bin" "$HOME/.cargo/bin"; do
-  if [[ ":$PATH:" != *":$dir:"* ]]; then
-    echo "$dir is not in PATH – adding it now…"
-    export PATH="$dir:$PATH"
+if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
+    echo "$HOME/.local/bin is not in PATH, adding it now..."
+    export PATH="$HOME/.local/bin:$PATH"
+    # Optionally add it to .bashrc or .zshrc to make the change permanent
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> $HOME/.bashrc
+    # For Zsh, uncomment the following line:
+    # echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+fi
 
-    if ! grep -qxF 'export PATH="$HOME'"$dir#"$HOME"':$PATH"' "$HOME/.bashrc"; then
-      echo 'export PATH="$HOME'"$dir#"$HOME"':$PATH"' >> "$HOME/.bashrc"
-    fi
-  fi
-done
+if [[ ":$PATH:" != *":$HOME/.cargo/bin:"* ]]; then
+    echo "$HOME/.cargo/bin is not in PATH, adding it now..."
+    export PATH="$HOME/.cargo/bin:$PATH"
+    # Optionally add it to .bashrc or .zshrc to make the change permanent
+    echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> $HOME/.bashrc
+    # For Zsh, uncomment the following line:
+    # echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.zshrc
+fi
 
 source $HOME/.bashrc
 
