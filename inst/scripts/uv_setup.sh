@@ -15,8 +15,9 @@ for dir in "$HOME/.local/bin" "$HOME/.cargo/bin"; do
     echo "$dir is not in PATH – adding it now…"
     export PATH="$dir:$PATH"
 
-    if ! grep -qxF "export PATH=\"$dir:\$PATH\"" "$HOME/.bashrc"; then
-      echo "export PATH=\"$dir:\$PATH\"" >> "$HOME/.bashrc"
+    # single-quote the whole thing so $HOME and $PATH stay literal
+    if ! grep -qxF 'export PATH="$HOME'"${dir#"$HOME"}'":"'$PATH'"' "$HOME/.bashrc"; then
+      echo 'export PATH="$HOME'"${dir#"$HOME"}'":"'$PATH'"' >> "$HOME/.bashrc"
     fi
   fi
 done
