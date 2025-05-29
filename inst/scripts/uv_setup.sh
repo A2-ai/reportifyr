@@ -19,13 +19,15 @@ if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
     # echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
 fi
 
+CARGO_EXPORT='export PATH="$HOME/.cargo/bin:$PATH"'
+
 if [[ ":$PATH:" != *":$HOME/.cargo/bin:"* ]]; then
     echo "$HOME/.cargo/bin is not in PATH, adding it now..."
     export PATH="$HOME/.cargo/bin:$PATH"
-    # Optionally add it to .bashrc or .zshrc to make the change permanent
-    echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> $HOME/.bashrc
-    # For Zsh, uncomment the following line:
-    # echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.zshrc
+    # only append if it's not already in .bashrc
+    if ! grep -Fxq "$CARGO_EXPORT" "$HOME/.bashrc"; then
+        echo "$CARGO_EXPORT" >> "$HOME/.bashrc"
+    fi
 fi
 
 source $HOME/.bashrc
