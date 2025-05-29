@@ -7,7 +7,6 @@ from typing import Optional
 from docx import Document
 from parse_magic_string import parse_magic_string
 
-
 def add_figure_footnotes(
     docx_in: str,
     docx_out: str,
@@ -36,7 +35,6 @@ def add_figure_footnotes(
 
     paragraphs = document.paragraphs
     missing_metadata = False
-    num_figs_processeed = 0
 
     for i, par in enumerate(paragraphs):
         matches = magic_pattern.findall(par.text)
@@ -77,25 +75,23 @@ def add_figure_footnotes(
                                 )
                             else:
                                 new_footnote_text = f"{meta_text_dict[key]} "
-
+                           
                             if config.get("combine_duplicate_footnotes", True):
-
+                                                                
                                 if new_footnote_text not in combined_footnotes[key]:
-                                    combined_footnotes[key].append(new_footnote_text)
+                                    combined_footnotes[key].append(new_footnote_text) 
 
                             else:
                                 combined_footnotes[key].append(new_footnote_text)
-
+                        
                     else:
-                        combined_footnotes = {
-                            key: [value] for key, value in meta_text_dict.items()
-                        }
-
+                        combined_footnotes = {key: [value] for key, value in meta_text_dict.items()}
+                    
                     for key, value in combined_footnotes.items():
-                        if len(value) > 1:
-                            if "N/A " in value:
-                                value.remove("N/A ")
-                            combined_footnotes[key] = value
+                            if len(value) > 1:
+                                if "N/A " in value:
+                                    value.remove("N/A ")
+                                combined_footnotes[key] = value
 
                     if f == len(figure_args) - 1:
                         footnote_inserted = False
@@ -118,10 +114,7 @@ def add_figure_footnotes(
                             # Get the last figure paragraph found
                             _, fig_paragraph = figure_paragraphs[-1]
                             new_paragraph = helper.create_footnote_paragraph(
-                                combined_footnotes,
-                                "".join(figure_args.keys()),
-                                i,
-                                config,
+                                combined_footnotes, "".join(figure_args.keys()), i, config
                             )
                             fig_paragraph._element.addnext(new_paragraph)
                             footnote_inserted = True
