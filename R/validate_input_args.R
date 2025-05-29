@@ -5,7 +5,7 @@
 #' @param config_yaml optional path to config yaml
 #'
 #' @return ()
-#' @export
+#' @internal
 #'
 #' @examples \dontrun{
 #' validate_input_args(
