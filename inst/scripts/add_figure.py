@@ -194,6 +194,8 @@ def add_label_to_image(image_path: str, index: int) -> str:
     font = ImageFont.load_default(size=56)
 
     img_width, img_height = img.size
+    original_format = img.format or os.path.splitext(image_path)[1][1:].upper()
+    original_dpi = img.info.get("dpi", (72, 72)) # word default
     # aspect_ratio = img_width / img_height
 
     left_corner_position = (20, 20)
@@ -215,7 +217,7 @@ def add_label_to_image(image_path: str, index: int) -> str:
     temp_path = temp_file.name
     temp_file.close()
 
-    img.save(temp_path)
+    img.save(temp_path, format=original_format, dpi=original_dpi)
     return temp_path
 
 
