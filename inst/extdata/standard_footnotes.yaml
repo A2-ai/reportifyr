@@ -1,62 +1,232 @@
 abbreviations:
- AUC: Area under the curve
- AGEBL: Baseline age
- ALBBL: Baseline albumin
- ALTBL: Baseline alanine aminotransferase
- ASTBL: Baseline aspartate aminotransferase
- B2MBL: Baseline β2 microglobulin
- BSABL: Baseline body surface area
- BSTGBGE2: Baseline stage at screening flag ≥ 2
- BSTGEQ3: Baseline stage at screening flag = 3
- CADC_21D: ADC concentration at 21 days
- CADC_28D: ADC concentration at 28 days
- CADC_42D: ADC concentration at 42 days
- CADC_56D: ADC concentration at 56 days
- CATABL: Presence of cataracts at baseline
- CAVGA_21D: ADC Average concentration over 21 days
- CAVGA_28D: ADC Average concentration over 28 days
- CAVGA_42D: ADC Average concentration over 42 days
- CAVGA_56D: ADC Average concentration over 56 days
- CAVGM_21D: MMAF Average concentration over 21 days
- CAVGM_28D: MMAF Average concentration over 28 days
- CMAXA: Cycle 1 ADC maximum concentration
- CMAXM: Cycle 1 MMAF maximum concentration
- CNCEURO: European country flag
- CRPBL: Baseline Creactive protein
- CYTORSK: Cytogenetic risk
- ECOGBEQ2: Baseline ECOG = 2 flag
- ECOGBGE1: Baseline ECOG ≥ 1 flag
- GLAUCBL: History of glaucoma at baseline
- HEPFCH: Hepatic function
- HISTDIAB: History of diabetes
- HSDRYEYE: Know history of dry eye
- HSIOSURG: History of intraocular surgery
- IBMIBL: Baseline body mass index
- IGGBL: Baseline IgG
- IGGFLG: Multiple myeloma IgG type flag
- KERABL: Presence of keratopathy at baseline
- LDHBL: Baseline Lactate Dehydrogenase
- LENSTABL: Lens status at baseline
- MEDFL: Extramedullary disease flag
- MMIGTY: Myeloma immunoglobulin
- MMLCTY: Myeloma light chain
- MMTY: Type of mutiple myeloma
- MPROTBL: Baseline M-protein
- PCD38: Prior CD38 exposure flag
- PRXGT3: Prior Number of Therapy >3 Flag
- PRXGT4: Prior Number of Therapy >4 Flag
- RACEBFLG: Black race flag
- RACEWFLG: White race flag
- RENALFCH: Renal function
- SBCMABL: soluble baseline BCMA
- SCH: Planned schedule
- SCHCH: Planned schedule
- SEXN: Sex
- SPLITB: Split flag
- STAGEBL: Stage at screening
- STRETCHB: Stretch flag
- TBILBL: Baseline total bilirubin
- WTBL: Baseline weight
+ ΔOFV: change in objective function value
+ ΔQTC: change from baseline in the heart rate-corrected QT interval
+ Ab: antibody
+ ADA: anti-drug antibodies
+ ADC: antibody-drug conjugate
+ ADME: absorption, distribution, metabolism, and excretion
+ AE: adverse event
+ AHRQ: Agency for Healthcare Research and Quality
+ AIC: Akaike information criterion
+ ALAG: absorption lag time
+ ALB: albumin
+ ALT: alanine aminotransferase
+ AMA: American Medical Association
+ API: active pharmaceutical ingredient
+ AR: accumulation ratio
+ AST: aspartate aminotransferase
+ ATFD: actual time since first dose
+ ATLD: actual time since last dose
+ AUC: area under the curve
+ "AUC_{0-24}": area under the concentration-time curve from time 0 to 24 hours
+ "AUC_{24,ss}": area under the concentration-time curve over a 24 hour interval at steady state
+ "AUC_{0-inf}": area under the concentration-time curve from time 0 to infinity
+ "AUC_{ss}": area under the concentration-time curve at steady state
+ "AUC_{τ}": area under the concentration-time curve over the dosing interval (τ)
+ BCRP: breast cancer resistant protein
+ BIC: Bayesian information criterion
+ BICR: blinded independent central review
+ BID: twice daily
+ BILI: bilirubin
+ BIW: twice weekly
+ BLQ: below the limit of quantification
+ BMI: body mass index
+ BOR: best overall response
+ BP: blood pressure
+ BSA: body surface area
+ BSV: between-subject variability
+ "C_{0}": pre-dose concentration
+ "C_{avg}": average concentration
+ "C_{avg,0T}": average concentration since first dose until either time of event or censoring
+ "C_{avg,ss}": average concentration at steady state
+ "C_{avg,te}": average concentration during the dose interval immediately prior to time of event
+ CBC: complete blood cell count
+ CDC: Centers for Disease Control and Prevention
+ CDER: Center for Drug Evaluation and Research
+ cGCP: current good clinical practice
+ cGMP: current good manufacturing practice
+ CI: confidence interval
+ CL: clearance
+ CL/F: apparent clearance
+ "C_{max}": peak (maximum) concentration
+ "C_{max,ss}": peak (maximum) concentration at steady state
+ "C_{max,te}": maximum concentration during the dose interval immediately prior to time of event
+ "C_{min}": trough (minimum) concentration
+ "C_{min,ss}": trough (minimum) concentration at steady state
+ CMP: comprehensive metabolic panel
+ CMT: compartment
+ CN: condition number
+ CNS: central nervous system
+ COV: covariance
+ CPK: creatine phosphokinase
+ C-QTc: concentration-heart rate-corrected QT interval
+ CR: complete response
+ CrCL: creatinine clearance
+ CRF: case report form
+ CSF: cerebrospinal fluid
+ CSR: clinical study report
+ CTCAE: common terminology criteria for adverse events
+ "C_{trough}": trough concentration
+ "C_{trough,ss}": trough concentration at steady state
+ CV: coefficient of variation
+ CWRES: conditional weighted residuals
+ DDI: drug-drug interaction
+ DLT: dose-limiting toxicity
+ DOR: duration of response
+ DV: dependent variable
+ EBE: empirical Bayes estimate
+ "EC_{50}": concentration needed to achieve 50% of the maximal effect
+ ECG: electrocardiogram
+ ECOG: Eastern Cooperative Oncology Group
+ EDA: exploratory data analysis
+ eGFR: estimated glomerular filtration rate
+ EMA: European Medicines Agency
+ "E_{max}": maximal effect
+ EOS: end of study
+ EOT: end of treatment
+ ER: exposure-response
+ ESRD: end stage renal disease
+ ET: early termination
+ ETA: individual random effect
+ F: bioavailability
+ FDA: U.S. Food and Drug Administration
+ FO: first order
+ FOCE: first-order conditional estimation
+ FOCE-I: first-order conditional estimation with interaction
+ GFR: glomerular filtration rate
+ GI: gastrointestinal
+ GM: geometric mean
+ GOF: goodness-of-fit
+ HR: hazard ratio
+ IB: investigator’s brochure
+ "IC_{50}": concentration achieving 50% of maximum inhibition
+ ICF: informed consent form
+ ICH: International Council for Harmonisation
+ ICV: intracerebroventricular
+ IgA: immunoglobulin A
+ IgE: immunoglobulin E
+ IgG: immunoglobulin G
+ IgM: immunoglobulin M
+ IIV: inter-individual variability
+ IM: intramuscular
+ IND: Investigational New Drug
+ INR: international normalized ratio
+ IPRED: individual predicted
+ IQR: interquartile range
+ IRB: Institutional Review Board
+ IRC: independent review committee
+ IT: intrathecal
+ IU: international unit
+ IV: intravenous
+ IWRES: individual weighted residual
+ K: rate constant
+ KA: absorption rate constant
+ LDH: lactate dehydrogenase
+ LDL: low-density lipoprotein
+ LFT: liver function test
+ LLOQ: lower limit of quantification
+ LOCF: last observation carried forward
+ LOESS: locally weighted scatter plot smoothing
+ LOQ: limit of quantitation
+ LP: lumbar puncture
+ MAP: modeling analysis plan
+ MAT: mean absorption time
+ MI: myocardial infarction
+ MRI: magnetic resonance imaging
+ mRNA: messenger RNA
+ MRSD: maximum recommended safe dose
+ MTD: maximum tolerated dose
+ MVN: multivariate normal
+ MW: molecular weight
+ NAb: neutralizing antibodies
+ NCA: noncompartmental analysis
+ NDA: New Drug Application
+ NDC: National Drug Code
+ NHANES: National Health and Nutrition Examination Surveys
+ NIH: National Institutes of Health
+ NLME: nonlinear mixed effects
+ NME: new molecular entity
+ NONMEM: nonlinear mixed effects modeling
+ OFV: objective function value
+ OR: odds ratio
+ ORR: objective response rate
+ OS: overall survival
+ OTC: over-the-counter
+ P-gp: P-glycoprotein
+ pcVPC: prediction-corrected visual predictive check
+ PD: pharmacodynamic
+ PET: positron emission tomography
+ PFS: progression-free survival
+ PH: proportional hazards
+ PI: prediction interval
+ PK: pharmacokinetic
+ PK/PD: pharmacokinetic/pharmacodynamic
+ PLT: platelet
+ PT: prothrombin time
+ PMS: postmarketing surveillance
+ PPI: proton pump inhibitor
+ PopPK: population pharmacokinetics
+ PPM: parts per million
+ PR: partial response
+ PRED: population prediction
+ PRN: as needed
+ Q: inter-compartmental clearance
+ QA: quality assurance
+ QC: quality control
+ QD: once daily
+ Q/F: apparent inter-compartmental clearance
+ QID: 4 times daily
+ QOL: quality of life
+ QRS: QRS interval of the ECG (depolarization of ventricles)
+ QT: QT interval of the ECG (time between start of the Q-wave and the end of the T-wave)
+ QTc: heart rate-corrected QT interval
+ QTcB: Bazett’s corrected QT interval
+ QTcF: Fridericia’s corrected QT interval
+ QTcP: Population corrected QT interval
+ QW: once weekly
+ RBC: red blood cell
+ RE: residual error
+ RECIST: Response Evaluation Criteria in Solid Tumors
+ RNA: ribonucleic acid
+ RP2D: recommended Phase 2 dose
+ RR: RR interval of the ECG (interval between two consecutive R waves)
+ RSE: relative standard error
+ RUV: residual unexplained variability
+ SAE: serious adverse event
+ SAP: statistical analysis plan
+ SAR: serious adverse reaction
+ SC: subcutaneous
+ SD: standard deviation
+ SDTM: Study Data Tabulation Model
+ SE: standard error
+ SLD: Sum of longest target lesion diameters
+ SOC: system organ class
+ SOP: standard operating procedure
+ "t_{1/2}": elimination half-life
+ TEAE: treatment-emergent adverse event
+ TESAE: treatment-emergent severe adverse event
+ TFLs: tables, figures, and listings
+ TGI: tumor growth inhibition
+ TID: three times daily
+ TIW: three times weekly
+ TK: toxicokinetic
+ "T_{max}": time of maximum concentration
+ TRAE: treatment-related adverse event
+ TRSAE: treatment-related severe adverse event
+ TTE: time-to-event
+ ULN: upper limit of normal
+ USPI: United States prescribing information
+ Vc: volume of the central compartment
+ Vc/F: apparent volume of the central compartment
+ Vp: volume of the peripheral compartment
+ VPC: visual predictive check
+ Vss: volume of distribution at steady state
+ Vss/F: apparent volume of distribution at steady state
+ WBC: white blood cell
+ WHO: World Health Organization
+ WOCBP: women of childbearing potential
+ WRES: weighted residuals
+ WTBL: baseline weight
 
 figure_footnotes:
  logistic_plot: The independent variable was divided into quartiles. The summary statistics for each quartile are reported in the footnote as median (minimum, maximum). Black points and error bars represent the observed proportions and 95% CIs for each quartile (plotted at the median exposure within each quartile), respectively. The blue curve represents the prediction of the univariate logistic regression model, and the blue shaded region represents the 95% CI of the prediction. The displayed p-value is for the logistic regression slope.

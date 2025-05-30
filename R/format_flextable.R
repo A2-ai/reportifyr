@@ -13,8 +13,7 @@
 #'   data_in = dt
 #' )
 #' }
-format_flextable <- function(data_in,
-                             table1_format = FALSE) {
+format_flextable <- function(data_in, table1_format = FALSE) {
   log4r::debug(.le$logger, "Starting format_flextable function")
 
   assertthat::assert_that(
@@ -30,10 +29,16 @@ format_flextable <- function(data_in,
   log4r::debug(.le$logger, "table1_format is validated as boolean")
 
   if (!table1_format) {
-    log4r::info(.le$logger, "table1_format is FALSE, applying default formatting")
+    log4r::info(
+      .le$logger,
+      "table1_format is FALSE, applying default formatting"
+    )
 
     if (!inherits(data_in, "flextable")) {
-      log4r::info(.le$logger, "Input data is not a flextable, converting to flextable")
+      log4r::info(
+        .le$logger,
+        "Input data is not a flextable, converting to flextable"
+      )
 
       ft_out <- flextable::qflextable(data_in) |>
         flextable::set_table_properties(layout = "autofit", width = 1) |>
@@ -47,7 +52,10 @@ format_flextable <- function(data_in,
     }
 
     if (inherits(data_in, "flextable")) {
-      log4r::info(.le$logger, "Input data is already a flextable, applying formatting")
+      log4r::info(
+        .le$logger,
+        "Input data is already a flextable, applying formatting"
+      )
 
       ft_out <- data_in |>
         flextable::set_table_properties(layout = "autofit", width = 1) |>
@@ -71,14 +79,21 @@ format_flextable <- function(data_in,
     rownames(data_in) <- NULL
 
     data_in2 <- data_in
-    colnames(data_in2)[2:ncol(data_in2)] <- paste(colnames(data_in)[-1], "\n", data_in[1, 2:ncol(data_in)])
+    colnames(data_in2)[2:ncol(data_in2)] <- paste(
+      colnames(data_in)[-1],
+      "\n",
+      data_in[1, 2:ncol(data_in)]
+    )
     data_in2 <- data_in2[-1, ]
 
     log4r::info(.le$logger, "Formatting flextable with table1 style")
     ft_out <- flextable::qflextable(data_in2) |>
       flextable::align(j = 2:ncol(data_in), align = "left", part = "body") |>
       flextable::align(j = 2:ncol(data_in), align = "left", part = "header") |>
-      flextable::bold(i = substr(data_in2[, 1], start = 1, stop = 1) %in% c(letters, LETTERS), j = 1) |>
+      flextable::bold(
+        i = substr(data_in2[, 1], start = 1, stop = 1) %in% c(letters, LETTERS),
+        j = 1
+      ) |>
       flextable::bold(bold = T, part = "header") |>
       flextable::border(border = officer::fp_border(), part = "all") |>
       flextable::font(fontname = "Arial Narrow", part = "all") |>

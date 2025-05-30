@@ -51,12 +51,14 @@ test_that("get_meta_type fails for footnote file without `table_footnotes:`", {
 test_that("get_meta_type fails for non yaml input file.", {
   temp_txt_file <- tempfile(fileext = "txt")
   write("figure_footnotes:", temp_txt_file)
-  write(" simple-figure: A simple figure footnote", temp_txt_file, append = TRUE)
+  write(
+    " simple-figure: A simple figure footnote",
+    temp_txt_file,
+    append = TRUE
+  )
   write("table_footnotes:", temp_txt_file, append = TRUE)
   write(" simple-table: A simple table footnote.", temp_txt_file, append = TRUE)
 
   expect_error(get_meta_type(temp_txt_file))
   unlink(temp_txt_file)
 })
-
-

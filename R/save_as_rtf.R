@@ -6,22 +6,31 @@
 #'
 #' @keywords internal
 #' @noRd
-save_rtf <- function(object,
-                     file,
-                     table1_format) {
+save_rtf <- function(object, file, table1_format) {
   log4r::debug(.le$logger, "Starting save_rtf function")
-  rtf_file <- paste0(tools::file_path_sans_ext(file), "_", tools::file_ext(file), ".RTF")
+  rtf_file <- paste0(
+    tools::file_path_sans_ext(file),
+    "_",
+    tools::file_ext(file),
+    ".RTF"
+  )
   log4r::info(.le$logger, paste0("RTF file path set: ", rtf_file))
 
   if (!inherits(object, "flextable")) {
-    log4r::info(.le$logger, "Object is not a flextable, applying format_flextable")
+    log4r::info(
+      .le$logger,
+      "Object is not a flextable, applying format_flextable"
+    )
 
     object <- tryCatch(
       {
         format_flextable(object, table1_format = table1_format)
       },
       error = function(e) {
-        log4r::error(.le$logger, paste("Failed to convert object to flextable:", e$message))
+        log4r::error(
+          .le$logger,
+          paste("Failed to convert object to flextable:", e$message)
+        )
       }
     )
   }

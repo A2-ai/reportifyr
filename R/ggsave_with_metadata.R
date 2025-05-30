@@ -29,14 +29,14 @@
 #' ggsave_with_metadata(filename = file.path(figures_path, plot_file_name))
 #' }
 ggsave_with_metadata <- function(
-    filename,
-    plot = ggplot2::last_plot(),
-    meta_type = "NA",
-    meta_equations = NULL,
-    meta_notes = NULL,
-    meta_abbrevs = NULL,
-    ...) {
-
+  filename,
+  plot = ggplot2::last_plot(),
+  meta_type = "NA",
+  meta_equations = NULL,
+  meta_notes = NULL,
+  meta_abbrevs = NULL,
+  ...
+) {
   log4r::debug(.le$logger, "Starting ggsave_with_metadata function")
 
   ggplot2::ggsave(

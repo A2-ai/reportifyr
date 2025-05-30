@@ -3,6 +3,7 @@
 #' @description Reads in a `.docx` file and returns a finalized version with magic strings and bookmarks removed.
 #' @param docx_in The file path to the input `.docx` file.
 #' @param docx_out The file path to the output `.docx` file to save to. Default is `NULL`. If `NULL`, `docx_out` is assigned `doc_dirs$doc_final` using `make_doc_dirs(docx_in = docx_in)`.
+#' @param config_yaml The file path to the `config.yaml`.
 #'
 #' @export
 #'
@@ -41,40 +42,32 @@
 #'   docx_out = doc_dirs$doc_final
 #' )
 #' }
-finalize_document <- function(docx_in,
-                              docx_out = NULL) {
+finalize_document <- function(
+  docx_in,
+  docx_out = NULL,
+  config_yaml
+) {
+  tictoc::tic()
   log4r::debug(.le$logger, "Starting finalize_document function")
-
-  if (!file.exists(docx_in)) {
-    log4r::error(.le$logger, paste("Input file does not exist:", docx_in))
-    stop("Input file does not exist.")
-  }
-  log4r::info(.le$logger, paste0("Input document found: ", docx_in))
 
   if (is.null(docx_out)) {
     doc_dirs <- make_doc_dirs(docx_in = docx_in)
     docx_out <- doc_dirs$doc_final
-    log4r::info(.le$logger, paste0("Docx_out is null, setting docx_out to: ", docx_out))
+    log4r::info(
+      .le$logger,
+      paste0("Docx_out is null, setting docx_out to: ", docx_out)
+    )
   }
 
-  if (docx_in == docx_out) {
-    log4r::error(.le$logger, "Input and output files cannot be the same")
-    stop("You must save the output document as a new file.")
-  }
+  validate_input_args(docx_in, docx_out, config_yaml)
+  validate_docx(docx_in, config_yaml)
   log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
 
-  if (!(tools::file_ext(docx_in) == "docx")) {
-    log4r::error(.le$logger, paste("The input file must be a .docx file, not:", tools::file_ext(docx_in)))
-    stop(paste("The file must be a docx file not:", tools::file_ext(docx_in)))
-  }
-
-  if (!(tools::file_ext(docx_out) == "docx")) {
-    log4r::error(.le$logger, paste("The output file must be a .docx file, not:", tools::file_ext(docx_out)))
-    stop(paste("The file must be a docx file not:", tools::file_ext(docx_out)))
-  }
-
   intermediate_docx <- gsub(".docx", "-int.docx", docx_out)
-  log4r::info(.le$logger, paste0("Intermediate document path set: ", intermediate_docx))
+  log4r::info(
+    .le$logger,
+    paste0("Intermediate document path set: ", intermediate_docx)
+  )
 
   remove_bookmarks(docx_in, intermediate_docx)
 
@@ -84,8 +77,7 @@ finalize_document <- function(docx_in,
   unlink(intermediate_docx)
   log4r::debug(.le$logger, "Deleting intermediate document")
 
-
   write_object_metadata(object_file = docx_out)
-
   log4r::debug(.le$logger, "Exiting finalize_document function")
+  tictoc::toc()
 }

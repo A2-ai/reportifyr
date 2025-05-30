@@ -3,6 +3,7 @@
 #' @description Reads in a `.docx` file and returns a new version with tables, figures, and footnotes removed from the document.
 #' @param docx_in The file path to the input `.docx` file.
 #' @param docx_out The file path to the output `.docx` file to save to.
+#' @param config_yaml The file path to the `config.yaml`. Default is `NULL`, a default `config.yaml` bundled with the `reportifyr` package is used.
 #'
 #' @export
 #'
@@ -22,54 +23,55 @@
 #'   docx_out = doc_dirs$doc_clean
 #' )
 #' }
-remove_tables_figures_footnotes <- function(docx_in,
-                                            docx_out) {
+remove_tables_figures_footnotes <- function(
+  docx_in,
+  docx_out,
+  config_yaml = NULL
+) {
+  tictoc::tic()
   log4r::debug(.le$logger, "Starting remove_tables_figures_footnotes function")
 
-  if (!file.exists(docx_in)) {
-    log4r::error(.le$logger, paste("The input document does not exist:", docx_in))
-    stop(paste("The input document does not exist:", docx_in))
-  }
+  validate_input_args(docx_in, docx_out, config_yaml)
+  validate_alt_text_magic_strings(docx_in, config_yaml)
 
-  log4r::info(.le$logger, paste("Input document found: ", docx_in))
-
-  if (!(tools::file_ext(docx_in) == "docx")) {
-    stop(paste("The file must be a docx file not:", tools::file_ext(docx_in)))
-  }
-
-  if (!(tools::file_ext(docx_out) == "docx")) {
-    stop(paste("The file must be a docx file not:", tools::file_ext(docx_out)))
-  }
-
-  if (is.null(getOption("venv_dir"))) {
-    log4r::info(.le$logger, "Setting options('venv_dir') to project root.")
-    message("Setting options('venv_dir') to project root.")
-    options("venv_dir" = here::here())
-  }
-
-  venv_path <- file.path(getOption("venv_dir"), ".venv")
-
-  if (!dir.exists(venv_path)) {
-    log4r::error(.le$logger, "Virtual environment not found. Please initialize with initialize_python.")
-    stop("Create virtual environment with initialize_python")
-  }
-
-  uv_path <- get_uv_path()
-
-  notes_script <- system.file("scripts/remove_footnotes.py", package = "reportifyr")
+  paths <- get_venv_uv_paths()
+  notes_script <- system.file(
+    "scripts/remove_footnotes.py",
+    package = "reportifyr"
+  )
   notes_args <- c("run", notes_script, "-i", docx_in, "-o", docx_out)
 
   log4r::debug(.le$logger, "Running remove footnotes script")
-  notes_result <- tryCatch({
-    processx::run(
-      command = uv_path, args = notes_args, env = c("current", VIRTUAL_ENV = venv_path), error_on_status = TRUE
-    )
-  }, error = function(e) {
-    log4r::error(.le$logger, paste0("Remove footnotes script failed. Status: ", e$status))
-    log4r::error(.le$logger, paste0("Remove footnotes script failed. Stderr: ", e$stderr))
-    log4r::info(.le$logger, paste0("Remove footnotes script failed. Stdout: ", e$stdout))
-    stop(paste("Remove footnotes script failed. Status: ", e$status, "Stderr: ", e$stderr))
-  })
+  notes_result <- tryCatch(
+    {
+      processx::run(
+        command = paths$uv,
+        args = notes_args,
+        env = c("current", VIRTUAL_ENV = paths$venv),
+        error_on_status = TRUE
+      )
+    },
+    error = function(e) {
+      log4r::error(
+        .le$logger,
+        paste0("Remove footnotes script failed. Status: ", e$status)
+      )
+      log4r::error(
+        .le$logger,
+        paste0("Remove footnotes script failed. Stderr: ", e$stderr)
+      )
+      log4r::info(
+        .le$logger,
+        paste0("Remove footnotes script failed. Stdout: ", e$stdout)
+      )
+      stop(paste(
+        "Remove footnotes script failed. Status: ",
+        e$status,
+        "Stderr: ",
+        e$stderr
+      ))
+    }
+  )
 
   log4r::info(.le$logger, paste0("Returning status: ", notes_result$status))
   log4r::info(.le$logger, paste0("Returning stdout: ", notes_result$stdout))
@@ -79,16 +81,36 @@ remove_tables_figures_footnotes <- function(docx_in,
   tab_args <- c("run", tab_script, "-i", docx_out, "-o", docx_out)
 
   log4r::debug(.le$logger, "Running remove tables script")
-  tab_result <- tryCatch({
-    processx::run(
-      command = uv_path, args = tab_args, env = c("current", VIRTUAL_ENV = venv_path), error_on_status = TRUE
+  tab_result <- tryCatch(
+    {
+      processx::run(
+        command = paths$uv,
+        args = tab_args,
+        env = c("current", VIRTUAL_ENV = paths$venv),
+        error_on_status = TRUE
       )
-  }, error = function(e) {
-    log4r::error(.le$logger, paste0("Remove tables script failed. Status: ", e$status))
-    log4r::error(.le$logger, paste0("Remove tables strings script failed. Stderr: ", e$stderr))
-    log4r::info(.le$logger, paste0("Remove tables strings script failed. Stdout: ", e$stdout))
-    stop(paste("Remove tables strings script failed. Status: ", e$status, "Stderr: ", e$stderr))
-  })
+    },
+    error = function(e) {
+      log4r::error(
+        .le$logger,
+        paste0("Remove tables script failed. Status: ", e$status)
+      )
+      log4r::error(
+        .le$logger,
+        paste0("Remove tables strings script failed. Stderr: ", e$stderr)
+      )
+      log4r::info(
+        .le$logger,
+        paste0("Remove tables strings script failed. Stdout: ", e$stdout)
+      )
+      stop(paste(
+        "Remove tables strings script failed. Status: ",
+        e$status,
+        "Stderr: ",
+        e$stderr
+      ))
+    }
+  )
 
   log4r::info(.le$logger, paste0("Returning status: ", tab_result$status))
   log4r::info(.le$logger, paste0("Returning stdout: ", tab_result$stdout))
@@ -98,21 +120,47 @@ remove_tables_figures_footnotes <- function(docx_in,
   fig_script <- system.file("scripts/remove_figures.py", package = "reportifyr")
   fig_args <- c("run", fig_script, "-i", docx_out, "-o", docx_out)
 
+  if (!is.null(config_yaml)) {
+    fig_args <- c(fig_args, "-c", config_yaml)
+    log4r::info(.le$logger, paste0("config yaml set: ", config_yaml))
+  }
+
   log4r::debug(.le$logger, "Running remove figures script")
-  fig_result <- tryCatch({
-    processx::run(
-      command = uv_path, args = fig_args, env = c("current", VIRTUAL_ENV = venv_path), error_on_status = TRUE
-    )
-  }, error = function(e) {
-    log4r::error(.le$logger, paste0("Remove figures script failed. Status: ", e$status))
-    log4r::error(.le$logger, paste0("Remove figures strings script failed. Stderr: ", e$stderr))
-    log4r::info(.le$logger, paste0("Remove figures strings script failed. Stdout: ", e$stdout))
-    stop(paste("Remove figures strings script failed. Status: ", e$status, "Stderr: ", e$stderr))
-  })
+  fig_result <- tryCatch(
+    {
+      processx::run(
+        command = paths$uv,
+        args = fig_args,
+        env = c("current", VIRTUAL_ENV = paths$venv),
+        error_on_status = TRUE
+      )
+    },
+    error = function(e) {
+      log4r::error(
+        .le$logger,
+        paste0("Remove figures script failed. Status: ", e$status)
+      )
+      log4r::error(
+        .le$logger,
+        paste0("Remove figures strings script failed. Stderr: ", e$stderr)
+      )
+      log4r::info(
+        .le$logger,
+        paste0("Remove figures strings script failed. Stdout: ", e$stdout)
+      )
+      stop(paste(
+        "Remove figures strings script failed. Status: ",
+        e$status,
+        "Stderr: ",
+        e$stderr
+      ))
+    }
+  )
 
   log4r::info(.le$logger, paste0("Returning status: ", fig_result$status))
   log4r::info(.le$logger, paste0("Returning stdout: ", fig_result$stdout))
   log4r::info(.le$logger, paste0("Returning stderr: ", fig_result$stderr))
 
   log4r::debug(.le$logger, "Exiting remove_tables_figures_footnotes function")
+  tictoc::toc()
 }

@@ -4,10 +4,22 @@
 \alias{initialize_report_project}
 \title{Create report directories within a project}
 \usage{
-initialize_report_project(project_dir)
+initialize_report_project(
+  project_dir,
+  report_dir_name = NULL,
+  outputs_dir_name = NULL
+)
 }
 \arguments{
-\item{project_dir}{The file path to the main project directory where the directory structure will be created. The directory must already exist; otherwise, an error will be thrown.}
+\item{project_dir}{The file path to the main project directory
+where the directory structure will be created.
+The directory must already exist; otherwise, an error will be thrown.}
+
+\item{report_dir_name}{The directory name for where reports will be saved,
+default NULL will use "report"}
+
+\item{outputs_dir_name}{The directory name for where artifacts will be saved,
+default NULL will use "OUTPUTS"}
 }
 \description{
 Create report directories within a project

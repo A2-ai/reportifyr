@@ -12,7 +12,7 @@ remove_magic_strings(docx_in, docx_out)
 \item{docx_out}{The file path to the output \code{.docx} file to save to.}
 }
 \description{
-Reads in a .\code{docx} file and returns a new version with magic strings removed from the document.
+Reads in a \code{.docx} file and returns a new version with magic strings removed from the document.
 }
 \examples{
 \dontrun{

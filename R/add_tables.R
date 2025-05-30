@@ -4,6 +4,7 @@
 #' @param docx_in The file path to the input `.docx` file.
 #' @param docx_out The file path to the output `.docx` file to save to.
 #' @param tables_path The file path to the tables and associated metadata directory.
+#' @param config_yaml The path to config.yaml file that controls figure dimensions
 #' @param debug Debug.
 #'
 #' @export
@@ -29,110 +30,173 @@
 #'   tables_path = tables_path
 #' )
 #' }
-add_tables <- function(docx_in,
-                       docx_out,
-                       tables_path,
-                       debug = FALSE) {
+add_tables <- function(
+  docx_in,
+  docx_out,
+  tables_path,
+  config_yaml = NULL,
+  debug = FALSE
+) {
   log4r::debug(.le$logger, "Starting add_tables function")
   tictoc::tic()
-
-  if (!file.exists(docx_in)) {
-    log4r::error(.le$logger, paste("The input document does not exist:", docx_in))
-    stop(paste("The input document does not exist:", docx_in))
-  }
-  log4r::info(.le$logger, paste0("Input document found: ", docx_in))
-
-  if (!(tools::file_ext(docx_in) == "docx") || !(tools::file_ext(docx_out) == "docx")) {
-    log4r::error(.le$logger, "Both input and output files must be .docx")
-    stop("Both input and output files must be .docx")
-  }
 
   if (debug) {
     log4r::debug(.le$logger, "Debug mode enabled")
     browser()
   }
 
-  # Define magic string pattern
-  start_pattern <- "\\{rpfy\\}:" # Matches "{rpfy}:"
-  end_pattern <- "\\.[^.]+$"     # Matches the file extension (e.g., ".csv", ".RDS")
+  validate_input_args(docx_in, docx_out, config_yaml)
+  validate_docx(docx_in, config_yaml)
+  log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
+
+  intermediate_docx <- gsub(".docx", "-int.docx", docx_out)
+  log4r::info(
+    .le$logger,
+    paste0("Intermediate document path set: ", intermediate_docx)
+  )
+
+  keep_caption_next(docx_in, intermediate_docx)
+
+  # define magic string pattern
+  start_pattern <- "\\{rpfy\\}:" # matches "{rpfy}:"
+  end_pattern <- "\\.[^.]+$" # matches the file extension (e.g., ".csv", ".rds")
   magic_pattern <- paste0(start_pattern, ".*?", end_pattern)
 
-  document <- officer::read_docx(docx_in)
+  document <- officer::read_docx(intermediate_docx)
 
   # Extract the document summary, which includes text for paragraphs
   doc_summary <- officer::docx_summary(document)
-  paragraphs <- doc_summary[doc_summary$content_type == "paragraph", "text"]
+  magic_indices <- grep(magic_pattern, doc_summary$text)
+  processed_files <- c()
+  # find duplicated tables
+  if (length(magic_indices) > 0) {
+    log4r::info(
+      .le$logger,
+      paste0(
+        "Found magic strings: in paragraph indices ",
+        paste0(magic_indices, collapse = ",")
+      )
+    )
+  } else {
+    log4r::warn(.le$logger, "No magic strings were found in the document.")
+    tictoc::toc()
+    print(document, target = docx_out)
+    return(invisible(NULL))
+  }
 
-  found_matches <- FALSE  # Track if we find any matches
-
-  # Loop through paragraphs
-  for (i in seq_along(paragraphs)) {
-    par_text <- paragraphs[i]
-
-    # Find matches for the magic string pattern
-    matches <- regmatches(par_text, regexec(magic_pattern, par_text))[[1]]
-
-    if (length(matches) > 0) {
-      log4r::info(.le$logger, paste0("Found magic string: ", matches[1], " in paragraph ", i))
-      table_name <- gsub("\\{rpfy\\}:", "", matches[1]) |> trimws() # Remove "{rpfy}:"
-      table_file <- file.path(tables_path, table_name)
-
+  for (i in magic_indices) {
+    # Remove "{rpfy}:"
+    table_name <- gsub("\\{rpfy\\}:", "", doc_summary$text[[i]]) |> trimws()
+    table_file <- file.path(tables_path, table_name)
+    # check extension is valid
+    if (tools::file_ext(table_file) %in% c("RDS", "csv")) {
       # Check if the file exists
       if (file.exists(table_file)) {
-        found_matches <- TRUE
-        log4r::info(.le$logger, paste0("Found matching table file: ", table_file))
-
-        # Load the table data
-        data_in <- switch(tools::file_ext(table_file),
-                          "csv" = utils::read.csv(table_file),
-                          "RDS" = readRDS(table_file),
-                          stop("Unsupported file type"))
-
-        # Correct metadata file naming
-        metadata_file <- paste0(tools::file_path_sans_ext(table_file), "_", tools::file_ext(table_file), "_metadata.json")
-        if (!file.exists(metadata_file)) {
-          log4r::warn(.le$logger, paste0("Metadata file missing for table: ", table_file))
-          if (!inherits(data_in, "flextable")) {
-            log4r::warn(.le$logger, paste0("Default formatting will be applied for ", table_file, "."))
-            flextable <- format_flextable(data_in)
-          } else {
-            log4r::warn(.le$logger, paste0("Data is already a flextable so no formatting will be applied for ", table_file, "."))
-            flextable <- data_in
-          }
-        } else {
-          # Format the table using flextable
-          metadata <- jsonlite::fromJSON(metadata_file)
-          flextable <- format_flextable(data_in, metadata$object_meta$table1)
-        }
-
-        # Insert the table right after the paragraph containing the magic string, but keep the magic string
-        magic_file_pattern <- paste0("\\{rpfy\\}:", table_name)
-
-        officer::cursor_reach(document, magic_file_pattern) |>
-          flextable::body_add_flextable(
-            value = flextable,
-            pos = "after",
-            align = "center",
-            split = F,
-            keepnext = F
+        if (!(table_file %in% processed_files)) {
+          document <- process_table_file(
+            table_file,
+            document
           )
-
-        log4r::info(.le$logger, paste0("Inserted table for: ", table_file))
-      } else {
-        if (tools::file_ext(table_file) %in% c("RDS", "csv")) {
-          log4r::warn(.le$logger, paste0("Table file not found: ", table_file))
+          processed_files <- c(processed_files, table_file)
+        } else {
+          # strict mode fail - config option, deafult FALSE
+          # log4r::error
+          # else
+          log4r::warn(
+            .le$logger,
+            paste0("Duplicate table file fount: ", table_file)
+          )
         }
+      } else {
+        log4r::warn(.le$logger, paste0("Table file not found: ", table_file))
       }
     }
   }
+  intermediate_tabs_docx <- gsub(".docx", "-inttabs.docx", docx_out)
 
-  # If no matches found, output warning
-  if (!found_matches) {
-    log4r::warn(.le$logger, "No magic strings were found in the document.")
-  }
+  print(document, target = intermediate_tabs_docx)
 
-  # Save the final document
-  print(document, target = docx_out)
+  add_tables_alt_text(
+    intermediate_tabs_docx,
+    docx_out
+  )
+
+  unlink(intermediate_docx)
+  log4r::debug(.le$logger, "Deleting intermediate document")
+
+  unlink(intermediate_tabs_docx)
+  log4r::debug(.le$logger, "Deleting intermediate tabs document")
+
   log4r::info(.le$logger, paste0("Final document saved to: ", docx_out))
   tictoc::toc()
+}
+
+### New function for processing #####
+process_table_file <- function(table_file, document) {
+  log4r::info(
+    .le$logger,
+    paste0("Processing table file: ", table_file)
+  )
+
+  # Load the table data
+  data_in <- switch(
+    tools::file_ext(table_file),
+    "csv" = utils::read.csv(table_file),
+    "RDS" = readRDS(table_file),
+    stop("Unsupported file type")
+  )
+
+  # Correct metadata file naming
+  metadata_file <- paste0(
+    tools::file_path_sans_ext(table_file),
+    "_",
+    tools::file_ext(table_file),
+    "_metadata.json"
+  )
+
+  if (!file.exists(metadata_file)) {
+    log4r::warn(
+      .le$logger,
+      paste0("Metadata file missing for table: ", table_file)
+    )
+    if (!inherits(data_in, "flextable")) {
+      log4r::warn(
+        .le$logger,
+        paste0("Default formatting will be applied for ", table_file, ".")
+      )
+      flextable <- format_flextable(data_in)
+    } else {
+      log4r::warn(
+        .le$logger,
+        paste0(
+          "Data is already a flextable so no formatting will be applied for ",
+          table_file,
+          "."
+        )
+      )
+      flextable <- data_in
+    }
+  } else {
+    # Format the table using flextable
+    metadata <- jsonlite::fromJSON(metadata_file)
+    flextable <- format_flextable(data_in, metadata$object_meta$table1)
+  }
+
+  document <- officer::cursor_reach(
+    document,
+    paste0("\\{rpfy\\}:", basename(table_file))
+  )
+
+  flextable::body_add_flextable(
+    document,
+    value = flextable,
+    pos = "after",
+    align = "center",
+    split = FALSE,
+    keepnext = FALSE
+  )
+
+  log4r::info(.le$logger, paste0("Inserted table for: ", table_file))
+  # save to tmp docx file for next iteration
+  document
 }

@@ -1,6 +1,6 @@
 Package: reportifyr
-Title: Reproducible Reporting Made Simple in R
-Version: 0.2.6
+Title: Reproducible Reporting Made Simple with R
+Version: 0.3.0
 Authors@R: c(
     person("Jacob", "Dumbleton", , "jacob@a2-ai.com", role = c("aut", "cre")),
     person("Matthew", "Smith", , "matthews@a2-ai.com", role = "aut"),
@@ -29,6 +29,7 @@ Imports:
     digest,
     dplyr,
     flextable,
+    fs,
     gert,
     ggplot2,
     here,
@@ -43,8 +44,10 @@ Imports:
     yaml
 Suggests: 
     knitr,
+    mockery,
     rmarkdown,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    withr
 Config/testthat/edition: 3
 LazyData: true
 URL: https://a2-ai.github.io/reportifyr/

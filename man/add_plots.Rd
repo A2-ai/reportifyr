@@ -8,6 +8,7 @@ add_plots(
   docx_in,
   docx_out,
   figures_path,
+  config_yaml = NULL,
   fig_width = NULL,
   fig_height = NULL,
   debug = FALSE
@@ -19,6 +20,8 @@ add_plots(
 \item{docx_out}{The file path to the output \code{.docx} file to save to.}
 
 \item{figures_path}{The file path to the figures directory.}
+
+\item{config_yaml}{The path to config.yaml file that controls figure dimensions}
 
 \item{fig_width}{A global controller. The figure width in inches. Default is \code{NULL}. If \code{NULL}, the width is determined by the figure's pixel dimensions.}
 

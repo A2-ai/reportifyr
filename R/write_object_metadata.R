@@ -16,18 +16,22 @@
 #' write_object_metadata(object_file = file.path(figures_path, plot_file_name))
 #' }
 write_object_metadata <- function(
-    object_file,
-    meta_type = NULL,
-    meta_equations = NULL,
-    meta_notes = NULL,
-    meta_abbrevs = NULL,
-    table1_format = FALSE) {
-
+  object_file,
+  meta_type = NULL,
+  meta_equations = NULL,
+  meta_notes = NULL,
+  meta_abbrevs = NULL,
+  table1_format = FALSE
+) {
   log4r::debug(.le$logger, "Starting write_object_metadata function")
 
   if (!file.exists(object_file)) {
     log4r::error(.le$logger, paste0("File does not exist: ", object_file))
-    stop(paste0("Please pass path to object that exists: ", object_file, " does not exist"))
+    stop(paste0(
+      "Please pass path to object that exists: ",
+      object_file,
+      " does not exist"
+    ))
   }
 
   log4r::info(.le$logger, paste0("File exists: ", object_file))
@@ -37,43 +41,55 @@ write_object_metadata <- function(
   rvers <- R.version$version.string
   platform <- R.version$platform
 
-  log4r::info(.le$logger, paste0("Collected system metadata: ", list(timestamp, rvers, platform)))
+  log4r::info(
+    .le$logger,
+    paste0("Collected system metadata: ", list(timestamp, rvers, platform))
+  )
 
   hash <- digest::digest(file = object_file, algo = "blake3")
   log4r::info(.le$logger, paste0("Generated file hash: ", hash))
 
-  source_path <- tryCatch({
-    # Check if the script is being sourced
-    src_path <- if (!is.null(sys.frame(1)$ofile)) {
-      normalizePath(sys.frame(1)$ofile)  # Path of the currently sourced file
-    } else if (!is.null(knitr::current_input())) {
-      normalizePath(knitr::current_input())
-    } else if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable()) {
-      context <- rstudioapi::getSourceEditorContext()
-      if (!is.null(context$path) && nzchar(context$path)) {
-        normalizePath(context$path)
+  source_path <- tryCatch(
+    {
+      # Check if the script is being sourced
+      src_path <- if (!is.null(sys.frame(1)$ofile)) {
+        normalizePath(sys.frame(1)$ofile) # Path of the currently sourced file
+      } else if (!is.null(knitr::current_input())) {
+        normalizePath(knitr::current_input())
+      } else if (
+        requireNamespace("rstudioapi", quietly = TRUE) &&
+          rstudioapi::isAvailable()
+      ) {
+        context <- rstudioapi::getSourceEditorContext()
+        if (!is.null(context$path) && nzchar(context$path)) {
+          normalizePath(context$path)
+        } else {
+          normalizePath("Object created from console")
+        }
+      } else if (!is.null(rmarkdown::metadata$input_file)) {
+        normalizePath(rmarkdown::metadata$input_file)
+      } else if (!is.null(getOption("knitr.in.file"))) {
+        normalizePath(getOption("knitr.in.file"))
+      } else if (testthat::is_testing()) {
+        normalizePath(testthat::test_path())
       } else {
-        normalizePath("Object created from console")
+        stop("Unable to detect input file")
       }
-    } else if (!is.null(rmarkdown::metadata$input_file)) {
-      normalizePath(rmarkdown::metadata$input_file)
-    } else if (!is.null(getOption("knitr.in.file"))) {
-      normalizePath(getOption("knitr.in.file"))
-    } else if (testthat::is_testing()) {
-      normalizePath(testthat::test_path())
-    } else {
-      stop("Unable to detect input file")
+      src_path
+    },
+    error = function(e) {
+      log4r::error(.le$logger, "Error detecting source file path")
+      stop(e)
     }
-    src_path
-  }, error = function(e) {
-    log4r::error(.le$logger, "Error detecting source file path")
-    stop(e)
-  })
+  )
 
   log4r::info(.le$logger, paste0("Source file path detected: ", source_path))
 
   source_path_git_info <- get_git_info(source_path)
-  log4r::info(.le$logger, paste0("Fetched git info for source file: ", source_path_git_info))
+  log4r::info(
+    .le$logger,
+    paste0("Fetched git info for source file: ", source_path_git_info)
+  )
 
   # Combine into expected structure
   data_to_save <- list(
@@ -112,7 +128,12 @@ write_object_metadata <- function(
   json_data <- jsonlite::toJSON(data_to_save, pretty = TRUE, auto_unbox = TRUE)
   log4r::debug(.le$logger, "Data converted to json string")
 
-  file_path <- paste0(tools::file_path_sans_ext(object_file), "_", tools::file_ext(object_file), "_metadata.json")
+  file_path <- paste0(
+    tools::file_path_sans_ext(object_file),
+    "_",
+    tools::file_ext(object_file),
+    "_metadata.json"
+  )
 
   write(json_data, file = file_path)
 

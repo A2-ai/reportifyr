@@ -13,20 +13,26 @@
 preview_metadata_files <- function(file_dir) {
   log4r::debug(.le$logger, "Starting preview_metadata_files function")
 
-
   if (!dir.exists(file_dir)) {
     log4r::error(.le$logger, paste0("Directory does not exist: ", file_dir))
     stop("Directory does not exist.")
   }
   log4r::info(.le$logger, paste0("Directory found: ", file_dir))
 
-  json_files <- list.files(path = file_dir, pattern = "\\_metadata.json$", full.names = TRUE)
+  json_files <- list.files(
+    path = file_dir,
+    pattern = "\\_metadata.json$",
+    full.names = TRUE
+  )
 
   if (length(json_files) == 0) {
     log4r::error(.le$logger, "No .json files found in the specified directory")
     stop("No .json files found in the specified directory.")
   }
-  log4r::info(.le$logger, paste0("Found ", length(json_files), " metadata .json files in directory"))
+  log4r::info(
+    .le$logger,
+    paste0("Found ", length(json_files), " metadata .json files in directory")
+  )
 
   # Extract the necessary fields for each JSON file and return as a data frame
   json_content_list <- purrr::map(json_files, function(file) {
@@ -50,7 +56,9 @@ preview_metadata_files <- function(file_dir) {
     log4r::info(.le$logger, paste0("Extracted meta_type: ", meta_type))
 
     # If these fields are lists, join them into a single string, if empty make them "N/A"
-    meta_equations <- if (length(json_content$object_meta$footnotes$equations) == 0) {
+    meta_equations <- if (
+      length(json_content$object_meta$footnotes$equations) == 0
+    ) {
       "N/A"
     } else if (is.list(json_content$object_meta$footnotes$equations)) {
       paste(json_content$object_meta$footnotes$equations, collapse = ", ")
@@ -68,7 +76,9 @@ preview_metadata_files <- function(file_dir) {
     }
     log4r::info(.le$logger, paste0("Extracted notes: ", meta_notes))
 
-    meta_abbrevs <- if (length(json_content$object_meta$footnotes$abbreviations) == 0) {
+    meta_abbrevs <- if (
+      length(json_content$object_meta$footnotes$abbreviations) == 0
+    ) {
       "N/A"
     } else if (is.list(json_content$object_meta$footnotes$abbreviations)) {
       paste(json_content$object_meta$footnotes$abbreviations, collapse = ", ")
@@ -78,22 +88,30 @@ preview_metadata_files <- function(file_dir) {
     log4r::info(.le$logger, paste0("Extracted abbreviations: ", meta_abbrevs))
 
     # Return as a named list
-    log4r::debug(.le$logger, paste0("Returning extracted data for file: ", file))
+    log4r::debug(
+      .le$logger,
+      paste0("Returning extracted data for file: ", file)
+    )
     return(list(
-      name = name, meta_type = meta_type, meta_equations = meta_equations,
-      meta_notes = meta_notes, meta_abbrevs = meta_abbrevs
+      name = name,
+      meta_type = meta_type,
+      meta_equations = meta_equations,
+      meta_notes = meta_notes,
+      meta_abbrevs = meta_abbrevs
     ))
   })
 
   # Convert list of lists into a data frame
   result_df <- do.call(rbind, lapply(json_content_list, as.data.frame))
 
-  log4r::info(.le$logger, paste0("Metadata preview successfully generated:", result_df))
+  log4r::info(
+    .le$logger,
+    paste0("Metadata preview successfully generated:", result_df)
+  )
   log4r::debug(.le$logger, "Exiting preview_metadata_files function")
 
   return(result_df)
 }
-
 
 
 #' Previews a single metadata file for an object

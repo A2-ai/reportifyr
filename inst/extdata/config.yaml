@@ -1,0 +1,30 @@
+# report directory options
+report_dir_name: "report"
+
+# outputs directory options
+outputs_dir_name: "OUTPUTS"
+
+# strict mode - duplicate artifacts
+strict: false
+
+# Footnotes options
+footnotes_font: "Arial Narrow"
+footnotes_font_size: 10
+use_object_path_as_source: FALSE
+wrap_path_in_[]: TRUE
+combine_duplicate_footnotes: TRUE
+footnote_order:
+  - Source
+  - Object
+  - Notes
+  - Abbreviations
+
+# Table options
+save_table_rtf: FALSE
+
+# Figure options
+fig_alignment: "center"
+use_artifact_size: TRUE
+default_fig_width: 6
+use_embedded_dimensions: TRUE
+label_multi_figures: FALSE

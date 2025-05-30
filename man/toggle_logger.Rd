@@ -4,7 +4,10 @@
 \alias{toggle_logger}
 \title{Updates the logging level for functions. Default is set to WARN}
 \usage{
-toggle_logger()
+toggle_logger(quiet = FALSE)
+}
+\arguments{
+\item{quiet}{suppresses messaging about log level.}
 }
 \description{
 Updates the logging level for functions. Default is set to WARN

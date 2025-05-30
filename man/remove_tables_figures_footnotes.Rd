@@ -4,12 +4,14 @@
 \alias{remove_tables_figures_footnotes}
 \title{Removes Tables, Figures, and Footnotes from a Word file}
 \usage{
-remove_tables_figures_footnotes(docx_in, docx_out)
+remove_tables_figures_footnotes(docx_in, docx_out, config_yaml = NULL)
 }
 \arguments{
 \item{docx_in}{The file path to the input \code{.docx} file.}
 
 \item{docx_out}{The file path to the output \code{.docx} file to save to.}
+
+\item{config_yaml}{The file path to the \code{config.yaml}. Default is \code{NULL}, a default \code{config.yaml} bundled with the \code{reportifyr} package is used.}
 }
 \description{
 Reads in a \code{.docx} file and returns a new version with tables, figures, and footnotes removed from the document.

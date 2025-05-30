@@ -6,49 +6,57 @@
 #' @noRd
 get_git_info <- function(file_path) {
   # If git doesn't work return NA for everything.
-  result <- tryCatch({
-    log <- processx::run("git", c("log", "--follow", "--", file_path))$stdout
+  tryCatch(
+    {
+      log <- processx::run("git", c("log", "--follow", "--", file_path))$stdout
 
-    if (log == "") {
-      log4r::warn(.le$logger, paste0("Source file path not tracked by git: ", file_path))
+      if (log == "") {
+        log4r::warn(
+          .le$logger,
+          paste0("Source file path not tracked by git: ", file_path)
+        )
+        return(list(
+          creation_author = "FILE NOT TRACKED BY GIT",
+          latest_author = "FILE NOT TRACKED BY GIT",
+          creation_time = "FILE NOT TRACKED BY GIT",
+          latest_time = format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+        ))
+      }
+
+      author_lines <- regmatches(log, gregexpr("Author: [^\n]+", log))[[1]]
+      date_lines <- regmatches(log, gregexpr("Date: [^\n]+", log))[[1]]
+
+      authors <- sub("Author: ", "", author_lines)
+      dates <- sub("Date: ", "", date_lines)
+
+      dates <- trimws(dates)
+      parsed_dates <- strptime(dates, "%a %b %d %H:%M:%S %Y %z")
+
+      creation_author <- authors[length(authors)]
+      latest_author <- authors[1]
+      creation_time <- format(
+        parsed_dates[length(parsed_dates)],
+        "%Y-%m-%d %H:%M:%S"
+      )
+      latest_time <- format(parsed_dates[1], "%Y-%m-%d %H:%M:%S")
+
       return(list(
-        creation_author = "FILE NOT TRACKED BY GIT",
-        latest_author = "FILE NOT TRACKED BY GIT",
-        creation_time = "FILE NOT TRACKED BY GIT",
-        latest_time = "FILE NOT TRACKED BY GIT"
+        creation_author = creation_author,
+        latest_author = latest_author,
+        creation_time = creation_time,
+        latest_time = latest_time
       ))
+    },
+    error = function(e) {
+      # Return the specified list in case of an error
+      list(
+        creation_author = "COULD NOT ACCESS GIT",
+        latest_author = "COULD NOT ACCESS GIT",
+        creation_time = "COULD NOT ACCESS GIT",
+        latest_time = "COULD NOT ACCESS GIT"
+      )
     }
-
-    author_lines <- regmatches(log, gregexpr("Author: [^\n]+", log))[[1]]
-    date_lines <- regmatches(log, gregexpr("Date: [^\n]+", log))[[1]]
-
-    authors <- sub("Author: ", "", author_lines)
-    dates <- sub("Date: ", "", date_lines)
-
-    dates <- trimws(dates)
-    parsed_dates <- strptime(dates, "%a %b %d %H:%M:%S %Y %z")
-
-    creation_author <- authors[length(authors)]
-    latest_author <- authors[1]
-    creation_time <- format(parsed_dates[length(parsed_dates)], "%Y-%m-%d %H:%M:%S")
-    latest_time <- format(parsed_dates[1], "%Y-%m-%d %H:%M:%S")
-
-    return(list(
-      creation_author = creation_author,
-      latest_author = latest_author,
-      creation_time = creation_time,
-      latest_time = latest_time
-    ))
-
-  }, error = function(e) {
-    # Return the specified list in case of an error
-    return(list(
-      creation_author = "COULD NOT ACCESS GIT",
-      latest_author = "COULD NOT ACCESS GIT",
-      creation_time = "COULD NOT ACCESS GIT",
-      latest_time = "COULD NOT ACCESS GIT"
-    ))
-  })
+  )
 }
 
 #' Gets the author information
@@ -57,21 +65,30 @@ get_git_info <- function(file_path) {
 #'
 #' @keywords internal
 #' @noRd
-get_git_config_author <- function(settings = gert::git_config_global()){
-
+get_git_config_author <- function(settings = gert::git_config_global()) {
   global_settings <- settings[settings$level == "global", ]
 
-  email <- subset(global_settings, name == 'user.email')$value
-  name <- subset(global_settings, name == 'user.name')$value
+  email <- subset(global_settings, name == "user.email")$value
+  name <- subset(global_settings, name == "user.name")$value
 
   if (length(email) > 1 || length(name) > 1) {
-    stop("Multiple user names or emails found in global git config. Please check the .gitconfig file before running again.")
+    stop(
+      "Multiple user names or emails found in global git config.
+			Please check the .gitconfig file before running again."
+    )
   } else if (length(email) == 0 || length(name) == 0) {
-    stop("Please set git global configs  git config --global user.name \"user name\", git config --global user.email user\\@emai.com")
+    stop(
+      "Please set git global configs
+			git config --global user.name \"user name\",
+			git config --global user.email user\\@emai.com"
+    )
   }
 
-  if (!nzchar(email) || !nzchar(name)){
-    warning("No default git user or email configuration set up. Empty values set for object meta author. \n")
+  if (!nzchar(email) || !nzchar(name)) {
+    warning(
+      "No default git user or email configuration set up.
+			Empty values set for object meta author. \n"
+    )
   }
 
   author <- paste(name, " <", email, ">", sep = "")
@@ -97,34 +114,59 @@ get_packages <- function() {
   namespaced_only <- setdiff(namespaced_pkgs, names(attached_pkgs))
 
   namespaced_pkgs_metadata <- sapply(namespaced_only, function(pkg) {
-    version <- tryCatch(as.character(utils::packageVersion(pkg)), error = function(e) NA)
+    version <- tryCatch(
+      as.character(utils::packageVersion(pkg)),
+      error = function(e) NA
+    )
     list(version = version)
   })
 
   # Combine both metadatas
   pkgs_metadata <- c(attached_pkgs_metadata, namespaced_pkgs_metadata)
 
-  return(pkgs_metadata)
+  pkgs_metadata
 }
 
 
-#' Gets the path to uv -- pre v0.5.0 installed to /.cargo/bin post v0.5.0 to /.local/bin
+#' /.cargo/bin post v0.5.0 to /.local/bin
+#'
+#' @param quite boolean to suppress log message
 #'
 #' @return path to uv
 #'
 #' @keywords internal
 #' @noRd
-get_uv_path <- function() {
-  uv_paths <- c(normalizePath("~/.local/bin/uv", mustWork = FALSE),
-                normalizePath("~/.cargo/bin/uv", mustWork = FALSE))
+get_uv_path <- function(quiet = FALSE) {
+  uv_paths <- c(
+    normalizePath("~/.local/bin/uv", mustWork = FALSE),
+    normalizePath("~/.cargo/bin/uv", mustWork = FALSE)
+  )
 
   # Find the first existing path, preferring ~/.local/bin/uv
-  uv_path <- uv_paths[file.exists(uv_paths)][1]
+  uv_paths <- uv_paths[nzchar(uv_paths) & file.exists(uv_paths)]
 
-  if (is.null(uv_path)) {
-    log4r::error(.le$logger, "uv not found. Please install with initialize_python")
-    stop("Please install uv with initialize_python")
-  } else {
-    return(uv_path)
+  uv_path <- if (length(uv_paths)) uv_paths[[1]] else NULL
+
+  if (!quiet) {
+    if (is.null(uv_path)) {
+      log4r::warn(
+        .le$logger,
+        "uv not found. Please install with initialize_python"
+      )
+    }
   }
+  uv_path
+}
+
+#' Gets the version of uv
+#'
+#' @param uv_path path to uv
+#' @keywords internal
+#' @noRd
+get_uv_version <- function(uv_path) {
+  result <- processx::run(uv_path, "--version")
+  # output should be "uv version (commit date)\n"
+  uv_version <- strsplit(result$stdout, " ")[[1]][2]
+
+  uv_version
 }

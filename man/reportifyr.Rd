@@ -90,7 +90,9 @@ strings and bookmarks from document.
 
 \itemize{
 \item \code{\link{make_doc_dirs}}: FILL IN
+\item \code{\link{fit_flextable_to_page}}: FILL IN
 \item \code{\link{validate_object}}: FILL IN
+\item \code{\link{validate_config}}: FILL IN
 }
 }
 

@@ -1,13 +1,19 @@
 test_that("preview_metadata_files throws an error if the directory does not exist", {
   temp_dir <- file.path("path", "to", "dir", "that", "doesnt", "exist")
-  expect_error(preview_metadata_files(temp_dir), regexp = "Directory does not exist.")
+  expect_error(
+    preview_metadata_files(temp_dir),
+    regexp = "Directory does not exist."
+  )
   unlink(temp_dir, recursive = TRUE)
 })
 
 test_that("preview_metadata_files throws an error if no metadata files are found", {
   temp_dir <- tempfile()
   dir.create(temp_dir)
-  expect_error(preview_metadata_files(temp_dir), regexp = "No .json files found in the specified directory.")
+  expect_error(
+    preview_metadata_files(temp_dir),
+    regexp = "No .json files found in the specified directory."
+  )
   unlink(temp_dir, recursive = TRUE)
 })
 
@@ -16,32 +22,38 @@ test_that("preview_metadata_files processes metadata correctly", {
   dir.create(temp_dir)
 
   # Create metadata with {1: eq1, 2: eq2} format for equations, notes, and abbreviations
-  metadata_1 <- list(object_meta = list(
-    meta_type = "table",
-    footnotes = list(
-      equations = list(`1` = "E = mc^2", `2` = "F = ma"),
-      notes = list(`1` = "Test note 1", `2` = "Test note 2"),
-      abbreviations = list(`1` = "abbr1", `2` = "abbr2")
+  metadata_1 <- list(
+    object_meta = list(
+      meta_type = "table",
+      footnotes = list(
+        equations = list(`1` = "E = mc^2", `2` = "F = ma"),
+        notes = list(`1` = "Test note 1", `2` = "Test note 2"),
+        abbreviations = list(`1` = "abbr1", `2` = "abbr2")
+      )
     )
-  ))
+  )
 
-  metadata_2 <- list(object_meta = list(
-    meta_type = "figure",
-    footnotes = list(
-      equations = list(`1` = "P = IV"),
-      notes = list(`1` = "Single note"),
-      abbreviations = list(`1` = "abbr_single")
+  metadata_2 <- list(
+    object_meta = list(
+      meta_type = "figure",
+      footnotes = list(
+        equations = list(`1` = "P = IV"),
+        notes = list(`1` = "Single note"),
+        abbreviations = list(`1` = "abbr_single")
+      )
     )
-  ))
+  )
 
-  metadata_3 <- list(object_meta = list(
-    meta_type = NULL,
-    footnotes = list(
-      equations = NULL,
-      notes = NULL,
-      abbreviations = NULL
+  metadata_3 <- list(
+    object_meta = list(
+      meta_type = NULL,
+      footnotes = list(
+        equations = NULL,
+        notes = NULL,
+        abbreviations = NULL
+      )
     )
-  ))
+  )
 
   file_1 <- file.path(temp_dir, "object1_table_csv_metadata.json")
   file_2 <- file.path(temp_dir, "object2_figure_png_metadata.json")

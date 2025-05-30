@@ -7,6 +7,7 @@
 write_csv_with_metadata(
   object,
   file,
+  config_yaml = NULL,
   meta_type = "NA",
   meta_equations = NULL,
   meta_notes = NULL,
@@ -19,6 +20,8 @@ write_csv_with_metadata(
 \item{object}{The \code{R} object to serialize.}
 
 \item{file}{The connection or name of the file where the \code{R} object is saved.}
+
+\item{config_yaml}{The path to the config.yaml, default is NULL and defaults will be used.}
 
 \item{meta_type}{A string to specify the type of object. Default is \code{"NA"}.}
 

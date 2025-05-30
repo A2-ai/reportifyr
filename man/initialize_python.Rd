@@ -4,7 +4,14 @@
 \alias{initialize_python}
 \title{Initializes python virtual environment}
 \usage{
-initialize_python()
+initialize_python(continue = NULL)
+}
+\arguments{
+\item{continue}{Optional argument to bypass asking user for
+confirmation to install python deps}
+}
+\value{
+invisibly the metadata_file path
 }
 \description{
 Initializes python virtual environment

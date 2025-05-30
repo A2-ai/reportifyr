@@ -31,4 +31,3 @@ ft <- flextable(iris)
 fit_flextable_to_page(ft, page_width = 6.5)
 }
 }
-\keyword{internal}
