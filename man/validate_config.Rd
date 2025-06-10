@@ -2,18 +2,18 @@
 % Please edit documentation in R/validate_config.R
 \name{validate_config}
 \alias{validate_config}
-\title{Validate config file}
+\title{Validate config.yaml file}
 \usage{
 validate_config(path_to_config_yaml)
 }
 \arguments{
-\item{path_to_config_yaml}{path to config.yaml file}
+\item{path_to_config_yaml}{The file path to the \code{config.yaml}.}
 }
 \value{
-bool TRUE if config is valid, FALSE otherwise
+bool \code{TRUE} if config is valid, \code{FALSE} otherwise.
 }
 \description{
-Validate config file
+Validate config.yaml file
 }
 \examples{
 \dontrun{

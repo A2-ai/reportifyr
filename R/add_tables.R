@@ -4,7 +4,7 @@
 #' @param docx_in The file path to the input `.docx` file.
 #' @param docx_out The file path to the output `.docx` file to save to.
 #' @param tables_path The file path to the tables and associated metadata directory.
-#' @param config_yaml The path to config.yaml file that controls figure dimensions
+#' @param config_yaml The file path to the `config.yaml`. Default is `NULL`, a default `config.yaml` bundled with the `reportifyr` package is used.
 #' @param debug Debug.
 #'
 #' @export
@@ -45,7 +45,12 @@ add_tables <- function(
     browser()
   }
 
-  validate_input_args(docx_in, docx_out, config_yaml)
+  if (is.null(config_yaml)) {
+    config_yaml <- system.file("extdata", "config.yaml", package = "reportifyr")
+    log4r::info(.le$logger, paste0("using built-in config.yaml: ", config_yaml))
+  }
+
+  validate_input_args(docx_in, docx_out)
   validate_docx(docx_in, config_yaml)
   log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
 

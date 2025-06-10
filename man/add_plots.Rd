@@ -21,7 +21,7 @@ add_plots(
 
 \item{figures_path}{The file path to the figures directory.}
 
-\item{config_yaml}{The path to config.yaml file that controls figure dimensions}
+\item{config_yaml}{The file path to the \code{config.yaml}. Default is \code{NULL}, a default \code{config.yaml} bundled with the \code{reportifyr} package is used.}
 
 \item{fig_width}{A global controller. The figure width in inches. Default is \code{NULL}. If \code{NULL}, the width is determined by the figure's pixel dimensions.}
 

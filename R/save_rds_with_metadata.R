@@ -3,7 +3,7 @@
 #' @description Extension to the `saveRDS()` function that allows capturing object metadata as a separate `.json` file.
 #' @param object The `R` object to serialize.
 #' @param file The connection or name of the file where the `R` object is saved.
-#' @param config_yaml The path to the config.yaml, default is NULL and defaults will be used.
+#' @param config_yaml The file path to the `config.yaml`. Default is `NULL`. If `NULL`, a default value of `TRUE` for `save_rtf()` is used.
 #' @param meta_type A string to specify the type of object. Default is `"NA"`.
 #' @param meta_equations A string or vector of strings representing equations to include in the metadata. Default is `NULL`.
 #' @param meta_notes A string or vector of strings representing notes to include in the metadata. Default is `NULL`.

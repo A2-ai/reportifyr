@@ -50,7 +50,12 @@ build_report <- function(
 ) {
   log4r::debug(.le$logger, "Starting build_report function")
 
-  validate_input_args(docx_in, docx_out, config_yaml)
+  if (is.null(config_yaml)) {
+    config_yaml <- system.file("extdata", "config.yaml", package = "reportifyr")
+    log4r::info(.le$logger, paste0("using built-in config.yaml: ", config_yaml))
+  }
+
+  validate_input_args(docx_in, docx_out)
   validate_docx(docx_in, config_yaml)
   log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
 

@@ -1,8 +1,7 @@
-#' validate_input_args
+#' Validates input and output arguments for reportifyr functions
 #'
-#' @param docx_in input docx to work on
-#' @param docx_out output docx to save to
-#' @param config_yaml optional path to config yaml
+#' @param docx_in The file path to the input `.docx` file.
+#' @param docx_out The file path to the output `.docx` file to save to.
 #'
 #' @return ()
 #' @internal
@@ -10,11 +9,10 @@
 #' @examples \dontrun{
 #' validate_input_args(
 #'   "template.docx",
-#'   "template-figs.docx",
-#'   "path/to/config.yaml"
+#'   "template-figs.docx"
 #' )
 #' }
-validate_input_args <- function(docx_in, docx_out, config_yaml = NULL) {
+validate_input_args <- function(docx_in, docx_out) {
   log4r::debug(.le$logger, "Starting validate_input_args function")
 
   if (!file.exists(docx_in)) {

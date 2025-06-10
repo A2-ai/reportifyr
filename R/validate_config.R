@@ -1,8 +1,8 @@
-#' Validate config file
+#' Validate config.yaml file
 #'
-#' @param path_to_config_yaml path to config.yaml file
+#' @param path_to_config_yaml The file path to the `config.yaml`.
 #'
-#' @returns bool TRUE if config is valid, FALSE otherwise
+#' @returns bool `TRUE` if config is valid, `FALSE` otherwise.
 #' @export
 #'
 #' @examples \dontrun{

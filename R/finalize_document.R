@@ -3,7 +3,7 @@
 #' @description Reads in a `.docx` file and returns a finalized version with magic strings and bookmarks removed.
 #' @param docx_in The file path to the input `.docx` file.
 #' @param docx_out The file path to the output `.docx` file to save to. Default is `NULL`. If `NULL`, `docx_out` is assigned `doc_dirs$doc_final` using `make_doc_dirs(docx_in = docx_in)`.
-#' @param config_yaml The file path to the `config.yaml`.
+#' @param config_yaml The file path to the `config.yaml`. Default is `NULL`, a default `config.yaml` bundled with the `reportifyr` package is used.
 #'
 #' @export
 #'
@@ -45,7 +45,7 @@
 finalize_document <- function(
   docx_in,
   docx_out = NULL,
-  config_yaml
+  config_yaml = NULL
 ) {
   tictoc::tic()
   log4r::debug(.le$logger, "Starting finalize_document function")
@@ -59,7 +59,11 @@ finalize_document <- function(
     )
   }
 
-  validate_input_args(docx_in, docx_out, config_yaml)
+  if (is.null(config_yaml)) {
+    config_yaml <- system.file("extdata", "config.yaml", package = "reportifyr")
+  }
+
+  validate_input_args(docx_in, docx_out)
   validate_docx(docx_in, config_yaml)
   log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
 

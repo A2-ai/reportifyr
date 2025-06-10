@@ -43,7 +43,7 @@
 remove_magic_strings <- function(docx_in, docx_out) {
   tictoc::tic()
   log4r::debug(.le$logger, "Starting remove_magic_strings function")
-  validate_input_args(docx_in, docx_out, NULL)
+  validate_input_args(docx_in, docx_out)
 
   if (interactive()) {
     log4r::info(

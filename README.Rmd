@@ -43,12 +43,13 @@ library(reportifyr)
 
 Before starting any reporting effort, it is important to initialize all
 reporting directories within the project directory you are working in.
-Please note that for development, the directory structure and names have
-been hard-coded. We realize this is sub-optimal and are working on
-allowing user-defined `report` and `OUTPUTS` structure!
 
 ``` r
-initialize_report_project(project_dir = here::here())
+initialize_report_project(
+  project_dir = here::here(),
+  report_dir_name = "report",
+  outputs_dir_name = "OUTPUTS"
+)
 ```
 
 ## Steps at the Analysis Stage

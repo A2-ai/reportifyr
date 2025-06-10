@@ -1,8 +1,8 @@
-#' add_plots_alt_text()
+#' Inserts alt text for figures within a Microsoft Word file.
 #'
-#' @param docx_in path to document
-#' @param docx_out path to output document with figures alt text
-#' @param debug boolean turns on browser
+#' @param docx_in The file path to the input `.docx` file.
+#' @param docx_out The file path to the output `.docx` file to save to.
+#' @param debug Debug.
 #'
 #' @export
 #'
@@ -22,7 +22,7 @@ add_plots_alt_text <- function(
     browser()
   }
 
-  validate_input_args(docx_in, docx_out, NULL)
+  validate_input_args(docx_in, docx_out)
 
   log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
 

@@ -2,19 +2,17 @@
 % Please edit documentation in R/validate_alt_text_magic_strings.R
 \name{validate_alt_text_magic_strings}
 \alias{validate_alt_text_magic_strings}
-\title{validate_alt_text_magic_strings}
+\title{Validate alt text of figures/tables against their magic strings in a Microsoft Word file}
 \usage{
-validate_alt_text_magic_strings(docx_in, config_yaml = NULL, debug = FALSE)
+validate_alt_text_magic_strings(docx_in, debug = FALSE)
 }
 \arguments{
-\item{docx_in}{path to docx in file}
+\item{docx_in}{The file path to the input \code{.docx} file.}
 
-\item{config_yaml}{path to config.yaml file}
-
-\item{debug}{boolean, whether to open browser}
+\item{debug}{Debug.}
 }
 \description{
-validate_alt_text_magic_strings
+Validate alt text of figures/tables against their magic strings in a Microsoft Word file
 }
 \examples{
 \dontrun{

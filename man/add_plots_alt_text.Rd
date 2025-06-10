@@ -2,19 +2,19 @@
 % Please edit documentation in R/add_plots_alt_text.R
 \name{add_plots_alt_text}
 \alias{add_plots_alt_text}
-\title{add_plots_alt_text()}
+\title{Inserts alt text for figures within a Microsoft Word file.}
 \usage{
 add_plots_alt_text(docx_in, docx_out, debug = FALSE)
 }
 \arguments{
-\item{docx_in}{path to document}
+\item{docx_in}{The file path to the input \code{.docx} file.}
 
-\item{docx_out}{path to output document with figures alt text}
+\item{docx_out}{The file path to the output \code{.docx} file to save to.}
 
-\item{debug}{boolean turns on browser}
+\item{debug}{Debug.}
 }
 \description{
-add_plots_alt_text()
+Inserts alt text for figures within a Microsoft Word file.
 }
 \examples{
 \dontrun{

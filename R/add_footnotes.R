@@ -78,7 +78,7 @@ add_footnotes <- function(
     browser()
   }
 
-  validate_input_args(docx_in, docx_out, config_yaml)
+  validate_input_args(docx_in, docx_out)
   validate_docx(docx_in, config_yaml)
   log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
 
@@ -142,7 +142,7 @@ add_footnotes <- function(
 
   if (!is.null(config_yaml)) {
     if (!validate_config(config_yaml)) {
-      stop("Invalid confi yaml. Please fix")
+      stop("Invalid config yaml. Please fix")
     }
     log4r::info(
       .le$logger,
@@ -158,11 +158,10 @@ add_footnotes <- function(
       paste0("Using default config file: ", config_yaml)
     )
   }
-  if (!is.null(config_yaml)) {
-    log4r::info(.le$logger, "Adding config.yaml to args")
-    fig_args <- c(fig_args, "-c", config_yaml)
-    tab_args <- c(tab_args, "-c", config_yaml)
-  }
+  log4r::info(.le$logger, "Adding config.yaml to args")
+  fig_args <- c(fig_args, "-c", config_yaml)
+  tab_args <- c(tab_args, "-c", config_yaml)
+
   paths <- get_venv_uv_paths()
   log4r::debug(.le$logger, "Running figure footnotes script")
   tryCatch(
