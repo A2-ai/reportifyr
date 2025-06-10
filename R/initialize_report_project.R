@@ -3,10 +3,10 @@
 #' @param project_dir The file path to the main project directory
 #' where the directory structure will be created.
 #' The directory must already exist; otherwise, an error will be thrown.
-#' @param report_dir_name The directory name for where reports will be saved,
-#' default NULL will use "report"
-#' @param outputs_dir_name The directory name for where artifacts will be saved,
-#' default NULL will use "OUTPUTS"
+#' @param report_dir_name The directory name for where reports will be saved.
+#' Default is `NULL`. If `NULL`, `report` will be used.
+#' @param outputs_dir_name The directory name for where artifacts will be saved.
+#' Default is `NULL`. If `NULL`, `OUTPUTS` will be used.
 #'
 #' @export
 #'
