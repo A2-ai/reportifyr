@@ -31,8 +31,8 @@ remove_tables_figures_footnotes <- function(
   tictoc::tic()
   log4r::debug(.le$logger, "Starting remove_tables_figures_footnotes function")
 
-  validate_input_args(docx_in, docx_out, config_yaml)
-  validate_alt_text_magic_strings(docx_in, config_yaml)
+  validate_input_args(docx_in, docx_out)
+  validate_alt_text_magic_strings(docx_in)
 
   paths <- get_venv_uv_paths()
   notes_script <- system.file(
@@ -120,10 +120,11 @@ remove_tables_figures_footnotes <- function(
   fig_script <- system.file("scripts/remove_figures.py", package = "reportifyr")
   fig_args <- c("run", fig_script, "-i", docx_out, "-o", docx_out)
 
-  if (!is.null(config_yaml)) {
-    fig_args <- c(fig_args, "-c", config_yaml)
-    log4r::info(.le$logger, paste0("config yaml set: ", config_yaml))
+  if (is.null(config_yaml)) {
+    config_yaml <- system.file("extdata", "config.yaml", package = "reportifyr")
   }
+  fig_args <- c(fig_args, "-c", config_yaml)
+  log4r::info(.le$logger, paste0("config yaml set: ", config_yaml))
 
   log4r::debug(.le$logger, "Running remove figures script")
   fig_result <- tryCatch(
