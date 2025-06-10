@@ -6,7 +6,7 @@
 #' @noRd
 keep_caption_next <- function(docx_in, docx_out) {
   log4r::debug(.le$logger, "Starting keep_caption_next function")
-  validate_input_args(docx_in, docx_out, NULL)
+  validate_input_args(docx_in, docx_out)
 
   paths <- get_venv_uv_paths()
 
