@@ -1,3 +1,18 @@
+# reportifyr 0.3.1
+## Minor Improvements
+
+* If `config_yaml` is left `NULL` for the following functions, a default `config.yaml` file bundled with `reportifyr` is used instead:
+  * `add_footnotes()`
+  * `add_plots()`
+  * `add_tables()`
+  * `build_report()`
+  * `finalize_document()`
+  * `remove_tables_figures_footnotes()`
+
+* `validate_input_args()` and `validate_alt_text_magic_strings()` no longer take a `config_yaml` argument.
+
+* Function and argument descriptions introduced or expanded on in 0.3.0 have been updated for clarity and understanding.
+  
 # reportifyr 0.3.0
 ## New Features
 
