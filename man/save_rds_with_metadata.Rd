@@ -21,7 +21,7 @@ save_rds_with_metadata(
 
 \item{file}{The connection or name of the file where the \code{R} object is saved.}
 
-\item{config_yaml}{The path to the config.yaml, default is NULL and defaults will be used.}
+\item{config_yaml}{The file path to the \code{config.yaml}. Default is \code{NULL}. If \code{NULL}, a default value of \code{TRUE} for \code{save_rtf()} is used.}
 
 \item{meta_type}{A string to specify the type of object. Default is \code{"NA"}.}
 

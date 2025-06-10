@@ -13,7 +13,7 @@ add_tables(docx_in, docx_out, tables_path, config_yaml = NULL, debug = FALSE)
 
 \item{tables_path}{The file path to the tables and associated metadata directory.}
 
-\item{config_yaml}{The path to config.yaml file that controls figure dimensions}
+\item{config_yaml}{The file path to the \code{config.yaml}. Default is \code{NULL}, a default \code{config.yaml} bundled with the \code{reportifyr} package is used.}
 
 \item{debug}{Debug.}
 }

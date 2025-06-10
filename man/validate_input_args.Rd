@@ -2,29 +2,26 @@
 % Please edit documentation in R/validate_input_args.R
 \name{validate_input_args}
 \alias{validate_input_args}
-\title{validate_input_args}
+\title{Validates input and output arguments for reportifyr functions}
 \usage{
-validate_input_args(docx_in, docx_out, config_yaml = NULL)
+validate_input_args(docx_in, docx_out)
 }
 \arguments{
-\item{docx_in}{input docx to work on}
+\item{docx_in}{The file path to the input \code{.docx} file.}
 
-\item{docx_out}{output docx to save to}
-
-\item{config_yaml}{optional path to config yaml}
+\item{docx_out}{The file path to the output \code{.docx} file to save to.}
 }
 \value{
 ()
 }
 \description{
-validate_input_args
+Validates input and output arguments for reportifyr functions
 }
 \examples{
 \dontrun{
 validate_input_args(
   "template.docx",
-  "template-figs.docx",
-  "path/to/config.yaml"
+  "template-figs.docx"
 )
 }
 }

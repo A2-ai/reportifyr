@@ -13,8 +13,8 @@ sync_report_project(project_dir, report_dir_name = NULL)
 where the directory structure will be created.
 The directory must already exist; otherwise, an error will be thrown.}
 
-\item{report_dir_name}{The directory name for where reports will be saved,
-default NULL will use "report"}
+\item{report_dir_name}{The directory name for where reports will be saved.
+Default is \code{NULL}. If \code{NULL}, \code{report} will be used.}
 }
 \description{
 Synchronizes report project with config and python

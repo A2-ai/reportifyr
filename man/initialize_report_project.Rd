@@ -15,11 +15,11 @@ initialize_report_project(
 where the directory structure will be created.
 The directory must already exist; otherwise, an error will be thrown.}
 
-\item{report_dir_name}{The directory name for where reports will be saved,
-default NULL will use "report"}
+\item{report_dir_name}{The directory name for where reports will be saved.
+Default is \code{NULL}. If \code{NULL}, \code{report} will be used.}
 
-\item{outputs_dir_name}{The directory name for where artifacts will be saved,
-default NULL will use "OUTPUTS"}
+\item{outputs_dir_name}{The directory name for where artifacts will be saved.
+Default is \code{NULL}. If \code{NULL}, \code{OUTPUTS} will be used.}
 }
 \description{
 Create report directories within a project

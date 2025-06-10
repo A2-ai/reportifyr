@@ -4,14 +4,14 @@
 \alias{finalize_document}
 \title{Finalizes the Microsoft Word file by removing magic strings and bookmarks}
 \usage{
-finalize_document(docx_in, docx_out = NULL, config_yaml)
+finalize_document(docx_in, docx_out = NULL, config_yaml = NULL)
 }
 \arguments{
 \item{docx_in}{The file path to the input \code{.docx} file.}
 
 \item{docx_out}{The file path to the output \code{.docx} file to save to. Default is \code{NULL}. If \code{NULL}, \code{docx_out} is assigned \code{doc_dirs$doc_final} using \code{make_doc_dirs(docx_in = docx_in)}.}
 
-\item{config_yaml}{The file path to the \code{config.yaml}.}
+\item{config_yaml}{The file path to the \code{config.yaml}. Default is \code{NULL}, a default \code{config.yaml} bundled with the \code{reportifyr} package is used.}
 }
 \description{
 Reads in a \code{.docx} file and returns a finalized version with magic strings and bookmarks removed.

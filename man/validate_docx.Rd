@@ -2,17 +2,17 @@
 % Please edit documentation in R/validate_docx.R
 \name{validate_docx}
 \alias{validate_docx}
-\title{Validates input docx to ensure proper functionality with reportiryf}
+\title{Validates input Microsoft Word file to ensure proper functionality with reportifyr}
 \usage{
 validate_docx(docx_in, config_yaml)
 }
 \arguments{
-\item{docx_in}{path to input docx}
+\item{docx_in}{The file path to the input \code{.docx} file.}
 
-\item{config_yaml}{path to config.yaml file}
+\item{config_yaml}{The file path to the \code{config.yaml}.}
 }
 \description{
-Validates input docx to ensure proper functionality with reportiryf
+Validates input Microsoft Word file to ensure proper functionality with reportifyr
 }
 \examples{
 \dontrun{
