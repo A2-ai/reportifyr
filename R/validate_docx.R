@@ -1,6 +1,6 @@
-#' Validates input docx to ensure proper functionality with reportiryf
+#' Validates input Microsoft Word file to ensure proper functionality with reportifyr
 #'
-#' @param docx_in path to input docx
+#' @param docx_in The file path to the input `.docx` file.
 #' @param config_yaml The file path to the `config.yaml`.
 #'
 #' @export

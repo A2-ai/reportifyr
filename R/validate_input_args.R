@@ -1,7 +1,7 @@
-#' validate_input_args
+#' Validates input and output arguments for reportifyr functions
 #'
-#' @param docx_in input docx to work on
-#' @param docx_out output docx to save to
+#' @param docx_in The file path to the input `.docx` file.
+#' @param docx_out The file path to the output `.docx` file to save to.
 #'
 #' @return ()
 #' @internal
