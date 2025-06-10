@@ -1,8 +1,8 @@
-#' add_tables_alt_text
+#' Inserts alt text for tables within a Microsoft Word file.
 #'
-#' @param docx_in path to input document
-#' @param docx_out path to output document
-#' @param debug boolean for turning on debugging
+#' @param docx_in The file path to the input `.docx` file.
+#' @param docx_out The file path to the output `.docx` file to save to.
+#' @param debug Debug.
 #'
 #' @export
 #'
@@ -22,7 +22,7 @@ add_tables_alt_text <- function(
     browser()
   }
 
-  validate_input_args(docx_in, docx_out, NULL)
+  validate_input_args(docx_in, docx_out)
 
   log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
 
