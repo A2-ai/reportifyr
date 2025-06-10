@@ -1,8 +1,7 @@
-#' validate_alt_text_magic_strings
+#' Validate alt text of figures/tables against their magic strings in a Microsoft Word file
 #'
-#' @param docx_in path to docx in file
-#' @param config_yaml path to config.yaml file
-#' @param debug boolean, whether to open browser
+#' @param docx_in The file path to the input `.docx` file.
+#' @param debug Debug.
 #'
 #' @export
 #'
@@ -11,7 +10,6 @@
 #' }
 validate_alt_text_magic_strings <- function(
   docx_in,
-  config_yaml = NULL,
   debug = FALSE
 ) {
   log4r::debug(.le$logger, "Starting validate_alt_text_magic_strings function")
