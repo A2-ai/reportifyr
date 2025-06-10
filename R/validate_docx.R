@@ -1,7 +1,7 @@
 #' Validates input docx to ensure proper functionality with reportiryf
 #'
 #' @param docx_in path to input docx
-#' @param config_yaml path to config.yaml file
+#' @param config_yaml The file path to the `config.yaml`.
 #'
 #' @export
 #'
