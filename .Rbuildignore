@@ -8,3 +8,8 @@
 ^pkgdown$
 ^doc$
 ^Meta$
+
+^rv$
+^rproject.toml$
+^rv\.toml$
+^\.Rprofile$
