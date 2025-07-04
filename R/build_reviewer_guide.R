@@ -89,7 +89,7 @@ build_reviewer_guide <- function(
     meta_basename <- sprintf("%s_%s_metadata.json", stem, ext)
 
     # candidate directories for this extension
-    cand_dirs <- ext2dir[[ext]] %||% character(0)
+    cand_dirs <- rlang::`%||%`(ext2dir[[ext]], character(0))
 
     # try each candidate until one exists
     meta_file <- purrr::detect(
