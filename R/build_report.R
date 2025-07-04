@@ -145,5 +145,11 @@ build_report <- function(
       file.rename(item, file.path(intermediate_dir, basename(item)))
     }
   }
+  build_reviewer_guide(
+    docx_in = docx_in,
+    docx_out = NULL,
+    figures_path = figures_path,
+    tables_path = tables_path
+  )
   log4r::debug(.le$logger, "Exiting build_report function")
 }
