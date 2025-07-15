@@ -100,7 +100,7 @@ build_reviewer_guide <- function(
       if (length(datasets) > 0) input <- paste(datasets, collapse = "\n")
     }
 
-    tibble::tibble(
+    data.frame(
       Program = basename(src_path),
       Input = input,
       Output = f,
@@ -124,7 +124,7 @@ build_reviewer_guide <- function(
         levels = gtools::mixedsort(.data$Program, decreasing = TRUE)
       )
     ) |>
-    dplyr::arrange(.data$Program) 
+    dplyr::arrange(.data$Program)
 
   ft <- flextable::flextable(index_tbl) |>
     flextable::set_table_properties(layout = "autofit")
