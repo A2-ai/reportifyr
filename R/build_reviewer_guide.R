@@ -175,3 +175,54 @@ get_input_datasets <- function(script_path) {
 
   unique(matches)
 }
+
+#' Extract input and output file paths from a NONMEM .mod or .ctl model file
+#'
+#' @param mod_file Path to the NONMEM control stream (.mod or .ctl file)
+#'
+#' @return A list with elements:
+#'   - `input`: character vector (length 1 or 0) with relative input file path
+#'   - `output`: character vector of output artifact file paths
+#' @export
+
+get_mod_io_paths <- function(mod_file) {
+  if (!file.exists(mod_file)) {
+    warning("Model file not found: ", mod_file)
+    return(list(input = character(0), output = character(0)))
+  }
+
+  # Read and clean lines
+  lines <- readLines(mod_file, warn = FALSE)
+  lines <- trimws(lines)
+  lines <- lines[nzchar(lines)] # Drop empty lines
+
+  # Collapse to single string for regex
+  full_text <- paste(lines, collapse = "\n")
+
+  # Extract $DATA path
+  data_path <- stringr::str_match(full_text, stringr::regex("\\$DATA\\s+([^\\s]+)", ignore_case = TRUE))[, 2]
+
+  # Extract $TABLE FILE=... paths
+  table_files <- stringr::str_match_all(full_text, stringr::regex("FILE\\s*=\\s*([^\\s]+)", ignore_case = TRUE))
+  table_files <- unlist(lapply(table_files, function(x) if (ncol(x) >= 2) x[, 2] else NULL))
+
+  # Input: resolve relative path and normalize to POSIX style
+  input_path <- if (!is.na(data_path)) {
+    raw_input <- file.path(dirname(mod_file), data_path)
+    fs::path_norm(raw_input)
+  } else {
+    NA_character_
+  }
+
+  # Output: return just filenames (basename only)
+  output_files <- if (length(table_files)) {
+    basename(table_files)
+  } else {
+    character(0)
+  }
+
+  list(
+    input = input_path,
+    output = output_files
+  )
+}
