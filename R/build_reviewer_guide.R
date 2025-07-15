@@ -26,14 +26,11 @@ build_reviewer_guide <- function(
   if (is.null(docx_out)) {
     dir <- dirname(docx_in)
     docx_out <- file.path(dir, "reviewer_guide.docx")
-    log4r::info(
-      .le$logger,
-      paste0("Docx_out is null, setting docx_out to: ", docx_out)
-    )
+    log4r::info(.le$logger, paste0("docx_out is null, setting docx_out to: ", docx_out))
   }
 
-  start_pattern <- "\\{rpfy\\}:" # matches "{rpfy}:"
-  end_pattern <- "\\.[^.]+$" # matches the file extension (e.g., ".csv", ".rds")
+  start_pattern <- "\\{rpfy\\}:"
+  end_pattern <- "\\.[^.]+$"
   magic_pattern <- paste0(start_pattern, ".*?", end_pattern)
 
   doc <- officer::read_docx(docx_in)
@@ -42,41 +39,32 @@ build_reviewer_guide <- function(
 
   venv_path <- file.path(getOption("venv_dir"), ".venv")
   if (!dir.exists(venv_path)) {
-    log4r::error(
-      .le$logger,
-      "Virtual environment not found. Please initialize with initialize_python."
-    )
+    log4r::error(.le$logger, "Virtual environment not found. Please initialize with initialize_python.")
     stop("Create virtual environment with initialize_python")
   }
 
   uv_path <- get_uv_path()
   if (is.null(uv_path)) {
-    log4r::error(
-      .le$logger,
-      "uv not found. Please install with initialize_python"
-    )
+    log4r::error(.le$logger, "uv not found. Please install with initialize_python")
     stop("Please install uv with initialize_python")
   }
+
   file_names <- c()
   for (i in magic_indices) {
     magic_string <- doc_summary$text[[i]]
-    parser <- system.file(
-      "scripts/parse_magic_string.py",
-      package = "reportifyr"
-    )
+    parser <- system.file("scripts/parse_magic_string.py", package = "reportifyr")
     args <- c("run", parser, "-i", magic_string)
 
     result <- processx::run(
       command = uv_path,
       args = args,
-      env = c("current", VIRTUAL_ENV = venv_path),
+      env = c("current", VIRTUAL_ENV = venv_path)
     )
 
     j <- jsonlite::fromJSON(result$stdout)
     file_names <- c(file_names, names(j))
   }
 
-  # map extensions to candidate directories ------------
   ext2dir <- list(
     csv = tables_path,
     rds = tables_path,
@@ -88,10 +76,7 @@ build_reviewer_guide <- function(
     ext  <- tolower(tools::file_ext(f))
     meta_basename <- sprintf("%s_%s_metadata.json", stem, ext)
 
-    # candidate directories for this extension
     cand_dirs <- rlang::`%||%`(ext2dir[[ext]], character(0))
-
-    # try each candidate until one exists
     meta_file <- purrr::detect(
       cand_dirs,
       ~ file.exists(file.path(.x, meta_basename)),
@@ -106,7 +91,29 @@ build_reviewer_guide <- function(
       NA_character_
     }
 
-    tibble::tibble(filename = f, source_path = src_path)
+    # Extract input datasets from the R script
+    input <- NA_character_
+    if (!is.na(src_path) && file.exists(src_path)) {
+      script_text <- readLines(src_path, warn = FALSE)
+      patterns <- c(
+        "read_csv\\s*\\(\\s*['\"](.*?)['\"]",
+        "read\\.csv\\s*\\(\\s*['\"](.*?)['\"]",
+        "read_excel\\s*\\(\\s*['\"](.*?)['\"]",
+        "read_parquet\\s*\\(\\s*['\"](.*?)['\"]"
+      )
+      matches <- unlist(lapply(patterns, function(pat) {
+        m <- stringr::str_match_all(script_text, pat)
+        unlist(lapply(m, function(x) if (ncol(x) >= 2) x[, 2] else NULL))
+      }))
+      if (length(matches) > 0) input <- paste(unique(matches), collapse = "; ")
+    }
+
+    tibble::tibble(
+      Program = basename(src_path),
+      Input = input,
+      Output = f,
+      Description = NA_character_
+    )
   })
 
   ft <- flextable::flextable(index_tbl) |> flextable::autofit()
@@ -119,4 +126,34 @@ build_reviewer_guide <- function(
 
   log4r::info(.le$logger, paste("Artifact index saved to:", docx_out))
   invisible(index_tbl)
+}
+
+#' Extract dataset file names from an R script
+#'
+#' @param script_path Path to the R script
+#'
+#' @return A character vector of input dataset file names
+#' @export
+get_input_datasets <- function(script_path) {
+  if (!file.exists(script_path)) {
+    warning("Script file not found: ", script_path)
+    return(character(0))
+  }
+
+  script_text <- readLines(script_path, warn = FALSE)
+
+  patterns <- c(
+    "read_csv\\s*\\(\\s*['\"](.*?)['\"]",
+    "read\\.csv\\s*\\(\\s*['\"](.*?)['\"]",
+    "read_excel\\s*\\(\\s*['\"](.*?)['\"]",
+    "read_parquet\\s*\\(\\s*['\"](.*?)['\"]",
+    "readRDS\\s*\\(\\s*['\"](.*?)['\"]"
+  )
+
+  matches <- unlist(lapply(patterns, function(pat) {
+    m <- stringr::str_match_all(script_text, pat)
+    unlist(lapply(m, function(x) if (ncol(x) >= 2) x[, 2] else NULL))
+  }))
+
+  unique(matches)
 }

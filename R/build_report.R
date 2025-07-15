@@ -146,7 +146,7 @@ build_report <- function(
     }
   }
   build_reviewer_guide(
-    docx_in = docx_in,
+    docx_in = docx_out,
     docx_out = NULL,
     figures_path = figures_path,
     tables_path = tables_path
