@@ -20,8 +20,7 @@ build_reviewer_guide <- function(
     docx_in,
     docx_out = NULL,
     figures_path,
-    tables_path
-) {
+    tables_path) {
   log4r::debug(.le$logger, "Starting build_reviewer_guide function")
 
   if (is.null(docx_out)) {
@@ -74,7 +73,7 @@ build_reviewer_guide <- function(
 
   index_tbl <- purrr::map_dfr(file_names, function(f) {
     stem <- tools::file_path_sans_ext(f)
-    ext  <- tolower(tools::file_ext(f))
+    ext <- tolower(tools::file_ext(f))
     meta_basename <- sprintf("%s_%s_metadata.json", stem, ext)
 
     cand_dirs <- rlang::`%||%`(ext2dir[[ext]], character(0))
@@ -87,7 +86,9 @@ build_reviewer_guide <- function(
 
     src_path <- if (!is.na(meta_file)) {
       purrr::pluck(jsonlite::read_json(meta_file, simplifyVector = TRUE),
-                   "source_meta", "path", .default = NA_character_)
+        "source_meta", "path",
+        .default = NA_character_
+      )
     } else {
       NA_character_
     }
@@ -95,18 +96,8 @@ build_reviewer_guide <- function(
     # Extract input datasets from the R script
     input <- NA_character_
     if (!is.na(src_path) && file.exists(src_path)) {
-      script_text <- readLines(src_path, warn = FALSE)
-      patterns <- c(
-        "read_csv\\s*\\(\\s*['\"](.*?)['\"]",
-        "read\\.csv\\s*\\(\\s*['\"](.*?)['\"]",
-        "read_excel\\s*\\(\\s*['\"](.*?)['\"]",
-        "read_parquet\\s*\\(\\s*['\"](.*?)['\"]"
-      )
-      matches <- unlist(lapply(patterns, function(pat) {
-        m <- stringr::str_match_all(script_text, pat)
-        unlist(lapply(m, function(x) if (ncol(x) >= 2) x[, 2] else NULL))
-      }))
-      if (length(matches) > 0) input <- paste(unique(matches), collapse = "; ")
+      datasets <- get_input_datasets(src_path)
+      if (length(datasets) > 0) input <- paste(datasets, collapse = "\n")
     }
 
     tibble::tibble(
@@ -117,12 +108,24 @@ build_reviewer_guide <- function(
     )
   })
 
-  ft <- flextable::flextable(index_tbl) |> flextable::autofit()
+  index_tbl <- index_tbl |>
+    dplyr::group_by(.data$Program) |>
+    dplyr::summarise(
+      Input = paste(unique(na.omit(.data$Input)), collapse = "\n"),
+      Output = paste(sort(unique(.data$Output)), collapse = "\n"),
+      Description = paste(unique(na.omit(.data$Description)), collapse = "\n"),
+      .groups = "drop"
+    )
+
+  ft <- flextable::flextable(index_tbl) |>
+    flextable::set_table_properties(layout = "autofit")
 
   flextable::save_as_docx(
-    ft, path = docx_out,
+    ft,
+    path = docx_out,
     pr_section = officer::prop_section(
-      page_size = officer::page_size(orient = "landscape"))
+      page_size = officer::page_size(orient = "landscape")
+    )
   )
 
   log4r::info(.le$logger, paste("Artifact index saved to:", docx_out))
@@ -144,17 +147,20 @@ get_input_datasets <- function(script_path) {
   script_text <- readLines(script_path, warn = FALSE)
 
   patterns <- c(
-    "read_csv\\s*\\(\\s*['\"](.*?)['\"]",
-    "read\\.csv\\s*\\(\\s*['\"](.*?)['\"]",
-    "read_excel\\s*\\(\\s*['\"](.*?)['\"]",
-    "read_parquet\\s*\\(\\s*['\"](.*?)['\"]",
-    "readRDS\\s*\\(\\s*['\"](.*?)['\"]"
+    "([a-zA-Z0-9_]+::)?read_csv\\s*\\(.*?['\"](.*?)['\"]",
+    "([a-zA-Z0-9_]+::)?read\\.csv\\s*\\(.*?['\"](.*?)['\"]",
+    "([a-zA-Z0-9_]+::)?read_excel\\s*\\(.*?['\"](.*?)['\"]",
+    "([a-zA-Z0-9_]+::)?read_parquet\\s*\\(.*?['\"](.*?)['\"]",
+    "([a-zA-Z0-9_]+::)?readRDS\\s*\\(.*?['\"](.*?)['\"]"
   )
 
   matches <- unlist(lapply(patterns, function(pat) {
     m <- stringr::str_match_all(script_text, pat)
-    unlist(lapply(m, function(x) if (ncol(x) >= 2) x[, 2] else NULL))
+    unlist(lapply(m, function(x) if (ncol(x) >= 3) x[, 3] else NULL))
   }))
+
+
+  matches <- stringr::str_remove_all(matches, "^['\"]|['\"]$")
 
   unique(matches)
 }
