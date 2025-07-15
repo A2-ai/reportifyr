@@ -4,7 +4,7 @@
 #' @param docx_out The file path to the output `.docx` file to save to.
 #'
 #' @return ()
-#' @internal
+#' @keywords internal
 #'
 #' @examples \dontrun{
 #' validate_input_args(

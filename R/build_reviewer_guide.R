@@ -15,6 +15,7 @@
 #'   figures_path = figures_path,
 #'   tables_path = tables_path
 #' )
+#' }
 build_reviewer_guide <- function(
     docx_in,
     docx_out = NULL,

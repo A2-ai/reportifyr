@@ -41,6 +41,7 @@ Imports:
     rlang,
     rstudioapi,
     stringr,
+    tibble,
     tictoc,
     yaml
 Suggests: 
