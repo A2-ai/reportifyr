@@ -111,11 +111,20 @@ build_reviewer_guide <- function(
   index_tbl <- index_tbl |>
     dplyr::group_by(.data$Program) |>
     dplyr::summarise(
-      Input = paste(unique(na.omit(.data$Input)), collapse = "\n"),
+      Input = paste(unique(.data$Input), collapse = "\n"),
       Output = paste(sort(unique(.data$Output)), collapse = "\n"),
-      Description = paste(unique(na.omit(.data$Description)), collapse = "\n"),
+      Description = paste(unique(.data$Description), collapse = "\n"),
       .groups = "drop"
     )
+
+  index_tbl <- index_tbl |>
+    dplyr::mutate(
+      Program = factor(
+        .data$Program,
+        levels = gtools::mixedsort(.data$Program, decreasing = TRUE)
+      )
+    ) |>
+    dplyr::arrange(.data$Program) 
 
   ft <- flextable::flextable(index_tbl) |>
     flextable::set_table_properties(layout = "autofit")
@@ -145,6 +154,8 @@ get_input_datasets <- function(script_path) {
   }
 
   script_text <- readLines(script_path, warn = FALSE)
+  script_text <- script_text[!grepl("^\\s*#", script_text)] # Drop lines starting with #
+  script_text <- sub("#.*$", "", script_text) # Remove trailing comments after code
 
   patterns <- c(
     "([a-zA-Z0-9_]+::)?read_csv\\s*\\(.*?['\"](.*?)['\"]",
