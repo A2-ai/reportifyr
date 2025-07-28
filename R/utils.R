@@ -170,3 +170,28 @@ get_uv_version <- function(uv_path) {
 
   uv_version
 }
+
+find_init_root <- function(
+  path_like,
+  init_pattern = "^\\.[^/]+_init\\.json$",
+  debug = FALSE
+) {
+  start <- fs::path_abs(path_like)
+
+  dir   <- if (fs::dir_exists(start)) start else fs::path_dir(start)
+
+  repeat {
+    if (debug) message("check: ", dir)
+
+    entries <- fs::dir_ls(dir, type = "file", all = TRUE, recurse = FALSE)
+
+    hits <- entries[grepl(init_pattern, fs::path_file(entries))]
+    if (length(hits)) return(dir)
+
+    parent <- fs::path_dir(dir)
+    if (parent == dir) break
+    dir <- parent
+  }
+
+  NA_character_
+}

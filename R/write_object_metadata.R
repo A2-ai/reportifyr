@@ -91,6 +91,19 @@ write_object_metadata <- function(
     paste0("Fetched git info for source file: ", source_path_git_info)
   )
 
+  init_root <-  tryCatch(
+    {
+      find_init_root(source_path)
+    },
+    error = function(e) {
+      log4r::error(.le$logger, "Error detecting project root")
+      stop(e)
+    }
+  )
+
+  src_rel  <- fs::path_rel(source_path, start = init_root)
+  obj_rel  <- fs::path_rel(object_file, start = init_root)
+
   # Combine into expected structure
   data_to_save <- list(
     system_meta = list(
@@ -103,13 +116,13 @@ write_object_metadata <- function(
     source_meta = list(
       creation_author = source_path_git_info$creation_author,
       latest_author = source_path_git_info$latest_author,
-      path = source_path,
+      path = src_rel,
       creation_time = source_path_git_info$creation_time,
       latest_time = source_path_git_info$latest_time
     ),
     object_meta = list(
       author = get_git_config_author(),
-      path = object_file,
+      path = obj_rel,
       creation_time = as.character(timestamp),
       file_type = tools::file_ext(object_file),
       meta_type = meta_type,
