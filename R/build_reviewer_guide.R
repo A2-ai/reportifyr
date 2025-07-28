@@ -127,15 +127,31 @@ build_reviewer_guide <- function(
     dplyr::arrange(.data$Program)
 
   ft <- flextable::flextable(index_tbl) |>
-    flextable::set_table_properties(layout = "autofit")
+    format_flextable(table1_format = FALSE)
 
-  flextable::save_as_docx(
-    ft,
-    path = docx_out,
-    pr_section = officer::prop_section(
-      page_size = officer::page_size(orient = "landscape")
-    )
-  )
+  ft <- reportifyr::fit_flextable_to_page(ft, page_width = 9.73)
+
+  doc <- officer::read_docx()
+
+  # Title Page
+  doc <- officer::body_add_par(doc, "MODELING ANALYSIS ELECTRONIC SUBMISSION REVIEWERS GUIDE", style = "centered")
+  doc <- officer::body_add_par(doc, "", style = "Normal")
+  doc <- officer::body_end_section_portrait(doc)
+
+  # TOC
+  doc <- officer::body_add_par(doc, "Contents", style = "centered")
+  doc <- officer::body_add_toc(doc, level = 2)
+  doc <- officer::body_end_section_portrait(doc)
+
+  # Insert Table
+  doc <- officer::body_add_par(doc, "Listing of Submitted Files", style = "heading 1")
+  doc <- officer::body_add_par(doc, "Programs", style = "heading 2")
+  doc <- officer::body_add_par(doc, "", style = "Normal")
+  doc <- flextable::body_add_flextable(doc, value = ft)
+  doc <- officer::body_end_section_landscape(doc)
+
+  # Save
+  print(doc, target = docx_out)
 
   log4r::info(.le$logger, paste("Artifact index saved to:", docx_out))
   invisible(index_tbl)
