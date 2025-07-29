@@ -46,9 +46,6 @@ write_object_metadata <- function(
     paste0("Collected system metadata: ", list(timestamp, rvers, platform))
   )
 
-  hash <- digest::digest(file = object_file, algo = "blake3")
-  log4r::info(.le$logger, paste0("Generated file hash: ", hash))
-
   source_path <- tryCatch(
     {
       # Check if the script is being sourced
@@ -91,18 +88,20 @@ write_object_metadata <- function(
     paste0("Fetched git info for source file: ", source_path_git_info)
   )
 
-  init_root <-  tryCatch(
-    {
-      find_init_root(source_path)
-    },
-    error = function(e) {
-      log4r::error(.le$logger, "Error detecting project root")
-      stop(e)
-    }
-  )
+  init_root <- find_init_root(file_path = source_path)
+  log4r::info(.le$logger, paste0("Init root determined: ", init_root))
 
-  src_rel  <- fs::path_rel(source_path, start = init_root)
-  obj_rel  <- fs::path_rel(object_file, start = init_root)
+  obj_abs <- resolve_object_file(object_file = object_file, proj_root = init_root)
+  log4r::info(.le$logger, paste0("Absolute object file path: ", obj_abs))
+
+  src_rel <- fs::path_rel(source_path, start = init_root)
+  log4r::info(.le$logger, paste0("Relative source file path: ", src_rel))
+
+  obj_rel <- fs::path_rel(obj_abs, start = init_root)
+  log4r::info(.le$logger, paste0("Relative object file path: ", obj_rel))
+
+  hash <- digest::digest(file = obj_abs, algo = "blake3")
+  log4r::info(.le$logger, paste0("Generated file hash: ", hash))
 
   # Combine into expected structure
   data_to_save <- list(
