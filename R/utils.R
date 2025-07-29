@@ -174,7 +174,7 @@ get_uv_version <- function(uv_path) {
 
 #' Finds the _init.json at project root
 #'
-#' @param file_path An absolute file path for a directory or file to search from.
+#' @param file_path A file path for a directory or file to search from.
 #' @param init_pattern Pattern matching the _init.json file.
 #'
 #' @keywords internal
