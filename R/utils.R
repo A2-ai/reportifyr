@@ -161,6 +161,7 @@ get_uv_path <- function(quiet = FALSE) {
 #' Gets the version of uv
 #'
 #' @param uv_path path to uv
+#'
 #' @keywords internal
 #' @noRd
 get_uv_version <- function(uv_path) {
@@ -171,27 +172,73 @@ get_uv_version <- function(uv_path) {
   uv_version
 }
 
+#' Finds the _init.json at project root
+#'
+#' @param file_path An absolute file path for a directory or file to search from.
+#' @param init_pattern Pattern matching the _init.json file.
+#'
+#' @keywords internal
+#' @noRd
 find_init_root <- function(
-  path_like,
-  init_pattern = "^\\.[^/]+_init\\.json$",
-  debug = FALSE
+  file_path,
+  init_pattern = "^\\.[^/]+_init\\.json$"
 ) {
-  start <- fs::path_abs(path_like)
-
-  dir   <- if (fs::dir_exists(start)) start else fs::path_dir(start)
+  start <- fs::path_abs(file_path)
+  dir <- if (fs::dir_exists(start)) start else fs::path_dir(start)
 
   repeat {
-    if (debug) message("check: ", dir)
-
     entries <- fs::dir_ls(dir, type = "file", all = TRUE, recurse = FALSE)
-
     hits <- entries[grepl(init_pattern, fs::path_file(entries))]
     if (length(hits)) return(dir)
 
     parent <- fs::path_dir(dir)
-    if (parent == dir) break
+    if (parent == dir) {
+      stop(
+        sprintf("Could not find any file matching '%s'",
+                init_pattern),
+        call. = FALSE
+      )
+    }
     dir <- parent
   }
+}
 
-  NA_character_
+#' Resolves object file paths
+#'
+#' @param object_file The file path of the object, can be absolute or relative.
+#' @param proj_root The file path of the project root, must be absolute.
+#'
+#' @keywords internal
+#' @noRd
+resolve_object_file <- function(
+  object_file,
+  proj_root
+) {
+  obj_expanded <- fs::path_expand(object_file)
+
+  if (fs::is_absolute_path(obj_expanded)) {
+    obj_abs_path <- fs::path_norm(obj_expanded)
+    if (file.exists(obj_abs_path)){
+      return(obj_abs_path)
+    }
+  }
+
+  obj_root_path <- fs::path_norm(fs::path(proj_root, obj_expanded))
+  if (file.exists(obj_root_path)) {
+    return(obj_root_path)
+  }
+
+  cwd <- normalizePath(getwd(), mustWork = TRUE)
+  obj_cwd_path <- fs::path_norm(fs::path(cwd, obj_expanded))
+  if (file.exists(obj_cwd_path)) {
+    return(obj_cwd_path)
+  }
+
+  stop(
+    "Object not found. Tried resolving from:\n",
+    " - project root: ", obj_root_path, "\n",
+    " - CWD:          ", obj_cwd_path, "\n",
+    "Please pass a valid path relative to the project root ",
+    "or run from a directory where '", object_file, "' is resolvable."
+  )
 }
