@@ -113,12 +113,11 @@ build_reviewer_guide <- function(
     dplyr::summarise(
       Input = paste(unique(.data$Input), collapse = "\n"),
       Output = paste(sort(unique(.data$Output)), collapse = "\n"),
-      Description = paste(unique(.data$Description), collapse = "\n"),
+      Description = paste(unique(Description), collapse = "\n"),
       .groups = "drop"
-    )
-
-  index_tbl <- index_tbl |>
+    ) |>
     dplyr::mutate(
+      Description = "",
       Program = factor(
         .data$Program,
         levels = gtools::mixedsort(.data$Program, decreasing = TRUE)
@@ -126,10 +125,23 @@ build_reviewer_guide <- function(
     ) |>
     dplyr::arrange(.data$Program)
 
-  ft <- flextable::flextable(index_tbl) |>
+  dataset_tbl <- index_tbl |>
+    dplyr::select(`File Name` = Input) |>
+    dplyr::distinct(`File Name`) |>
+    dplyr::mutate(
+      Description = "",
+      Notes       = ""
+    )
+
+  ft <- flextable::flextable(dataset_tbl) |>
     format_flextable(table1_format = FALSE)
 
   ft <- reportifyr::fit_flextable_to_page(ft, page_width = 9.73)
+
+  ft2 <- flextable::flextable(index_tbl) |>
+    format_flextable(table1_format = FALSE)
+
+  ft2 <- reportifyr::fit_flextable_to_page(ft2, page_width = 9.73)
 
   doc <- officer::read_docx()
 
@@ -143,11 +155,16 @@ build_reviewer_guide <- function(
   doc <- officer::body_add_toc(doc, level = 2)
   doc <- officer::body_end_section_portrait(doc)
 
-  # Insert Table
+  # Insert Tables
   doc <- officer::body_add_par(doc, "Listing of Submitted Files", style = "heading 1")
-  doc <- officer::body_add_par(doc, "Programs", style = "heading 2")
+  doc <- officer::body_add_par(doc, "Datasets", style = "heading 2")
   doc <- officer::body_add_par(doc, "", style = "Normal")
   doc <- flextable::body_add_flextable(doc, value = ft)
+  doc <- officer::body_add_break(doc)
+
+  doc <- officer::body_add_par(doc, "Programs", style = "heading 2")
+  doc <- officer::body_add_par(doc, "", style = "Normal")
+  doc <- flextable::body_add_flextable(doc, value = ft2)
   doc <- officer::body_end_section_landscape(doc)
 
   # Save
@@ -169,28 +186,76 @@ get_input_datasets <- function(script_path) {
     return(character(0))
   }
 
-  script_text <- readLines(script_path, warn = FALSE)
-  script_text <- script_text[!grepl("^\\s*#", script_text)] # Drop lines starting with #
-  script_text <- sub("#.*$", "", script_text) # Remove trailing comments after code
+  # Read + strip comments
+  lines <- readLines(script_path, warn = FALSE)
+  lines <- lines[!grepl("^\\s*#", lines)]   # drop full-line comments
+  lines <- sub("#.*$", "", lines)           # drop trailing comments
 
-  patterns <- c(
-    "([a-zA-Z0-9_]+::)?read_csv\\s*\\(.*?['\"](.*?)['\"]",
-    "([a-zA-Z0-9_]+::)?read\\.csv\\s*\\(.*?['\"](.*?)['\"]",
-    "([a-zA-Z0-9_]+::)?read_excel\\s*\\(.*?['\"](.*?)['\"]",
-    "([a-zA-Z0-9_]+::)?read_parquet\\s*\\(.*?['\"](.*?)['\"]",
-    "([a-zA-Z0-9_]+::)?readRDS\\s*\\(.*?['\"](.*?)['\"]"
-  )
+  # Regex bits
+  read_fun <- "(?:[A-Za-z0-9_]+::)?(?:read_csv|read\\.csv|read_excel|read_parquet|readRDS)"
+  file_ext <- "(?i:csv(?:\\.gz)?|tsv(?:\\.gz)?|parquet|rds|xlsx|xls)"  # add more if needed
 
-  matches <- unlist(lapply(patterns, function(pat) {
-    m <- stringr::str_match_all(script_text, pat)
-    unlist(lapply(m, function(x) if (ncol(x) >= 3) x[, 3] else NULL))
-  }))
+  # Helpers
+  extract_filename_literals <- function(txt) {
+    # any quoted token ending with a known extension
+    rx <- paste0("['\"]([^'\"]+\\.", file_ext, ")['\"]")
+    m <- stringr::str_match_all(txt, stringr::regex(rx))[[1]]
+    if (nrow(m)) m[, 2] else character(0)
+  }
 
+  # keep most recent simple assignment var -> "filename.ext"
+  sym <- new.env(parent = emptyenv())
 
-  matches <- stringr::str_remove_all(matches, "^['\"]|['\"]$")
+  record_assignments <- function(txt) {
+    # only simple single-line assignments with quoted literals somewhere on RHS
+    m <- stringr::str_match(
+      txt,
+      stringr::regex("^\\s*([A-Za-z.][A-Za-z0-9_.]*)\\s*(?:<-|=)\\s*(.+?)\\s*$", dotall = TRUE)
+    )
+    if (anyNA(m)) return(invisible(NULL))
+    var <- m[2]; rhs <- m[3]
+    lits <- extract_filename_literals(rhs)
+    if (length(lits)) assign(var, utils::tail(lits, 1), envir = sym)  # last literal wins
+    invisible(NULL)
+  }
 
-  unique(matches)
+  extract_from_read_call <- function(txt) {
+    rx <- paste0("(?s)", read_fun, "\\s*\\(([^)]*)\\)")
+    mm <- stringr::str_match_all(txt, stringr::regex(rx, dotall = TRUE))[[1]]
+    out <- character(0)
+    if (!nrow(mm)) return(out)
+    for (i in seq_len(nrow(mm))) {
+      inside <- mm[i, 2]
+
+      # 1) any literal filenames inside the call
+      out <- c(out, extract_filename_literals(inside))
+
+      # 2) identifiers that we’ve already seen bound to a filename
+      ids <- stringr::str_match_all(inside, "\\b([A-Za-z.][A-Za-z0-9_.]*)\\b")[[1]]
+      if (nrow(ids)) {
+        for (j in seq_len(nrow(ids))) {
+          key <- ids[j, 2]
+          if (exists(key, envir = sym, inherits = FALSE)) {
+            out <- c(out, get(key, envir = sym, inherits = FALSE))
+          }
+        }
+      }
+    }
+    unique(out)
+  }
+
+  results <- character(0)
+
+  # Single pass: update symbol table, and collect from any read_* on the same line
+  for (ln in lines) {
+    record_assignments(ln)
+    results <- c(results, extract_from_read_call(ln))
+  }
+
+  if (!length(results)) return(character(0))
+  unique(basename(results))
 }
+
 
 #' Extract input and output file paths from a NONMEM .mod or .ctl model file
 #'
