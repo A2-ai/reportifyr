@@ -188,12 +188,12 @@ get_input_datasets <- function(script_path) {
 
   # Read + strip comments
   lines <- readLines(script_path, warn = FALSE)
-  lines <- lines[!grepl("^\\s*#", lines)]   # drop full-line comments
-  lines <- sub("#.*$", "", lines)           # drop trailing comments
+  lines <- lines[!grepl("^\\s*#", lines)] # drop full-line comments
+  lines <- sub("#.*$", "", lines) # drop trailing comments
 
   # Regex bits
   read_fun <- "(?:[A-Za-z0-9_]+::)?(?:read_csv|read\\.csv|read_excel|read_parquet|readRDS)"
-  file_ext <- "(?i:csv(?:\\.gz)?|tsv(?:\\.gz)?|parquet|rds|xlsx|xls)"  # add more if needed
+  file_ext <- "(?i:csv(?:\\.gz)?|tsv(?:\\.gz)?|parquet|rds|xlsx|xls)" # add more if needed
 
   # Helpers
   extract_filename_literals <- function(txt) {
@@ -212,10 +212,13 @@ get_input_datasets <- function(script_path) {
       txt,
       stringr::regex("^\\s*([A-Za-z.][A-Za-z0-9_.]*)\\s*(?:<-|=)\\s*(.+?)\\s*$", dotall = TRUE)
     )
-    if (anyNA(m)) return(invisible(NULL))
-    var <- m[2]; rhs <- m[3]
+    if (anyNA(m)) {
+      return(invisible(NULL))
+    }
+    var <- m[2]
+    rhs <- m[3]
     lits <- extract_filename_literals(rhs)
-    if (length(lits)) assign(var, utils::tail(lits, 1), envir = sym)  # last literal wins
+    if (length(lits)) assign(var, utils::tail(lits, 1), envir = sym) # last literal wins
     invisible(NULL)
   }
 
@@ -223,7 +226,9 @@ get_input_datasets <- function(script_path) {
     rx <- paste0("(?s)", read_fun, "\\s*\\(([^)]*)\\)")
     mm <- stringr::str_match_all(txt, stringr::regex(rx, dotall = TRUE))[[1]]
     out <- character(0)
-    if (!nrow(mm)) return(out)
+    if (!nrow(mm)) {
+      return(out)
+    }
     for (i in seq_len(nrow(mm))) {
       inside <- mm[i, 2]
 
@@ -252,7 +257,9 @@ get_input_datasets <- function(script_path) {
     results <- c(results, extract_from_read_call(ln))
   }
 
-  if (!length(results)) return(character(0))
+  if (!length(results)) {
+    return(character(0))
+  }
   unique(basename(results))
 }
 
@@ -265,7 +272,6 @@ get_input_datasets <- function(script_path) {
 #'   - `input`: character vector (length 1 or 0) with relative input file path
 #'   - `output`: character vector of output artifact file paths
 #' @export
-
 get_mod_io_paths <- function(mod_file) {
   if (!file.exists(mod_file)) {
     warning("Model file not found: ", mod_file)
@@ -302,8 +308,218 @@ get_mod_io_paths <- function(mod_file) {
     character(0)
   }
 
+  output_files <- c(
+    output_files,
+    paste0(
+      tools::file_path_sans_ext(basename(mod_file)),
+      ".lst"
+    )
+  )
+
   list(
     input = input_path,
     output = output_files
   )
+}
+
+
+#' Add a modelling section to an existing reviewer guide document
+#'
+#' @description Takes a list of NONMEM control streams, processes them through get_mod_io_paths, 
+#' creates a formatted flextable, and adds it as a new "Modelling" section to an existing reviewer guide document.
+#'
+#' @param reviewer_guide_in The file path to the input reviewer guide `.docx` file.
+#' @param reviewer_guide_out The file path to the output `.docx` file to save to. Default is `NULL` (saves to same directory with "_modelling" suffix).
+#' @param control_streams A character vector of file paths to NONMEM control stream files (.mod or .ctl).
+#' @param section_title The title for the modelling section. Default is "Modelling".
+#' @param descriptions Either a named list where names are control stream basenames and values are descriptions, or a single string description (for single control stream).
+#'
+#' @return Invisibly returns the modelling data frame that was added to the document.
+#' @export
+#'
+#' @examples \dontrun{
+#' # Add modelling section with multiple control streams
+#' add_modelling_section(
+#'   reviewer_guide_in = "reviewer_guide.docx",
+#'   control_streams = c("model1.mod", "model2.mod"),
+#'   descriptions = list(
+#'     "model1.mod" = "Base population PK model",
+#'     "model2.mod" = "Final covariate model"
+#'   )
+#' )
+#' 
+#' # Add modelling section with single control stream
+#' add_modelling_section(
+#'   reviewer_guide_in = "reviewer_guide.docx",
+#'   control_streams = "final_model.mod",
+#'   descriptions = "Final population PK model"
+#' )
+#' }
+add_modelling_section <- function(
+  reviewer_guide_in,
+  reviewer_guide_out = NULL,
+  control_streams,
+  section_title = "Modelling",
+  descriptions = NULL
+) {
+  log4r::debug(.le$logger, "Starting add_modelling_section function")
+  
+  # Set default reviewer_guide_out before validation
+  if (is.null(reviewer_guide_out)) {
+    dir <- dirname(reviewer_guide_in)
+    base_name <- tools::file_path_sans_ext(basename(reviewer_guide_in))
+    reviewer_guide_out <- file.path(dir, paste0(base_name, "_modelling.docx"))
+    log4r::info(.le$logger, paste0("reviewer_guide_out is null, setting reviewer_guide_out to: ", reviewer_guide_out))
+  }
+  
+  # Validation
+  validate_input_args(reviewer_guide_in, reviewer_guide_out)
+  
+  # Validate control streams exist
+  missing_files <- control_streams[!file.exists(control_streams)]
+  if (length(missing_files) > 0) {
+    log4r::warn(
+      .le$logger, 
+      paste0("Control stream files not found: ", paste(missing_files, collapse = ", "))
+    )
+  }
+  
+  valid_streams <- control_streams[file.exists(control_streams)]
+  if (length(valid_streams) == 0) {
+    log4r::warn(.le$logger, "No valid control stream files found")
+    return(invisible(NULL))
+  }
+  
+  # Validate descriptions parameter
+  if (!is.null(descriptions) && is.character(descriptions) && 
+      length(descriptions) > 1 && is.null(names(descriptions))) {
+    log4r::warn(
+      .le$logger, 
+      paste0("Multiple descriptions provided without names. Use a named vector with control stream basenames as names: ",
+             "c(", paste0('"', basename(valid_streams), '" = "description"', collapse = ", "), ")")
+    )
+  }
+  
+  # Process control streams with warnings for failures
+  modelling_table <- create_modelling_flextable(valid_streams, descriptions)
+  
+  # Update document
+  modelling_data <- update_reviewer_guide_with_modelling(reviewer_guide_in, reviewer_guide_out, modelling_table, section_title)
+  
+  log4r::debug(.le$logger, "Exiting add_modelling_section function")
+  
+  invisible(modelling_data)
+}
+
+
+#' Create a formatted flextable from NONMEM control streams
+#'
+#' @description Processes a list of control streams through get_mod_io_paths and creates a formatted flextable.
+#'
+#' @param control_streams A character vector of file paths to NONMEM control stream files.
+#' @param descriptions Either a named list, a single string, or NULL for descriptions.
+#'
+#' @return A formatted flextable object, or NULL if no valid data found.
+#' @keywords internal
+create_modelling_flextable <- function(control_streams, descriptions = NULL) {
+  log4r::debug(.le$logger, "Processing control streams for modelling table")
+  
+  modelling_data <- purrr::map_dfr(control_streams, function(ctrl_file) {
+    tryCatch({
+      io_paths <- get_mod_io_paths(ctrl_file)
+      
+      # Handle descriptions - can be NULL, single string, or named list
+      description_text <- ""
+      if (!is.null(descriptions)) {
+        if (is.character(descriptions) && length(descriptions) == 1 && is.null(names(descriptions))) {
+          # Single string description
+          description_text <- descriptions
+        } else if (is.list(descriptions) || (!is.null(names(descriptions)))) {
+          # Named list or named vector
+          description_text <- descriptions[[basename(ctrl_file)]] %||% ""
+        }
+      }
+      
+      data.frame(
+        Program = basename(ctrl_file),
+        Input = ifelse(length(io_paths$input) > 0 && !is.na(io_paths$input), 
+                       basename(io_paths$input), 
+                       ""),
+        Output = ifelse(length(io_paths$output) > 0, 
+                        paste(io_paths$output, collapse = "\n"), 
+                        ""),
+        Description = description_text,
+        stringsAsFactors = FALSE
+      )
+    }, error = function(e) {
+      log4r::warn(
+        .le$logger, 
+        paste0("Failed to process control stream: ", ctrl_file, ". Error: ", e$message)
+      )
+      # Return empty row to maintain structure
+      data.frame(
+        Program = basename(ctrl_file),
+        Input = "",
+        Output = "",
+        Description = "",
+        stringsAsFactors = FALSE
+      )
+    })
+  })
+  
+  # Remove completely empty rows (where all processing failed)
+  modelling_data <- modelling_data[!(modelling_data$Program == "" & 
+                                   modelling_data$Input == "" & 
+                                   modelling_data$Output == ""), ]
+  
+  if (nrow(modelling_data) == 0) {
+    log4r::warn(.le$logger, "No valid modelling data found from control streams")
+    return(NULL)
+  }
+  
+  log4r::info(.le$logger, paste0("Successfully processed ", nrow(modelling_data), " control streams"))
+  
+  # Create and format flextable
+  ft <- flextable::flextable(modelling_data) |>
+    format_flextable(table1_format = FALSE) |>
+    fit_flextable_to_page(page_width = 9.73)
+  
+  return(ft)
+}
+
+
+#' Update reviewer guide document with modelling section
+#'
+#' @description Adds the modelling flextable to the end of an existing reviewer guide document.
+#'
+#' @param docx_in The file path to the input `.docx` file.
+#' @param docx_out The file path to the output `.docx` file.
+#' @param modelling_table A formatted flextable object.
+#' @param section_title The title for the modelling section.
+#'
+#' @return Invisibly returns the modelling data frame.
+#' @keywords internal
+update_reviewer_guide_with_modelling <- function(docx_in, docx_out, modelling_table, section_title) {
+  if (is.null(modelling_table)) {
+    log4r::warn(.le$logger, "No modelling table to add to reviewer guide")
+    return(invisible(NULL))
+  }
+  
+  # Read the existing document
+  doc <- officer::read_docx(docx_in)
+  
+  # Add the modelling section at the end
+  doc <- officer::body_add_par(doc, section_title, style = "heading 2")
+  doc <- officer::body_add_par(doc, "", style = "Normal")
+  doc <- flextable::body_add_flextable(doc, value = modelling_table)
+  doc <- officer::body_end_section_landscape(doc)
+  
+  # Save the updated document
+  print(doc, target = docx_out)
+  
+  log4r::info(.le$logger, paste0("Modelling section added to reviewer guide: ", docx_out))
+  
+  # Extract the data from the flextable for return value
+  modelling_data <- modelling_table$body$dataset
+  invisible(modelling_data)
 }
