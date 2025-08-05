@@ -1,33 +1,58 @@
 #' Build a reviewer's guide of file names and source paths
 #'
-#' @description Reads in a `.docx` file and returns a `.docx` table of file names and source paths.
+#' @description Reads in a `.docx` file and returns a `.docx` table of file names and source paths. Optionally adds a modelling section with NONMEM control streams.
 #' @param docx_in The file path to the input `.docx` file.
 #' @param docx_out The file path to the output `.docx` file to save to. Default is `NULL`.
 #' @param figures_path The file path to the figures and associated metadata directory.
 #' @param tables_path The file path to the tables and associated metadata directory.
+#' @param descriptions A named list where names are program basenames and values are descriptions (can be single strings or character vectors for multiple descriptions). Works for both R scripts and NONMEM models. Default is `NULL`.
+#' @param output A named list where names are program basenames and values are output descriptions (can be single strings or character vectors for multiple outputs). Gets combined with any existing outputs. Default is `NULL`.
+#' @param additional_files A character vector of file paths to additional helper scripts/files to include in the table. Default is `NULL`.
+#' @param control_streams A character vector of file paths to NONMEM control stream files (.mod or .ctl) to add as a modelling section. Default is `NULL`.
 #'
 #' @export
 #'
 #' @examples \dontrun{
-#' reviewer_guide(
+#' build_reviewer_guide(
 #'   docx_in = docx_in,
 #'   docx_out = docx_out,
 #'   figures_path = figures_path,
-#'   tables_path = tables_path
+#'   tables_path = tables_path,
+#'   descriptions = list(
+#'     "script1.R" = "Main analysis script", 
+#'     "helper.R" = "Data processing helper",
+#'     "1002.mod" = "Base model",
+#'     "1006.mod" = "Final model"
+#'   ),
+#'   output = list(
+#'     "script1.R" = c("analysis_results.csv", "summary_stats.csv"),
+#'     "helper.R" = "cleaned_data.csv"
+#'   ),
+#'   additional_files = c("scripts/helper.R", "qmds/analysis.qmd"),
+#'   control_streams = c("model/nonmem/1002.mod", "model/nonmem/1006.mod")
 #' )
 #' }
 build_reviewer_guide <- function(
     docx_in,
     docx_out = NULL,
     figures_path,
-    tables_path) {
+    tables_path,
+    descriptions = NULL,
+    output = NULL,
+    additional_files = NULL,
+    control_streams = NULL) {
   log4r::debug(.le$logger, "Starting build_reviewer_guide function")
 
-  if (is.null(docx_out)) {
+  # Store the final output path
+  final_docx_out <- docx_out
+  if (is.null(final_docx_out)) {
     dir <- dirname(docx_in)
-    docx_out <- file.path(dir, "reviewer_guide.docx")
-    log4r::info(.le$logger, paste0("docx_out is null, setting docx_out to: ", docx_out))
+    final_docx_out <- file.path(dir, "reviewer_guide.docx")
+    log4r::info(.le$logger, paste0("docx_out is null, setting docx_out to: ", final_docx_out))
   }
+  
+  # Use a temporary file for internal processing
+  temp_docx_out <- tempfile(pattern = "reviewer_guide_", fileext = ".docx")
 
   start_pattern <- "\\{rpfy\\}:"
   end_pattern <- "\\.[^.]+$"
@@ -37,17 +62,9 @@ build_reviewer_guide <- function(
   doc_summary <- officer::docx_summary(doc)
   magic_indices <- grep(magic_pattern, doc_summary$text)
 
-  venv_path <- file.path(getOption("venv_dir"), ".venv")
-  if (!dir.exists(venv_path)) {
-    log4r::error(.le$logger, "Virtual environment not found. Please initialize with initialize_python.")
-    stop("Create virtual environment with initialize_python")
-  }
-
-  uv_path <- get_uv_path()
-  if (is.null(uv_path)) {
-    log4r::error(.le$logger, "uv not found. Please install with initialize_python")
-    stop("Please install uv with initialize_python")
-  }
+  paths <- get_venv_uv_paths()
+  venv_path <- paths$venv
+  uv_path <- paths$uv
 
   file_names <- c()
   for (i in magic_indices) {
@@ -108,6 +125,29 @@ build_reviewer_guide <- function(
     )
   })
 
+  # Add additional files if provided
+  if (!is.null(additional_files) && length(additional_files) > 0) {
+    additional_tbl <- purrr::map_dfr(additional_files, function(file_path) {
+      # Extract input datasets from the additional file
+      input <- ""
+      if (file.exists(file_path)) {
+        datasets <- get_input_datasets(file_path)
+        if (length(datasets) > 0) input <- paste(datasets, collapse = "\n")
+      }
+      
+      data.frame(
+        Program = basename(file_path),
+        Input = input,
+        Output = "",
+        Description = "",
+        stringsAsFactors = FALSE
+      )
+    })
+    
+    # Combine with main index table
+    index_tbl <- rbind(index_tbl, additional_tbl)
+  }
+
   index_tbl <- index_tbl |>
     dplyr::group_by(.data$Program) |>
     dplyr::summarise(
@@ -117,7 +157,61 @@ build_reviewer_guide <- function(
       .groups = "drop"
     ) |>
     dplyr::mutate(
-      Description = "",
+      Output = if (!is.null(output)) {
+        # Require list input to prevent data loss
+        if (!is.list(output)) {
+          stop("'output' parameter must be a list. Use list() instead of c() to avoid data loss.")
+        }
+        
+        sapply(.data$Program, function(prog) {
+          if (!is.na(prog) && prog %in% names(output)) {
+            # Combine existing output with named output
+            existing_output <- .data$Output[.data$Program == prog]
+            new_output_raw <- output[[prog]]
+            
+            # Handle multiple outputs - collapse with newlines if it's a vector
+            new_output <- if (length(new_output_raw) > 1) {
+              paste(new_output_raw, collapse = "\n")
+            } else {
+              new_output_raw
+            }
+            
+            if (existing_output != "" && new_output != "") {
+              paste(existing_output, new_output, sep = "\n")
+            } else if (new_output != "") {
+              new_output
+            } else {
+              existing_output
+            }
+          } else {
+            .data$Output[.data$Program == prog]
+          }
+        })
+      } else {
+        .data$Output
+      },
+      Description = if (!is.null(descriptions)) {
+        # Require list input to prevent data loss
+        if (!is.list(descriptions)) {
+          stop("'descriptions' parameter must be a list. Use list() instead of c() to avoid data loss.")
+        }
+        
+        sapply(.data$Program, function(prog) {
+          if (!is.na(prog) && prog %in% names(descriptions)) {
+            desc_raw <- descriptions[[prog]]
+            # Handle multiple descriptions - collapse with newlines if it's a vector
+            if (length(desc_raw) > 1) {
+              paste(desc_raw, collapse = "\n")
+            } else {
+              desc_raw
+            }
+          } else {
+            ""
+          }
+        })
+      } else {
+        ""
+      },
       Program = factor(
         .data$Program,
         levels = gtools::mixedsort(.data$Program, decreasing = TRUE)
@@ -127,6 +221,7 @@ build_reviewer_guide <- function(
 
   dataset_tbl <- index_tbl |>
     dplyr::select(`File Name` = Input) |>
+    dplyr::filter(!is.na(`File Name`) & `File Name` != "" & `File Name` != "NA") |>
     dplyr::distinct(`File Name`) |>
     dplyr::mutate(
       Description = "",
@@ -167,10 +262,47 @@ build_reviewer_guide <- function(
   doc <- flextable::body_add_flextable(doc, value = ft2)
   doc <- officer::body_end_section_landscape(doc)
 
-  # Save
-  print(doc, target = docx_out)
+  # Save to temporary file
+  print(doc, target = temp_docx_out)
 
-  log4r::info(.le$logger, paste("Artifact index saved to:", docx_out))
+  log4r::info(.le$logger, paste("Artifact index saved to temporary file:", temp_docx_out))
+  
+  # Add modelling section if control streams are provided
+  current_file <- temp_docx_out
+  if (!is.null(control_streams) && length(control_streams) > 0) {
+    log4r::info(.le$logger, "Adding modelling section with control streams")
+    
+    # Extract descriptions for NONMEM models from the descriptions parameter
+    model_descriptions <- NULL
+    if (!is.null(descriptions)) {
+      model_basenames <- basename(control_streams)
+      model_descriptions <- descriptions[model_basenames]
+      # Remove NA entries (models without descriptions)
+      model_descriptions <- model_descriptions[!is.na(model_descriptions)]
+    }
+    
+    # Create another temp file for modelling section output
+    temp_modelling_out <- tempfile(pattern = "reviewer_guide_modelling_", fileext = ".docx")
+    
+    # Call add_modelling_section
+    add_modelling_section(
+      reviewer_guide_in = current_file,
+      reviewer_guide_out = temp_modelling_out,
+      control_streams = control_streams,
+      descriptions = model_descriptions
+    )
+    
+    current_file <- temp_modelling_out
+  }
+  
+  # Copy final result to user's desired output path
+  file.copy(current_file, final_docx_out, overwrite = TRUE)
+  log4r::info(.le$logger, paste("Final reviewer guide saved to:", final_docx_out))
+  
+  # Clean up temp files
+  if (file.exists(temp_docx_out)) file.remove(temp_docx_out)
+  if (exists("temp_modelling_out") && file.exists(temp_modelling_out)) file.remove(temp_modelling_out)
+  
   invisible(index_tbl)
 }
 
