@@ -22,6 +22,9 @@ footnote_order:
 # Table options
 save_table_rtf: FALSE
 
+# Reviewer guide options
+make_reviewer_guide: FALSE
+
 # Figure options
 fig_alignment: "center"
 use_artifact_size: TRUE

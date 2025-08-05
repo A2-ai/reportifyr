@@ -145,11 +145,20 @@ build_report <- function(
       file.rename(item, file.path(intermediate_dir, basename(item)))
     }
   }
-  build_reviewer_guide(
-    docx_in = docx_out,
-    docx_out = NULL,
-    figures_path = figures_path,
-    tables_path = tables_path
-  )
+  
+  # Check config option for reviewer guide generation
+  config <- yaml::read_yaml(config_yaml)
+  if (isTRUE(config$make_reviewer_guide)) {
+    log4r::info(.le$logger, "Building reviewer guide (make_reviewer_guide = TRUE)")
+    build_reviewer_guide(
+      docx_in = docx_out,
+      docx_out = NULL,
+      figures_path = figures_path,
+      tables_path = tables_path
+    )
+  } else {
+    log4r::info(.le$logger, "Skipping reviewer guide generation (make_reviewer_guide = FALSE)")
+  }
+  
   log4r::debug(.le$logger, "Exiting build_report function")
 }
