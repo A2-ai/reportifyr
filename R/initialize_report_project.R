@@ -62,6 +62,33 @@ initialize_report_project <- function(
     message(
       "reportifyr has already been initialized. Syncing with config file now."
     )
+    
+    # Check if .venv directory still exists, recreate if missing
+    uv_path <- get_uv_path(quiet = TRUE)
+    args <- get_args(uv_path)
+    venv_dir <- file.path(args[[1]], ".venv")
+    
+    if (!dir.exists(venv_dir)) {
+      log4r::warn(.le$logger, ".venv directory missing, reinitializing Python environment")
+      message("Python virtual environment missing. Reinitializing...")
+      metadata_path <- initialize_python()
+      
+      # Update metadata in report directory if it exists
+      if (is.null(report_dir_name)) {
+        report_dir <- file.path(project_dir, "report")
+      } else {
+        report_dir <- file.path(project_dir, report_dir_name)
+      }
+      
+      if (file.exists(metadata_path) && dir.exists(report_dir)) {
+        file.copy(
+          from = metadata_path,
+          to = file.path(report_dir, basename(metadata_path)),
+          overwrite = TRUE
+        )
+      }
+    }
+    
     sync_report_project(project_dir, report_dir_name)
   }
 

@@ -137,12 +137,30 @@ get_packages <- function() {
 #' @keywords internal
 #' @noRd
 get_uv_path <- function(quiet = FALSE) {
-  uv_paths <- c(
-    normalizePath("~/.local/bin/uv", mustWork = FALSE),
-    normalizePath("~/.cargo/bin/uv", mustWork = FALSE)
-  )
+  # First check if uv is available in PATH (cross-platform)
+  uv_in_path <- Sys.which("uv")
+  
+  if (.Platform$OS.type == "windows") {
+    # Windows specific paths - use USERPROFILE instead of ~ 
+    user_home <- Sys.getenv("USERPROFILE")
+    uv_paths <- c(
+      file.path(user_home, ".local", "bin", "uv.exe"),
+      file.path(user_home, ".cargo", "bin", "uv.exe")
+    )
+  } else {
+    # Unix paths
+    uv_paths <- c(
+      path.expand("~/.local/bin/uv"),
+      path.expand("~/.cargo/bin/uv")
+    )
+  }
+  
+  # Combine PATH result with known locations (prefer PATH version)
+  if (nzchar(uv_in_path)) {
+    uv_paths <- c(uv_in_path, uv_paths)
+  }
 
-  # Find the first existing path, preferring ~/.local/bin/uv
+  # Find the first existing path
   uv_paths <- uv_paths[nzchar(uv_paths) & file.exists(uv_paths)]
 
   uv_path <- if (length(uv_paths)) uv_paths[[1]] else NULL
