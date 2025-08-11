@@ -1,6 +1,6 @@
 Package: reportifyr
 Title: Reproducible Reporting Made Simple with R
-Version: 0.3.1
+Version: 0.3.2
 Authors@R: c(
     person("Jacob", "Dumbleton", , "jacob@a2-ai.com", role = c("aut", "cre")),
     person("Matthew", "Smith", , "matthews@a2-ai.com", role = "aut"),
