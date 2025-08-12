@@ -19,8 +19,10 @@ sync_report_project <- function(project_dir, report_dir_name = NULL) {
   # read in init.json files
   if (!is.null(report_dir_name)) {
     path_name <- sub("/", "_", report_dir_name)
+    report_dir <- file.path(project_dir, report_dir_name)
   } else {
     path_name <- "report"
+    report_dir <- file.path(project_dir, "report")
   }
   init_file <- file.path(project_dir, paste0(".", path_name, "_init.json"))
   log4r::debug(
@@ -38,9 +40,8 @@ sync_report_project <- function(project_dir, report_dir_name = NULL) {
 
   log4r::debug(.le$logger, paste0(init_file, " exists and being read now"))
   init <- jsonlite::read_json(init_file, simplifyVector = TRUE)
-  # bool and path for later use
+  # bool for later use
   update_init_file <- FALSE
-  metadata_path <- ""
 
   log4r::debug(
     .le$logger,
@@ -95,15 +96,21 @@ sync_report_project <- function(project_dir, report_dir_name = NULL) {
     log4r::debug(.le$logger, "Calling initialize_python now")
     metadata_path <- initialize_python(continue = "Y")
     update_init_file <- TRUE
+
+    if (file.exists(metadata_path) && dir.exists(report_dir)) {
+      file.copy(
+        from = metadata_path,
+        to = file.path(report_dir, basename(metadata_path)),
+        overwrite = TRUE
+      )
+      log4r::debug(.le$logger, "Updating .python_dependency_versions.json in report_dir_name")
+    }
   }
   # Check config
   log4r::debug(.le$logger, "getting config path now")
-  if (!is.null(report_dir_name)) {
-    config_path <- file.path(project_dir, report_dir_name, "config.yaml")
-  } else {
-    config_path <- file.path(project_dir, "report", "config.yaml")
-  }
+  config_path <- file.path(report_dir, "config.yaml")
   log4r::debug(.le$logger, paste0("using config path: ", config_path))
+
   config <- yaml::read_yaml(
     config_path,
     handlers = list(logical = yaml::verbatim_logical)
@@ -160,21 +167,6 @@ sync_report_project <- function(project_dir, report_dir_name = NULL) {
 
     json_data <- jsonlite::toJSON(init, pretty = TRUE, auto_unbox = TRUE)
     write(json_data, file = init_file)
-
-    if (is.null(report_dir_name)) {
-      report_dir <- file.path(project_dir, "report")
-    } else {
-      report_dir <- file.path(project_dir, report_dir_name)
-    }
-
-    if (file.exists(metadata_path) && dir.exists(report_dir)) {
-      file.copy(
-        from = metadata_path,
-        to = file.path(report_dir, basename(metadata_path)),
-        overwrite = TRUE
-      )
-      log4r::debug(.le$logger, "Updating .python_dependency_versions.json in report_dir_name")
-    }
   } else {
     message("Nothing to do")
   }
