@@ -3,12 +3,19 @@
 # uv_setup.sh venv_directory python-docx_version pyyaml_version pillow_version uv_version [python_version]
 
 # Check if uv is installed.
-if ! command -v uv &> /dev/null; then
+if ! command -v uv >/dev/null 2>&1; then
   echo "'uv' is not installed. Installing version $5..."
   curl --proto '=https' --tlsv1.2 -LsSf "https://github.com/astral-sh/uv/releases/download/$5/uv-installer.sh" | sh
 else
-	echo "uv already installed"
+  installed_ver="$(uv --version 2>/dev/null | awk '{print $2}')"
+  if [[ "$installed_ver" != "$5" ]]; then
+    echo "uv $installed_ver != required $5; installing $5..."
+    curl --proto '=https' --tlsv1.2 -LsSf "https://github.com/astral-sh/uv/releases/download/$5/uv-installer.sh" | sh
+  else
+    echo "uv $installed_ver matches required version."
+  fi
 fi
+
 
 if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
     echo "$HOME/.local/bin is not in PATH, adding it now..."
@@ -22,7 +29,6 @@ fi
 CARGO_EXPORT='export PATH="$HOME/.cargo/bin:$PATH"'
 
 if [[ ":$PATH:" != *":$HOME/.cargo/bin:"* ]]; then
-    echo "$HOME/.cargo/bin is not in PATH, adding it now..."
     export PATH="$HOME/.cargo/bin:$PATH"
     # only append if it's not already in .bashrc
     if ! grep -Fxq "$CARGO_EXPORT" "$HOME/.bashrc"; then
@@ -106,8 +112,8 @@ if ! python -c "import PIL" &> /dev/null; then
 		uv pip install "Pillow==$4"
 		echo "Installed pillow v$4"
 	else
-		uv pip install "Pillow==11.1"
-		echo "Installed pillow v11.1"
+		uv pip install "Pillow==11.1.0"
+		echo "Installed pillow v11.1.0"
 	fi
 else
 	# Already installed, check if version matches requested

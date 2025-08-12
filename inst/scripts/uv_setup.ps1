@@ -34,23 +34,43 @@ function Test-Command {
 # Check if uv is installed
 if (-not (Test-Command "uv")) {
     Write-Host "'uv' is not installed. Installing version $UvVersion..."
-    
+
     try {
         # Use official uv installer
         $InstallScript = "irm https://astral.sh/uv/$UvVersion/install.ps1 | iex"
         Invoke-Expression $InstallScript
-        
+
         Write-Host "uv installed successfully"
-        
+
         # Refresh PATH for current session
         $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("PATH", "User")
-        
+
     } catch {
         Write-Error "Failed to install uv: $_"
         exit 1
     }
 } else {
-    Write-Host "uv already installed"
+    # uv exists: get installed version (e.g., 'uv 0.7.8' -> '0.7.8')
+    $installedRaw = (& uv --version) 2>$null
+    if ($installedRaw -match '(\d+\.\d+\.\d+)') { $installedVer = $Matches[1] } else { $installedVer = $null }
+
+    if (-not $installedVer -or $installedVer -ne $UvVersion) {
+        Write-Host "uv $installedVer != required $UvVersion; installing $UvVersion..."
+        try {
+            $InstallScript = "irm https://astral.sh/uv/$UvVersion/install.ps1 | iex"
+            Invoke-Expression $InstallScript
+            Write-Host "uv installed successfully"
+
+            # Refresh PATH for current session
+            $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH", "Machine") + ";" +
+                        [System.Environment]::GetEnvironmentVariable("PATH", "User")
+        } catch {
+            Write-Error "Failed to install uv: $_"
+            exit 1
+        }
+    } else {
+        Write-Host "uv $installedVer matches required version."
+    }
 }
 
 # Setup PowerShell autocompletion for uv
@@ -58,7 +78,7 @@ try {
     if (!(Test-Path -Path $PROFILE)) {
         New-Item -ItemType File -Path $PROFILE -Force | Out-Null
     }
-    
+
     # Check if autocompletion is already configured
     $ProfileContent = Get-Content -Path $PROFILE -ErrorAction SilentlyContinue
     if ($ProfileContent -notmatch "uv generate-shell-completion") {
@@ -106,10 +126,10 @@ function Install-PythonPackage {
         [string]$RequestedVersion,
         [string]$DefaultVersion
     )
-    
+
     $Version = if ($RequestedVersion) { $RequestedVersion } else { $DefaultVersion }
     $PythonExe = Join-Path $VenvPath "Scripts\python.exe"
-    
+
     try {
         # Check if package can be imported
         & $PythonExe -c "import $ImportName" 2>$null
@@ -117,7 +137,7 @@ function Install-PythonPackage {
     } catch {
         $ImportSuccess = $false
     }
-    
+
     if (-not $ImportSuccess) {
         Write-Host "Installing $PackageName v$Version"
         & uv pip install "$PackageName==$Version" --python $PythonExe
@@ -126,7 +146,7 @@ function Install-PythonPackage {
         # Package exists, check version
         $CurrentVersion = Get-PythonPackageVersion -PackageName $PackageName -ImportName $ImportName
         Write-Host "Current $PackageName version: $CurrentVersion"
-        
+
         if ($CurrentVersion -and $CurrentVersion -ne $Version) {
             Write-Host "Updating $PackageName from v$CurrentVersion to v$Version"
             & uv pip install "$PackageName==$Version" --python $PythonExe
