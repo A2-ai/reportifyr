@@ -3,11 +3,15 @@
 
 * Added Windows support for `uv` installation, ensuring the setup script now works on both Unix-like (Unix/Mac) and Windows platforms.
 
+## Minor Improvements
+
+* Added a `uv` version check such that the installed version is compared against requested version before installing requested version.
+* Removed comments from JSON outputs
+
 ## Bug Fixes
 
 * Fixed changes to `.python_dependency_version.json` in `.venv` not being propagated to the `.python_dependency_version.json` in `report_dir_name`.
 * Fixed an issue where user supplied `python.version` via `options('python.version')` was creating a new line in both `.python_dependency_version.json` files.
-* Added a `uv` version check such that the installed version is compared against requested version before installing requested version.
 
 # reportifyr 0.3.1
 ## Minor Improvements
