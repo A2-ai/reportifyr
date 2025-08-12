@@ -139,9 +139,9 @@ get_packages <- function() {
 get_uv_path <- function(quiet = FALSE) {
   # First check if uv is available in PATH (cross-platform)
   uv_in_path <- Sys.which("uv")
-  
+
   if (.Platform$OS.type == "windows") {
-    # Windows specific paths - use USERPROFILE instead of ~ 
+    # Windows specific paths - use USERPROFILE instead of ~
     user_home <- Sys.getenv("USERPROFILE")
     uv_paths <- c(
       file.path(user_home, ".local", "bin", "uv.exe"),
@@ -154,7 +154,7 @@ get_uv_path <- function(quiet = FALSE) {
       path.expand("~/.cargo/bin/uv")
     )
   }
-  
+
   # Combine PATH result with known locations (prefer PATH version)
   if (nzchar(uv_in_path)) {
     uv_paths <- c(uv_in_path, uv_paths)
@@ -183,8 +183,8 @@ get_uv_path <- function(quiet = FALSE) {
 #' @noRd
 get_uv_version <- function(uv_path) {
   result <- processx::run(uv_path, "--version")
-  # output should be "uv version (commit date)\n"
-  uv_version <- strsplit(result$stdout, " ")[[1]][2]
+  # output should be "uv version (commit date)"
+  uv_version <- trimws(strsplit(result$stdout, " ")[[1]][2])
 
   uv_version
 }

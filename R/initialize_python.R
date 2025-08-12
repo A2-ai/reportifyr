@@ -16,7 +16,7 @@ initialize_python <- function(continue = NULL) {
   if (is.null(continue)) {
     continue <- continue()
   }
-  
+
   # Handle logical TRUE/FALSE as well as character Y/n
   if (is.logical(continue)) {
     continue <- if (continue) "Y" else "n"
@@ -86,12 +86,21 @@ initialize_python <- function(continue = NULL) {
   # Get Python version AFTER environment exists
   pyvers <- get_py_version(getOption("venv_dir"))
   if (!is.null(pyvers)) {
-    log4r::info(.le$logger, paste0("Python version detected: ", pyvers))
-    # Add Python version to args for metadata
-    args <- c(args, pyvers)
+    # Find the index for "python.version" in args_name
+    idx <- match("python.version", args_name)
+    if (!is.na(idx) && length(args) >= idx) {
+      args[idx] <- pyvers  # replace existing value
+    } else {
+      args <- c(args, pyvers)  # append if not already present
+    }
   } else {
     log4r::warn(.le$logger, "Python version could not be detected")
-    args <- c(args, "")
+    idx <- match("python.version", args_name)
+    if (!is.na(idx) && length(args) >= idx) {
+      args[idx] <- ""
+    } else {
+      args <- c(args, "")
+    }
   }
 
   if (is_new_env) {
@@ -110,10 +119,10 @@ initialize_python <- function(continue = NULL) {
   }
 
   message(result$stdout)
-  
+
   # Refresh uv_path after installation in case it was just installed
   uv_path <- get_uv_path(quiet = TRUE)
-  
+
   # Log appropriate message based on whether we created or used existing environment
   if (is_new_env) {
     log4r::info(
