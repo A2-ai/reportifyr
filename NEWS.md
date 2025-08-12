@@ -6,7 +6,7 @@
 ## Minor Improvements
 
 * Added a `uv` version check such that the installed version is compared against requested version before installing requested version.
-* Removed comments from JSON outputs
+* Removed comments from JSON outputs.
 
 ## Bug Fixes
 
