@@ -1,5 +1,5 @@
 test_that("get_uv_path returns ~/.local/bin/uv if it exists", {
-  withr::local_envvar(c(HOME = tempdir()))
+  withr::local_envvar(c(HOME = tempdir(), PATH = ""))  # isolate from system uv
   local_path <- normalizePath("~/.local/bin/uv", mustWork = FALSE)
   dir.create(dirname(local_path), recursive = TRUE, showWarnings = FALSE)
   file.create(local_path)
@@ -10,7 +10,7 @@ test_that("get_uv_path returns ~/.local/bin/uv if it exists", {
 })
 
 test_that("get_uv_path returns ~/.cargo/bin/uv if ~/.local/bin/uv does not exist", {
-  withr::local_envvar(c(HOME = tempdir()))
+  withr::local_envvar(c(HOME = tempdir(), PATH = ""))  # isolate from system uv
   local_path <- normalizePath("~/.local/bin/uv", mustWork = FALSE)
   cargo_path <- normalizePath("~/.cargo/bin/uv", mustWork = FALSE)
 
@@ -24,7 +24,11 @@ test_that("get_uv_path returns ~/.cargo/bin/uv if ~/.local/bin/uv does not exist
 })
 
 test_that("get_uv_path handles the quiet flag correctly when uv is absent", {
-  withr::local_envvar(c(HOME = withr::local_tempdir()))
+  withr::local_envvar(c(
+    HOME = withr::local_tempdir(),  # new empty HOME
+    PATH = "",                      # prevent Sys.which from finding real uv
+    UV_PATH = ""                    # ensure no explicit override
+  ))
 
   warn_stub_false <- mockery::mock(NULL)
   mockery::stub(get_uv_path, "log4r::warn", warn_stub_false)
@@ -41,7 +45,11 @@ test_that("get_uv_path handles the quiet flag correctly when uv is absent", {
 
 test_that("get_uv_path returns NULL when no uv binary is present", {
   home_tmp <- withr::local_tempdir()
-  withr::local_envvar(c(HOME = home_tmp))
+  withr::local_envvar(c(
+    HOME = withr::local_tempdir(),  # new empty HOME
+    PATH = "",                      # prevent Sys.which from finding real uv
+    UV_PATH = ""                    # ensure no explicit override
+  ))
 
   expect_false(file.exists(file.path(home_tmp, ".local/bin/uv")))
   expect_false(file.exists(file.path(home_tmp, ".cargo/bin/uv")))
