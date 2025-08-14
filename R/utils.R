@@ -138,20 +138,33 @@ get_packages <- function() {
 #' @noRd
 get_uv_path <- function(quiet = FALSE) {
   # First check if uv is available in PATH (cross-platform)
-  uv_in_path <- Sys.which("uv")
+  # Only check PATH if it's not empty (for test isolation)
+  path_env <- Sys.getenv("PATH")
+  uv_in_path <- if (nzchar(path_env)) Sys.which("uv") else ""
 
+  # Get home directory - respect HOME env var for test isolation
+  home_env <- Sys.getenv("HOME")
+  if (nzchar(home_env)) {
+    # Use HOME env var (for tests or Unix)
+    home_dir <- home_env
+  } else {
+    # Use default expansion
+    home_dir <- path.expand("~")
+  }
+  
   if (.Platform$OS.type == "windows") {
-    # Windows specific paths - use USERPROFILE instead of ~
-    user_home <- Sys.getenv("USERPROFILE")
+    # Windows paths
     uv_paths <- c(
-      file.path(user_home, ".local", "bin", "uv.exe"),
-      file.path(user_home, ".cargo", "bin", "uv.exe")
+      file.path(home_dir, ".local", "bin", "uv.exe"),
+      file.path(home_dir, ".local", "bin", "uv"),      # for tests without .exe
+      file.path(home_dir, ".cargo", "bin", "uv.exe"),
+      file.path(home_dir, ".cargo", "bin", "uv")       # for tests without .exe
     )
   } else {
     # Unix paths
     uv_paths <- c(
-      path.expand("~/.local/bin/uv"),
-      path.expand("~/.cargo/bin/uv")
+      file.path(home_dir, ".local", "bin", "uv"),
+      file.path(home_dir, ".cargo", "bin", "uv")
     )
   }
 
@@ -163,7 +176,7 @@ get_uv_path <- function(quiet = FALSE) {
   # Find the first existing path
   uv_paths <- uv_paths[nzchar(uv_paths) & file.exists(uv_paths)]
 
-  uv_path <- if (length(uv_paths)) uv_paths[[1]] else NULL
+  uv_path <- if (length(uv_paths)) normalizePath(uv_paths[[1]]) else NULL
 
   if (!quiet) {
     if (is.null(uv_path)) {
