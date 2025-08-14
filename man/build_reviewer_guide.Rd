@@ -4,7 +4,16 @@
 \alias{build_reviewer_guide}
 \title{Build a reviewer's guide of file names and source paths}
 \usage{
-build_reviewer_guide(docx_in, docx_out = NULL, figures_path, tables_path)
+build_reviewer_guide(
+  docx_in,
+  docx_out = NULL,
+  figures_path,
+  tables_path,
+  descriptions = NULL,
+  output = NULL,
+  additional_files = NULL,
+  control_streams = NULL
+)
 }
 \arguments{
 \item{docx_in}{The file path to the input \code{.docx} file.}
@@ -14,17 +23,38 @@ build_reviewer_guide(docx_in, docx_out = NULL, figures_path, tables_path)
 \item{figures_path}{The file path to the figures and associated metadata directory.}
 
 \item{tables_path}{The file path to the tables and associated metadata directory.}
+
+\item{descriptions}{A named list where names are program basenames or dataset filenames and values are descriptions (can be single strings or character vectors for multiple descriptions). Works for R scripts, NONMEM models, and input datasets. Default is \code{NULL}.}
+
+\item{output}{A named list where names are program basenames and values are output descriptions (can be single strings or character vectors for multiple outputs). Gets combined with any existing outputs. Default is \code{NULL}.}
+
+\item{additional_files}{A character vector of file paths to additional helper scripts/files to include in the table. Default is \code{NULL}.}
+
+\item{control_streams}{A character vector of file paths to NONMEM control stream files (.mod or .ctl) to add as a modelling section. Default is \code{NULL}.}
 }
 \description{
-Reads in a \code{.docx} file and returns a \code{.docx} table of file names and source paths.
+Reads in a \code{.docx} file and returns a \code{.docx} table of file names and source paths. Optionally adds a modelling section with NONMEM control streams.
 }
 \examples{
 \dontrun{
-reviewer_guide(
+build_reviewer_guide(
   docx_in = docx_in,
   docx_out = docx_out,
   figures_path = figures_path,
-  tables_path = tables_path
+  tables_path = tables_path,
+  descriptions = list(
+    "script1.R" = "Main analysis script", 
+    "helper.R" = "Data processing helper",
+    "1002.mod" = "Base model",
+    "1006.mod" = "Final model",
+    "input_data.csv" = "Primary analysis dataset"
+  ),
+  output = list(
+    "script1.R" = c("analysis_results.csv", "summary_stats.csv"),
+    "helper.R" = "cleaned_data.csv"
+  ),
+  additional_files = c("scripts/helper.R", "qmds/analysis.qmd"),
+  control_streams = c("model/nonmem/1002.mod", "model/nonmem/1006.mod")
 )
 }
 }

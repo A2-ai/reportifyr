@@ -5,7 +5,7 @@
 #' @param docx_out The file path to the output `.docx` file to save to. Default is `NULL`.
 #' @param figures_path The file path to the figures and associated metadata directory.
 #' @param tables_path The file path to the tables and associated metadata directory.
-#' @param descriptions A named list where names are program basenames and values are descriptions (can be single strings or character vectors for multiple descriptions). Works for both R scripts and NONMEM models. Default is `NULL`.
+#' @param descriptions A named list where names are program basenames or dataset filenames and values are descriptions (can be single strings or character vectors for multiple descriptions). Works for R scripts, NONMEM models, and input datasets. Default is `NULL`.
 #' @param output A named list where names are program basenames and values are output descriptions (can be single strings or character vectors for multiple outputs). Gets combined with any existing outputs. Default is `NULL`.
 #' @param additional_files A character vector of file paths to additional helper scripts/files to include in the table. Default is `NULL`.
 #' @param control_streams A character vector of file paths to NONMEM control stream files (.mod or .ctl) to add as a modelling section. Default is `NULL`.
@@ -22,7 +22,8 @@
 #'     "script1.R" = "Main analysis script", 
 #'     "helper.R" = "Data processing helper",
 #'     "1002.mod" = "Base model",
-#'     "1006.mod" = "Final model"
+#'     "1006.mod" = "Final model",
+#'     "input_data.csv" = "Primary analysis dataset"
 #'   ),
 #'   output = list(
 #'     "script1.R" = c("analysis_results.csv", "summary_stats.csv"),
@@ -224,8 +225,25 @@ build_reviewer_guide <- function(
     dplyr::filter(!is.na(`File Name`) & `File Name` != "" & `File Name` != "NA") |>
     dplyr::distinct(`File Name`) |>
     dplyr::mutate(
-      Description = "",
-      Notes       = ""
+      Description = if (!is.null(descriptions)) {
+        # Check if each dataset file name has a description
+        sapply(`File Name`, function(file_name) {
+          if (file_name %in% names(descriptions)) {
+            desc_raw <- descriptions[[file_name]]
+            # Handle multiple descriptions - collapse with newlines if it's a vector
+            if (length(desc_raw) > 1) {
+              paste(desc_raw, collapse = "\n")
+            } else {
+              desc_raw
+            }
+          } else {
+            ""
+          }
+        })
+      } else {
+        ""
+      },
+      Notes = ""
     )
 
   ft <- flextable::flextable(dataset_tbl) |>
