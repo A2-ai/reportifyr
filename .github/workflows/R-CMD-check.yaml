@@ -76,6 +76,10 @@ jobs:
           else
             echo "All system dependencies are present"
           fi
+      - name: Install libgit2 (macOS)
+        if: runner.os == 'macOS'
+        run: brew install libgit2
+
       - name: rv-sync
         run: rv sync
         if: runner.os != 'Windows'
