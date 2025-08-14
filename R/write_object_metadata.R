@@ -85,6 +85,22 @@ write_object_metadata <- function(
 
   log4r::info(.le$logger, paste0("Source file path detected: ", source_path))
 
+  # Find project root directory (containing .*_init.json)
+  project_root <- find_project_root()
+  
+  if (is.null(project_root)) {
+    log4r::error(.le$logger, "Could not find project root directory (no *_init.json file found)")
+    stop("Could not find project root directory. Make sure you're in a reportifyr project (run initialize_report_project() first)")
+  }
+  
+  # Convert source path to relative path from project root
+  source_path_relative <- fs::path_rel(source_path, project_root)
+  log4r::info(.le$logger, paste0("Source file path (relative): ", source_path_relative))
+
+  # Convert object path to relative path from project root
+  object_path_relative <- fs::path_rel(normalizePath(object_file), project_root)
+  log4r::info(.le$logger, paste0("Object file path (relative): ", object_path_relative))
+
   source_path_git_info <- get_git_info(source_path)
   log4r::info(
     .le$logger,
@@ -103,13 +119,13 @@ write_object_metadata <- function(
     source_meta = list(
       creation_author = source_path_git_info$creation_author,
       latest_author = source_path_git_info$latest_author,
-      path = source_path,
+      path = source_path_relative,
       creation_time = source_path_git_info$creation_time,
       latest_time = source_path_git_info$latest_time
     ),
     object_meta = list(
       author = get_git_config_author(),
-      path = object_file,
+      path = object_path_relative,
       creation_time = as.character(timestamp),
       file_type = tools::file_ext(object_file),
       meta_type = meta_type,

@@ -30,7 +30,7 @@ get_git_info <- function(file_path) {
       dates <- sub("Date: ", "", date_lines)
 
       dates <- trimws(dates)
-      parsed_dates <- strptime(dates, "%a %b %d %H:%M:%S %Y %z")
+      parsed_dates <- strptime(dates, "%a %b %d %H:%M:%S %Y %z", tz = "UTC")
 
       creation_author <- authors[length(authors)]
       latest_author <- authors[1]
@@ -187,4 +187,37 @@ get_uv_version <- function(uv_path) {
   uv_version <- trimws(strsplit(result$stdout, " ")[[1]][2])
 
   uv_version
+}
+
+#' Find the project root directory by looking for *_init.json files
+#'
+#' @param start_path Path to start searching from. Defaults to current directory.
+#'
+#' @return Path to project root directory, or NULL if not found
+#'
+#' @keywords internal
+#' @noRd
+find_project_root <- function(start_path = getwd()) {
+  current_path <- normalizePath(start_path)
+  
+  while (TRUE) {
+    # Look for any .*_init.json file (e.g., .report_init.json, .custom_init.json)
+    init_files <- list.files(current_path, pattern = "^\\.[^.]*_init\\.json$", full.names = TRUE, all.files = TRUE)
+    if (length(init_files) > 0) {
+      return(current_path)
+    }
+    
+    # Move up one directory
+    parent_path <- dirname(current_path)
+    
+    # If we've reached the root directory, stop
+    if (parent_path == current_path) {
+      break
+    }
+    
+    current_path <- parent_path
+  }
+  
+  # Return NULL if not found
+  return(NULL)
 }
