@@ -64,6 +64,7 @@ jobs:
         run: rv.exe plan
         shell: cmd
         if: runner.os == 'Windows'
+
       - name: rv-sysdeps-install (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -76,9 +77,6 @@ jobs:
           else
             echo "All system dependencies are present"
           fi
-      - name: Install libgit2 (macOS)
-        if: runner.os == 'macOS'
-        run: brew install libgit2
 
       - name: rv-sync
         run: rv sync
@@ -86,6 +84,7 @@ jobs:
 
       - run: git config --global user.email "r-cmd-check@github.com"
       - run: git config --global user.name "r-cmd-check"
+
       - name: rv-sync (Windows)
         run: rv.exe sync
         shell: cmd
