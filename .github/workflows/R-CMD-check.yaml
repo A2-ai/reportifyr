@@ -2,7 +2,7 @@
 # Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
 on:
   push:
-    branches: main
+    branches: [main, windows]
   pull_request:
     branches: main
 
@@ -20,6 +20,8 @@ jobs:
       fail-fast: false
       matrix:
         config:
+          - {os: macos-latest,   r: '4.5'}
+          - {os: windows-latest, r: '4.5'}
           - {os: ubuntu-latest,  r: '4.5'}
           - {os: ubuntu-latest,  r: '4.4'}
           - {os: ubuntu-latest,  r: '4.3'}
@@ -44,11 +46,27 @@ jobs:
         run: |
           perl -i -pe 's|^r_version = "4\.[0-9\.]+"$|r_version = "${{ matrix.config.r }}"|' rproject.toml
           cat rproject.toml
+        if: runner.os != 'Windows'
+
+      - name: replace-rversion (Windows)
+        run: |
+          $rVersion = "${{ matrix.config.r }}"
+          (Get-Content rproject.toml) -replace '^r_version = "4\.[0-9\.]+"$', "r_version = `"$rVersion`"" | Set-Content rproject.toml
+          Get-Content rproject.toml
+        shell: pwsh
+        if: runner.os == 'Windows'
 
       - name: rv-plan
         run: rv plan
+        if: runner.os != 'Windows'
+
+      - name: rv-plan (Windows)
+        run: rv.exe plan
+        shell: cmd
+        if: runner.os == 'Windows'
 
       - name: rv-sysdeps-install (Linux)
+        if: runner.os == 'Linux'
         run: |
           MISSING_DEPS=$(rv plan --json | jq -r '.installed[].sys_deps[]? | select(.status == "absent") | .name')
           if [ -n "$MISSING_DEPS" ]; then
@@ -59,11 +77,18 @@ jobs:
           else
             echo "All system dependencies are present"
           fi
+
       - name: rv-sync
         run: rv sync
+        if: runner.os != 'Windows'
 
       - run: git config --global user.email "r-cmd-check@github.com"
       - run: git config --global user.name "r-cmd-check"
+
+      - name: rv-sync (Windows)
+        run: rv.exe sync
+        shell: cmd
+        if: runner.os == 'Windows'
 
       - uses: r-lib/actions/check-r-package@v2
         with:

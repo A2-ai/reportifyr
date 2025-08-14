@@ -17,6 +17,11 @@ initialize_python <- function(continue = NULL) {
     continue <- continue()
   }
 
+  # Handle logical TRUE/FALSE as well as character Y/n
+  if (is.logical(continue)) {
+    continue <- if (continue) "Y" else "n"
+  }
+
   if (tolower(continue) != "y") {
     if (continue == "n") {
       log4r::info(.le$logger, "User declined installation. No changes made.")
@@ -34,7 +39,14 @@ initialize_python <- function(continue = NULL) {
 
   log4r::info(.le$logger, "Installation confirmed.")
 
-  cmd <- system.file("scripts/uv_setup.sh", package = "reportifyr")
+  # Detect platform and choose appropriate script
+  if (.Platform$OS.type == "windows") {
+    cmd <- system.file("scripts/uv_setup.ps1", package = "reportifyr")
+    log4r::info(.le$logger, "Windows platform detected, using PowerShell script")
+  } else {
+    cmd <- system.file("scripts/uv_setup.sh", package = "reportifyr")
+    log4r::info(.le$logger, "Unix-like platform detected, using bash script")
+  }
   log4r::info(
     .le$logger,
     paste0("Command for setting up virtual environment: ", cmd)
@@ -58,19 +70,37 @@ initialize_python <- function(continue = NULL) {
   is_new_env <- !dir.exists(venv_dir)
 
   # Run the setup script for both new and existing environments
-  result <- processx::run(
-    command = cmd,
-    args = args
-  )
+  if (.Platform$OS.type == "windows") {
+    # Run PowerShell script on Windows
+    result <- processx::run(
+      command = "powershell.exe",
+      args = c("-ExecutionPolicy", "Bypass", "-File", cmd, args)
+    )
+  } else {
+    # Run bash script on Unix-like systems
+    result <- processx::run(
+      command = cmd,
+      args = args
+    )
+  }
   # Get Python version AFTER environment exists
   pyvers <- get_py_version(getOption("venv_dir"))
   if (!is.null(pyvers)) {
-    log4r::info(.le$logger, paste0("Python version detected: ", pyvers))
-    # Add Python version to args for metadata
-    args <- c(args, pyvers)
+    # Find the index for "python.version" in args_name
+    idx <- match("python.version", args_name)
+    if (!is.na(idx) && length(args) >= idx) {
+      args[idx] <- pyvers  # replace existing value
+    } else {
+      args <- c(args, pyvers)  # append if not already present
+    }
   } else {
     log4r::warn(.le$logger, "Python version could not be detected")
-    args <- c(args, "")
+    idx <- match("python.version", args_name)
+    if (!is.na(idx) && length(args) >= idx) {
+      args[idx] <- ""
+    } else {
+      args <- c(args, "")
+    }
   }
 
   if (is_new_env) {
@@ -89,6 +119,10 @@ initialize_python <- function(continue = NULL) {
   }
 
   message(result$stdout)
+
+  # Refresh uv_path after installation in case it was just installed
+  uv_path <- get_uv_path(quiet = TRUE)
+
   # Log appropriate message based on whether we created or used existing environment
   if (is_new_env) {
     log4r::info(
@@ -96,7 +130,7 @@ initialize_python <- function(continue = NULL) {
       paste("Virtual environment created at: ", venv_dir)
     )
     log4r::debug(.le$logger, ".venv created")
-  } else if (file.exists(uv_path)) {
+  } else if (!is.null(uv_path) && file.exists(uv_path)) {
     log4r::info(
       .le$logger,
       paste("Virtual environment already present at: ", venv_dir)

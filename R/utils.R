@@ -30,7 +30,7 @@ get_git_info <- function(file_path) {
       dates <- sub("Date: ", "", date_lines)
 
       dates <- trimws(dates)
-      parsed_dates <- strptime(dates, "%a %b %d %H:%M:%S %Y %z")
+      parsed_dates <- strptime(dates, "%a %b %d %H:%M:%S %Y %z", tz = "UTC")
 
       creation_author <- authors[length(authors)]
       latest_author <- authors[1]
@@ -137,15 +137,46 @@ get_packages <- function() {
 #' @keywords internal
 #' @noRd
 get_uv_path <- function(quiet = FALSE) {
-  uv_paths <- c(
-    normalizePath("~/.local/bin/uv", mustWork = FALSE),
-    normalizePath("~/.cargo/bin/uv", mustWork = FALSE)
-  )
+  # First check if uv is available in PATH (cross-platform)
+  # Only check PATH if it's not empty (for test isolation)
+  path_env <- Sys.getenv("PATH")
+  uv_in_path <- if (nzchar(path_env)) Sys.which("uv") else ""
 
-  # Find the first existing path, preferring ~/.local/bin/uv
+  # Get home directory - respect HOME env var for test isolation
+  home_env <- Sys.getenv("HOME")
+  if (nzchar(home_env)) {
+    # Use HOME env var (for tests or Unix)
+    home_dir <- home_env
+  } else {
+    # Use default expansion
+    home_dir <- path.expand("~")
+  }
+  
+  if (.Platform$OS.type == "windows") {
+    # Windows paths
+    uv_paths <- c(
+      file.path(home_dir, ".local", "bin", "uv.exe"),
+      file.path(home_dir, ".local", "bin", "uv"),      # for tests without .exe
+      file.path(home_dir, ".cargo", "bin", "uv.exe"),
+      file.path(home_dir, ".cargo", "bin", "uv")       # for tests without .exe
+    )
+  } else {
+    # Unix paths
+    uv_paths <- c(
+      file.path(home_dir, ".local", "bin", "uv"),
+      file.path(home_dir, ".cargo", "bin", "uv")
+    )
+  }
+
+  # Combine PATH result with known locations (prefer PATH version)
+  if (nzchar(uv_in_path)) {
+    uv_paths <- c(uv_in_path, uv_paths)
+  }
+
+  # Find the first existing path
   uv_paths <- uv_paths[nzchar(uv_paths) & file.exists(uv_paths)]
 
-  uv_path <- if (length(uv_paths)) uv_paths[[1]] else NULL
+  uv_path <- if (length(uv_paths)) normalizePath(uv_paths[[1]]) else NULL
 
   if (!quiet) {
     if (is.null(uv_path)) {
@@ -165,8 +196,41 @@ get_uv_path <- function(quiet = FALSE) {
 #' @noRd
 get_uv_version <- function(uv_path) {
   result <- processx::run(uv_path, "--version")
-  # output should be "uv version (commit date)\n"
-  uv_version <- strsplit(result$stdout, " ")[[1]][2]
+  # output should be "uv version (commit date)"
+  uv_version <- trimws(strsplit(result$stdout, " ")[[1]][2])
 
   uv_version
+}
+
+#' Find the project root directory by looking for *_init.json files
+#'
+#' @param start_path Path to start searching from. Defaults to current directory.
+#'
+#' @return Path to project root directory, or NULL if not found
+#'
+#' @keywords internal
+#' @noRd
+find_project_root <- function(start_path = getwd()) {
+  current_path <- normalizePath(start_path)
+  
+  while (TRUE) {
+    # Look for any .*_init.json file (e.g., .report_init.json, .custom_init.json)
+    init_files <- list.files(current_path, pattern = "^\\.[^.]*_init\\.json$", full.names = TRUE, all.files = TRUE)
+    if (length(init_files) > 0) {
+      return(current_path)
+    }
+    
+    # Move up one directory
+    parent_path <- dirname(current_path)
+    
+    # If we've reached the root directory, stop
+    if (parent_path == current_path) {
+      break
+    }
+    
+    current_path <- parent_path
+  }
+  
+  # Return NULL if not found
+  return(NULL)
 }
