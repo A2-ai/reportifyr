@@ -10,5 +10,6 @@ repositories = [
 
 dependencies = [
 	"devtools",
+	{name = "yaml", force_source = true },
 	{name = "reportifyr", path = ".", dependencies_only = true, install_suggestions = true },
 ]
