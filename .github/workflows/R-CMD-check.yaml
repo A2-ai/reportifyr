@@ -39,6 +39,9 @@ jobs:
         with:
           r-version: ${{ matrix.config.r }}
           use-public-rspm: true
+      # for flextable, need xquartz if pulling from prism binary
+      - if: runner.os == 'macOS'
+        run: brew install --cask xquartz
 
       - uses: a2-ai/setup-rv@main
 
