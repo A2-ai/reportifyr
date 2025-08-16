@@ -5,8 +5,8 @@ name = "reportifyr"
 r_version = "4.4"
 
 repositories = [
-	{ alias = "PRISM", url = "https://prism.dev.a2-ai.cloud/rpkgs/stratus/2025-07-28/" },
-	#{alias = "ppm", url = "https://packagemanager.posit.co/cran/latest"},
+	#{ alias = "PRISM", url = "https://prism.dev.a2-ai.cloud/rpkgs/stratus/2025-07-28/" },
+	{alias = "ppm", url = "https://packagemanager.posit.co/cran/latest"},
 ]
 
 dependencies = [
