@@ -19,7 +19,7 @@
 #'   figures_path = figures_path,
 #'   tables_path = tables_path,
 #'   descriptions = list(
-#'     "script1.R" = "Main analysis script", 
+#'     "script1.R" = "Main analysis script",
 #'     "helper.R" = "Data processing helper",
 #'     "1002.mod" = "Base model",
 #'     "1006.mod" = "Final model",
@@ -51,7 +51,7 @@ build_reviewer_guide <- function(
     final_docx_out <- file.path(dir, "reviewer_guide.docx")
     log4r::info(.le$logger, paste0("docx_out is null, setting docx_out to: ", final_docx_out))
   }
-  
+
   # Use a temporary file for internal processing
   temp_docx_out <- tempfile(pattern = "reviewer_guide_", fileext = ".docx")
 
@@ -135,7 +135,7 @@ build_reviewer_guide <- function(
         datasets <- get_input_datasets(file_path)
         if (length(datasets) > 0) input <- paste(datasets, collapse = "\n")
       }
-      
+
       data.frame(
         Program = basename(file_path),
         Input = input,
@@ -144,7 +144,7 @@ build_reviewer_guide <- function(
         stringsAsFactors = FALSE
       )
     })
-    
+
     # Combine with main index table
     index_tbl <- rbind(index_tbl, additional_tbl)
   }
@@ -163,20 +163,20 @@ build_reviewer_guide <- function(
         if (!is.list(output)) {
           stop("'output' parameter must be a list. Use list() instead of c() to avoid data loss.")
         }
-        
+
         sapply(.data$Program, function(prog) {
           if (!is.na(prog) && prog %in% names(output)) {
             # Combine existing output with named output
             existing_output <- .data$Output[.data$Program == prog]
             new_output_raw <- output[[prog]]
-            
+
             # Handle multiple outputs - collapse with newlines if it's a vector
             new_output <- if (length(new_output_raw) > 1) {
               paste(new_output_raw, collapse = "\n")
             } else {
               new_output_raw
             }
-            
+
             if (existing_output != "" && new_output != "") {
               paste(existing_output, new_output, sep = "\n")
             } else if (new_output != "") {
@@ -196,7 +196,7 @@ build_reviewer_guide <- function(
         if (!is.list(descriptions)) {
           stop("'descriptions' parameter must be a list. Use list() instead of c() to avoid data loss.")
         }
-        
+
         sapply(.data$Program, function(prog) {
           if (!is.na(prog) && prog %in% names(descriptions)) {
             desc_raw <- descriptions[[prog]]
@@ -221,21 +221,19 @@ build_reviewer_guide <- function(
     dplyr::arrange(.data$Program)
 
   dataset_tbl <- index_tbl |>
-    dplyr::select(`File Name` = Input) |>
-    dplyr::filter(!is.na(`File Name`) & `File Name` != "" & `File Name` != "NA") |>
+    dplyr::select(Input) |>
+    dplyr::filter(!is.na(Input) & Input != "" & Input != "NA") |>
+    # split multi-line inputs
+    tidyr::separate_rows(Input, sep = "\n") |>
+    dplyr::mutate(`File Name` = trimws(Input)) |>
+    dplyr::filter(!is.na(`File Name`) & `File Name` != "" & toupper(`File Name`) != "NA") |>
     dplyr::distinct(`File Name`) |>
     dplyr::mutate(
       Description = if (!is.null(descriptions)) {
-        # Check if each dataset file name has a description
         sapply(`File Name`, function(file_name) {
           if (file_name %in% names(descriptions)) {
             desc_raw <- descriptions[[file_name]]
-            # Handle multiple descriptions - collapse with newlines if it's a vector
-            if (length(desc_raw) > 1) {
-              paste(desc_raw, collapse = "\n")
-            } else {
-              desc_raw
-            }
+            if (length(desc_raw) > 1) paste(desc_raw, collapse = "\n") else desc_raw
           } else {
             ""
           }
@@ -284,12 +282,12 @@ build_reviewer_guide <- function(
   print(doc, target = temp_docx_out)
 
   log4r::info(.le$logger, paste("Artifact index saved to temporary file:", temp_docx_out))
-  
+
   # Add modelling section if control streams are provided
   current_file <- temp_docx_out
   if (!is.null(control_streams) && length(control_streams) > 0) {
     log4r::info(.le$logger, "Adding modelling section with control streams")
-    
+
     # Extract descriptions for NONMEM models from the descriptions parameter
     model_descriptions <- NULL
     if (!is.null(descriptions)) {
@@ -298,10 +296,10 @@ build_reviewer_guide <- function(
       # Remove NA entries (models without descriptions)
       model_descriptions <- model_descriptions[!is.na(model_descriptions)]
     }
-    
+
     # Create another temp file for modelling section output
     temp_modelling_out <- tempfile(pattern = "reviewer_guide_modelling_", fileext = ".docx")
-    
+
     # Call add_modelling_section
     add_modelling_section(
       reviewer_guide_in = current_file,
@@ -309,18 +307,18 @@ build_reviewer_guide <- function(
       control_streams = control_streams,
       descriptions = model_descriptions
     )
-    
+
     current_file <- temp_modelling_out
   }
-  
+
   # Copy final result to user's desired output path
   file.copy(current_file, final_docx_out, overwrite = TRUE)
   log4r::info(.le$logger, paste("Final reviewer guide saved to:", final_docx_out))
-  
+
   # Clean up temp files
   if (file.exists(temp_docx_out)) file.remove(temp_docx_out)
   if (exists("temp_modelling_out") && file.exists(temp_modelling_out)) file.remove(temp_modelling_out)
-  
+
   invisible(index_tbl)
 }
 
@@ -342,8 +340,8 @@ get_input_datasets <- function(script_path) {
   lines <- sub("#.*$", "", lines) # drop trailing comments
 
   # Regex bits
-  read_fun <- "(?:[A-Za-z0-9_]+::)?(?:read_csv|read\\.csv|read_excel|read_parquet|readRDS)"
-  file_ext <- "(?i:csv(?:\\.gz)?|tsv(?:\\.gz)?|parquet|rds|xlsx|xls)" # add more if needed
+  read_fun <- "(?:[A-Za-z0-9_]+::)?(?:read_csv|read\\.csv|read_excel|read_parquet|readRDS|read\\.table)"
+  file_ext <- "(?i:csv(?:\\.gz)?|tsv(?:\\.gz)?|parquet|rds|xlsx|xls|tab)"
 
   # Helpers
   extract_filename_literals <- function(txt) {
@@ -475,7 +473,7 @@ get_mod_io_paths <- function(mod_file) {
 
 #' Add a modelling section to an existing reviewer guide document
 #'
-#' @description Takes a list of NONMEM control streams, processes them through get_mod_io_paths, 
+#' @description Takes a list of NONMEM control streams, processes them through get_mod_io_paths,
 #' creates a formatted flextable, and adds it as a new "Modelling" section to an existing reviewer guide document.
 #'
 #' @param reviewer_guide_in The file path to the input reviewer guide `.docx` file.
@@ -497,7 +495,7 @@ get_mod_io_paths <- function(mod_file) {
 #'     "model2.mod" = "Final covariate model"
 #'   )
 #' )
-#' 
+#'
 #' # Add modelling section with single control stream
 #' add_modelling_section(
 #'   reviewer_guide_in = "reviewer_guide.docx",
@@ -513,7 +511,7 @@ add_modelling_section <- function(
   descriptions = NULL
 ) {
   log4r::debug(.le$logger, "Starting add_modelling_section function")
-  
+
   # Set default reviewer_guide_out before validation
   if (is.null(reviewer_guide_out)) {
     dir <- dirname(reviewer_guide_in)
@@ -521,43 +519,43 @@ add_modelling_section <- function(
     reviewer_guide_out <- file.path(dir, paste0(base_name, "_modelling.docx"))
     log4r::info(.le$logger, paste0("reviewer_guide_out is null, setting reviewer_guide_out to: ", reviewer_guide_out))
   }
-  
+
   # Validation
   validate_input_args(reviewer_guide_in, reviewer_guide_out)
-  
+
   # Validate control streams exist
   missing_files <- control_streams[!file.exists(control_streams)]
   if (length(missing_files) > 0) {
     log4r::warn(
-      .le$logger, 
+      .le$logger,
       paste0("Control stream files not found: ", paste(missing_files, collapse = ", "))
     )
   }
-  
+
   valid_streams <- control_streams[file.exists(control_streams)]
   if (length(valid_streams) == 0) {
     log4r::warn(.le$logger, "No valid control stream files found")
     return(invisible(NULL))
   }
-  
+
   # Validate descriptions parameter
-  if (!is.null(descriptions) && is.character(descriptions) && 
+  if (!is.null(descriptions) && is.character(descriptions) &&
       length(descriptions) > 1 && is.null(names(descriptions))) {
     log4r::warn(
-      .le$logger, 
+      .le$logger,
       paste0("Multiple descriptions provided without names. Use a named vector with control stream basenames as names: ",
              "c(", paste0('"', basename(valid_streams), '" = "description"', collapse = ", "), ")")
     )
   }
-  
+
   # Process control streams with warnings for failures
   modelling_table <- create_modelling_flextable(valid_streams, descriptions)
-  
+
   # Update document
   modelling_data <- update_reviewer_guide_with_modelling(reviewer_guide_in, reviewer_guide_out, modelling_table, section_title)
-  
+
   log4r::debug(.le$logger, "Exiting add_modelling_section function")
-  
+
   invisible(modelling_data)
 }
 
@@ -573,11 +571,11 @@ add_modelling_section <- function(
 #' @keywords internal
 create_modelling_flextable <- function(control_streams, descriptions = NULL) {
   log4r::debug(.le$logger, "Processing control streams for modelling table")
-  
+
   modelling_data <- purrr::map_dfr(control_streams, function(ctrl_file) {
     tryCatch({
       io_paths <- get_mod_io_paths(ctrl_file)
-      
+
       # Handle descriptions - can be NULL, single string, or named list
       description_text <- ""
       if (!is.null(descriptions)) {
@@ -586,24 +584,25 @@ create_modelling_flextable <- function(control_streams, descriptions = NULL) {
           description_text <- descriptions
         } else if (is.list(descriptions) || (!is.null(names(descriptions)))) {
           # Named list or named vector
-          description_text <- descriptions[[basename(ctrl_file)]] %||% ""
+          desc_value <- descriptions[[basename(ctrl_file)]]
+          description_text <- if (is.null(desc_value)) "" else desc_value
         }
       }
-      
+
       data.frame(
         Program = basename(ctrl_file),
-        Input = ifelse(length(io_paths$input) > 0 && !is.na(io_paths$input), 
-                       basename(io_paths$input), 
+        Input = ifelse(length(io_paths$input) > 0 && !is.na(io_paths$input),
+                       basename(io_paths$input),
                        ""),
-        Output = ifelse(length(io_paths$output) > 0, 
-                        paste(io_paths$output, collapse = "\n"), 
+        Output = ifelse(length(io_paths$output) > 0,
+                        paste(io_paths$output, collapse = "\n"),
                         ""),
         Description = description_text,
         stringsAsFactors = FALSE
       )
     }, error = function(e) {
       log4r::warn(
-        .le$logger, 
+        .le$logger,
         paste0("Failed to process control stream: ", ctrl_file, ". Error: ", e$message)
       )
       # Return empty row to maintain structure
@@ -616,24 +615,24 @@ create_modelling_flextable <- function(control_streams, descriptions = NULL) {
       )
     })
   })
-  
+
   # Remove completely empty rows (where all processing failed)
-  modelling_data <- modelling_data[!(modelling_data$Program == "" & 
-                                   modelling_data$Input == "" & 
+  modelling_data <- modelling_data[!(modelling_data$Program == "" &
+                                   modelling_data$Input == "" &
                                    modelling_data$Output == ""), ]
-  
+
   if (nrow(modelling_data) == 0) {
     log4r::warn(.le$logger, "No valid modelling data found from control streams")
     return(NULL)
   }
-  
+
   log4r::info(.le$logger, paste0("Successfully processed ", nrow(modelling_data), " control streams"))
-  
+
   # Create and format flextable
   ft <- flextable::flextable(modelling_data) |>
     format_flextable(table1_format = FALSE) |>
     fit_flextable_to_page(page_width = 9.73)
-  
+
   return(ft)
 }
 
@@ -654,21 +653,21 @@ update_reviewer_guide_with_modelling <- function(docx_in, docx_out, modelling_ta
     log4r::warn(.le$logger, "No modelling table to add to reviewer guide")
     return(invisible(NULL))
   }
-  
+
   # Read the existing document
   doc <- officer::read_docx(docx_in)
-  
+
   # Add the modelling section at the end
   doc <- officer::body_add_par(doc, section_title, style = "heading 2")
   doc <- officer::body_add_par(doc, "", style = "Normal")
   doc <- flextable::body_add_flextable(doc, value = modelling_table)
   doc <- officer::body_end_section_landscape(doc)
-  
+
   # Save the updated document
   print(doc, target = docx_out)
-  
+
   log4r::info(.le$logger, paste0("Modelling section added to reviewer guide: ", docx_out))
-  
+
   # Extract the data from the flextable for return value
   modelling_data <- modelling_table$body$dataset
   invisible(modelling_data)
