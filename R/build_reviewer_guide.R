@@ -40,6 +40,7 @@ build_reviewer_guide <- function(
     tables_path,
     descriptions = NULL,
     output = NULL,
+    additional_data = NULL,
     additional_files = NULL,
     control_streams = NULL) {
   log4r::debug(.le$logger, "Starting build_reviewer_guide function")
@@ -214,16 +215,15 @@ build_reviewer_guide <- function(
         ""
       },
       Program = factor(
-        .data$Program,
-        levels = gtools::mixedsort(.data$Program, decreasing = TRUE)
+        Program,
+        levels = stringr::str_sort(unique(Program), numeric = TRUE)
       )
     ) |>
-    dplyr::arrange(.data$Program)
+    dplyr::arrange(Program)
 
   dataset_tbl <- index_tbl |>
     dplyr::select(Input) |>
     dplyr::filter(!is.na(Input) & Input != "" & Input != "NA") |>
-    # split multi-line inputs
     tidyr::separate_rows(Input, sep = "\n") |>
     dplyr::mutate(`File Name` = trimws(Input)) |>
     dplyr::filter(!is.na(`File Name`) & `File Name` != "" & toupper(`File Name`) != "NA") |>
@@ -241,8 +241,43 @@ build_reviewer_guide <- function(
       } else {
         ""
       },
+      Notes = "",
+      `File Name` = factor(
+        `File Name`,
+        levels = stringr::str_sort(unique(`File Name`), numeric = TRUE)
+      )
+    ) |>
+    dplyr::arrange(`File Name`)
+
+  if (!is.null(additional_data) && length(additional_data) > 0) {
+    add_data_tbl <- tibble::tibble(
+      `File Name` = basename(additional_data),
+      Description = if (!is.null(descriptions)) {
+        sapply(basename(additional_data), function(file_name) {
+          if (file_name %in% names(descriptions)) {
+            desc_raw <- descriptions[[file_name]]
+            if (length(desc_raw) > 1) paste(desc_raw, collapse = "\n") else desc_raw
+          } else {
+            ""
+          }
+        })
+      } else {
+        ""
+      },
       Notes = ""
     )
+
+    # append and dedupe, then re-sort
+    dataset_tbl <- dplyr::bind_rows(dataset_tbl, add_data_tbl) |>
+      dplyr::distinct(`File Name`, .keep_all = TRUE) |>
+      dplyr::mutate(
+        `File Name` = factor(
+          `File Name`,
+          levels = stringr::str_sort(unique(`File Name`), numeric = TRUE)
+        )
+      ) |>
+      dplyr::arrange(`File Name`)
+  }
 
   ft <- flextable::flextable(dataset_tbl) |>
     format_flextable(table1_format = FALSE)
