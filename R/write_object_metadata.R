@@ -51,35 +51,50 @@ write_object_metadata <- function(
 
   source_path <- tryCatch(
     {
-      # Check if the script is being sourced
-      src_path <- if (!is.null(sys.frame(1)$ofile)) {
-        normalizePath(sys.frame(1)$ofile) # Path of the currently sourced file
-      } else if (!is.null(knitr::current_input())) {
-        normalizePath(knitr::current_input())
-      } else if (
-        requireNamespace("rstudioapi", quietly = TRUE) &&
-          rstudioapi::isAvailable()
-      ) {
-        context <- rstudioapi::getSourceEditorContext()
-        if (!is.null(context$path) && nzchar(context$path)) {
-          normalizePath(context$path)
+      # this.path
+      if (requireNamespace("this.path", quietly = TRUE)) {
+        sp <- this.path::this.path()
+        if (!is.null(sp) && nzchar(sp)) {
+          normalizePath(sp)
         } else {
-          normalizePath("Object created from console")
+          stop("this.path did not return a valid script path")
         }
-      } else if (!is.null(rmarkdown::metadata$input_file)) {
-        normalizePath(rmarkdown::metadata$input_file)
-      } else if (!is.null(getOption("knitr.in.file"))) {
-        normalizePath(getOption("knitr.in.file"))
-      } else if (testthat::is_testing()) {
-        normalizePath(testthat::test_path())
       } else {
-        stop("Unable to detect input file")
+        stop("package this.path not available")
       }
-      src_path
     },
-    error = function(e) {
-      log4r::error(.le$logger, "Error detecting source file path")
-      stop(e)
+    error = function(e1) {
+      # previous fallbacks
+      tryCatch(
+        {
+          if (!is.null(sys.frame(1)$ofile)) {
+            normalizePath(sys.frame(1)$ofile)
+          } else if (!is.null(knitr::current_input())) {
+            normalizePath(knitr::current_input())
+          } else if (
+            requireNamespace("rstudioapi", quietly = TRUE) &&
+            rstudioapi::isAvailable()
+          ) {
+            context <- rstudioapi::getSourceEditorContext()
+            if (!is.null(context$path) && nzchar(context$path)) {
+              normalizePath(context$path)
+            } else {
+              normalizePath("Object created from console")
+            }
+          } else if (!is.null(rmarkdown::metadata$input_file)) {
+            normalizePath(rmarkdown::metadata$input_file)
+          } else if (!is.null(getOption("knitr.in.file"))) {
+            normalizePath(getOption("knitr.in.file"))
+          } else if (testthat::is_testing()) {
+            normalizePath(testthat::test_path())
+          } else {
+            stop("Unable to detect input file")
+          }
+        },
+        error = function(e2) {
+          log4r::warn(.le$logger, "Unable to detect input file; falling back to working directory")
+        }
+      )
     }
   )
 
@@ -87,12 +102,12 @@ write_object_metadata <- function(
 
   # Find project root directory (containing .*_init.json)
   project_root <- find_project_root()
-  
+
   if (is.null(project_root)) {
     log4r::error(.le$logger, "Could not find project root directory (no *_init.json file found)")
     stop("Could not find project root directory. Make sure you're in a reportifyr project (run initialize_report_project() first)")
   }
-  
+
   # Convert source path to relative path from project root
   source_path_relative <- fs::path_rel(source_path, project_root)
   log4r::info(.le$logger, paste0("Source file path (relative): ", source_path_relative))
