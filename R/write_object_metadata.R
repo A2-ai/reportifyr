@@ -49,56 +49,35 @@ write_object_metadata <- function(
   hash <- digest::digest(file = object_file, algo = "blake3")
   log4r::info(.le$logger, paste0("Generated file hash: ", hash))
 
-  source_path <- tryCatch(
-    {
-      # this.path
-      if (requireNamespace("this.path", quietly = TRUE)) {
-        sp <- this.path::this.path()
-        if (!is.null(sp) && nzchar(sp)) {
-          normalizePath(sp)
-        } else {
-          stop("this.path did not return a valid script path")
-        }
+  source_path <- tryCatch({
+    qmd_path <- detect_quarto_render()
+    if (!is.null(qmd_path)) {
+      log4r::info(.le$logger,
+                  paste0("Detected Quarto render; using .qmd file: ", qmd_path))
+      qmd_path
+    } else if (requireNamespace("this.path", quietly = TRUE)) {
+      sp <- this.path::this.path()
+      if (!is.null(sp) && nzchar(sp)) {
+        sp <- normalizePath(sp)
+        log4r::info(.le$logger,
+                    paste0("Source path detected via this.path: ", sp))
+        sp
       } else {
-        stop("package this.path not available")
+        log4r::warn(.le$logger,
+                    "this.path did not return a valid script path; setting placeholder")
+        "SOURCE_PATH_NOT_DETECTED"
       }
-    },
-    error = function(e1) {
-      # previous fallbacks
-      tryCatch(
-        {
-          if (!is.null(sys.frame(1)$ofile)) {
-            normalizePath(sys.frame(1)$ofile)
-          } else if (!is.null(knitr::current_input())) {
-            normalizePath(knitr::current_input())
-          } else if (
-            requireNamespace("rstudioapi", quietly = TRUE) &&
-            rstudioapi::isAvailable()
-          ) {
-            context <- rstudioapi::getSourceEditorContext()
-            if (!is.null(context$path) && nzchar(context$path)) {
-              normalizePath(context$path)
-            } else {
-              normalizePath("Object created from console")
-            }
-          } else if (!is.null(rmarkdown::metadata$input_file)) {
-            normalizePath(rmarkdown::metadata$input_file)
-          } else if (!is.null(getOption("knitr.in.file"))) {
-            normalizePath(getOption("knitr.in.file"))
-          } else if (testthat::is_testing()) {
-            normalizePath(testthat::test_path())
-          } else {
-            stop("Unable to detect input file")
-          }
-        },
-        error = function(e2) {
-          log4r::warn(.le$logger, "Unable to detect input file; falling back to working directory")
-        }
-      )
+    } else {
+      log4r::warn(.le$logger,
+                  "Unable to detect source path via Quarto or this.path(); setting placeholder")
+      "SOURCE_PATH_NOT_DETECTED"
     }
-  )
-
-  log4r::info(.le$logger, paste0("Source file path detected: ", source_path))
+  },
+  error = function(e) {
+    log4r::warn(.le$logger,
+                paste0("Error detecting source path: ", e$message))
+    "SOURCE_PATH_NOT_DETECTED"
+  })
 
   # Find project root directory (containing .*_init.json)
   project_root <- find_project_root()
