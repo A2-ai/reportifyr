@@ -151,7 +151,7 @@ get_uv_path <- function(quiet = FALSE) {
     # Use default expansion
     home_dir <- path.expand("~")
   }
-  
+
   if (.Platform$OS.type == "windows") {
     # Windows paths
     uv_paths <- c(
@@ -212,25 +212,74 @@ get_uv_version <- function(uv_path) {
 #' @noRd
 find_project_root <- function(start_path = getwd()) {
   current_path <- normalizePath(start_path)
-  
+
   while (TRUE) {
     # Look for any .*_init.json file (e.g., .report_init.json, .custom_init.json)
     init_files <- list.files(current_path, pattern = "^\\.[^.]*_init\\.json$", full.names = TRUE, all.files = TRUE)
     if (length(init_files) > 0) {
       return(current_path)
     }
-    
+
     # Move up one directory
     parent_path <- dirname(current_path)
-    
+
     # If we've reached the root directory, stop
     if (parent_path == current_path) {
       break
     }
-    
+
     current_path <- parent_path
   }
-  
+
   # Return NULL if not found
   return(NULL)
 }
+
+detect_quarto_render <- function() {
+  log4r::debug(.le$logger, "Starting detect_quarto_render()")
+
+  # --- Detect Quarto context ---
+  quarto_vars <- Sys.getenv(c("QUARTO_PROJECT_ROOT", "QUARTO_BIN_PATH", "QUARTO_RENDER_TOKEN"))
+  is_quarto <- any(quarto_vars != "")
+  log4r::debug(.le$logger, paste0(
+    "Quarto vars: ",
+    paste(names(quarto_vars), quarto_vars, sep = "=", collapse = "; "),
+    " | is_quarto = ", is_quarto
+  ))
+
+  if (!is_quarto) {
+    log4r::debug(.le$logger, "Not running in a Quarto context — returning NULL")
+    return(NULL)
+  }
+
+  # --- Get current input ---
+  current <- tryCatch(knitr::current_input(), error = function(e) NULL)
+  log4r::debug(.le$logger, paste0("knitr::current_input() returned: ", ifelse(is.null(current), "NULL", current)))
+
+  # --- Validate current file pattern ---
+  if (is.null(current) || !grepl("\\.(Rmd|rmarkdown)$", current, ignore.case = TRUE)) {
+    log4r::debug(.le$logger, "Current input is NULL or not an .Rmd/.rmarkdown file — returning NULL")
+    return(NULL)
+  }
+
+  # --- Attempt to resolve .qmd equivalent ---
+  qmd_candidate <- sub("\\.(rmd|rmarkdown)$", ".qmd", basename(current))
+  project_root <- Sys.getenv("QUARTO_PROJECT_ROOT", unset = getwd())
+  qmd_path <- file.path(project_root, qmd_candidate)
+  log4r::debug(.le$logger, paste0("Candidate .qmd path: ", qmd_path))
+
+  if (file.exists(qmd_path)) {
+    log4r::info(.le$logger, paste0(
+      "Detected Quarto render: .Rmd intermediate '", current,
+      "' mapped to existing .qmd: ", qmd_path
+    ))
+    return(normalizePath(qmd_path))
+  } else {
+    log4r::warn(.le$logger, paste0(
+      "Quarto environment detected, but .qmd not found at: ", qmd_path,
+      " — returning NULL"
+    ))
+    return(NULL)
+  }
+}
+
