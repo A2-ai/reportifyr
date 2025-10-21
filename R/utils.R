@@ -248,7 +248,7 @@ detect_quarto_render <- function() {
   ))
 
   if (!is_quarto) {
-    log4r::debug(.le$logger, "Not running in a Quarto context — returning NULL")
+    log4r::debug(.le$logger, "Not running in a Quarto context, returning NULL")
     return(NULL)
   }
 
@@ -258,7 +258,7 @@ detect_quarto_render <- function() {
 
   # --- Validate current file pattern ---
   if (is.null(current) || !grepl("\\.(Rmd|rmarkdown)$", current, ignore.case = TRUE)) {
-    log4r::debug(.le$logger, "Current input is NULL or not an .Rmd/.rmarkdown file — returning NULL")
+    log4r::debug(.le$logger, "Current input is NULL or not an .Rmd/.rmarkdown file, returning NULL")
     return(NULL)
   }
 
@@ -277,7 +277,7 @@ detect_quarto_render <- function() {
   } else {
     log4r::warn(.le$logger, paste0(
       "Quarto environment detected, but .qmd not found at: ", qmd_path,
-      " — returning NULL"
+      ", returning NULL"
     ))
     return(NULL)
   }
