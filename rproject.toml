@@ -7,9 +7,11 @@ r_version = "4.4"
 repositories = [
 	#{ alias = "PRISM", url = "https://prism.dev.a2-ai.cloud/rpkgs/stratus/2025-07-28/" },
 	{alias = "ppm", url = "https://packagemanager.posit.co/cran/latest"},
+	{alias = "CRAN", url = "https://cran.r-project.org"},
 ]
 
 dependencies = [
 	"devtools",
 	{name = "reportifyr", path = ".", dependencies_only = true, install_suggestions = true },
+	{name = "gdtools", repository = "CRAN"},
 ]
