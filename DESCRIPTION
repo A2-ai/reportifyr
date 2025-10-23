@@ -1,6 +1,6 @@
 Package: reportifyr
 Title: Reproducible Reporting Made Simple with R
-Version: 0.3.2
+Version: 0.3.3
 Authors@R: c(
     person("Jacob", "Dumbleton", , "jacob@a2-ai.com", role = c("aut", "cre")),
     person("Matthew", "Smith", , "matthews@a2-ai.com", role = "aut"),
@@ -39,7 +39,7 @@ Imports:
     processx,
     purrr,
     rlang,
-    rstudioapi,
+    this.path,
     tictoc,
     yaml
 Suggests: 

@@ -1,3 +1,8 @@
+# reportifyr 0.3.3
+## Bug Fixes
+
+* Fixed an issue where the source path of an object being written out with `write_object_metadata()` during a quarto render was being captured as the intermediate `.rmarkdown`.
+
 # reportifyr 0.3.2
 ## Improvements
 
