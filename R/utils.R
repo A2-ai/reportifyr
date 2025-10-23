@@ -241,11 +241,7 @@ detect_quarto_render <- function() {
   # --- Detect Quarto context ---
   quarto_vars <- Sys.getenv(c("QUARTO_PROJECT_ROOT", "QUARTO_BIN_PATH", "QUARTO_RENDER_TOKEN"))
   is_quarto <- any(quarto_vars != "")
-  log4r::debug(.le$logger, paste0(
-    "Quarto vars: ",
-    paste(names(quarto_vars), quarto_vars, sep = "=", collapse = "; "),
-    " | is_quarto = ", is_quarto
-  ))
+  log4r::debug(.le$logger, paste0("Quarto environment vars detected: ", is_quarto))
 
   if (!is_quarto) {
     log4r::debug(.le$logger, "Not running in a Quarto context, returning NULL")
