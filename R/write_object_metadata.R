@@ -233,6 +233,9 @@ write_enhanced_object_metadata <- function(
       " v",
       source_info$app_version
     )
+    metadata$source_meta$creation_author <- NULL
+    metadata$source_meta$creation_time <- NULL
+
     log4r::info(.le$logger, paste0("Modified source_meta for Shiny app: ", source_info$app_name))
   }
 
