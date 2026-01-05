@@ -151,3 +151,108 @@ write_object_metadata <- function(
 
   log4r::debug(.le$logger, "Exiting write_object_metadata function")
 }
+
+#' Write enhanced metadata for objects with additional context
+#'
+#' @inheritParams write_object_metadata
+#' @param source_type Type of source context. One of "script" (default),
+#'   or "shiny_app".
+#' @param source_info Named list of source information. For shiny_app, should
+#'   include app_name, app_version, and optionally app_repo and app_commit.
+#' @param execution_info Named list of execution context (e.g., user, session_id).
+#' @param additional_metadata Named list of any additional metadata to include
+#'   at the top level of the JSON structure.
+#'
+#' @export
+#'
+#' @examples \dontrun{
+#' # Shiny application usage
+#' write_enhanced_object_metadata(
+#'   object_file = plot_path,
+#'   source_type = "shiny_app",
+#'   source_info = list(
+#'     app_name = "CHRONOS",
+#'     app_version = "1.2.0"
+#'   ),
+#'   execution_info = list(
+#'     user = session$user,
+#'     session_id = session$token
+#'   )
+#' )
+#'
+#' # Standard script usage
+#' write_enhanced_object_metadata(
+#'   object_file = plot_path,
+#'   source_type = "script"
+#' )
+#' }
+write_enhanced_object_metadata <- function(
+    object_file,
+    source_type = c("script", "shiny_app"),
+    source_info = NULL,
+    execution_info = NULL,
+    meta_type = NULL,
+    meta_equations = NULL,
+    meta_notes = NULL,
+    meta_abbrevs = NULL,
+    table1_format = FALSE,
+    additional_metadata = NULL
+) {
+  source_type <- match.arg(source_type)
+
+  log4r::debug(.le$logger, "Starting write_enhanced_object_metadata function")
+  log4r::info(.le$logger, paste0("Source type: ", source_type))
+
+  write_object_metadata(
+    object_file = object_file,
+    meta_type = meta_type,
+    meta_equations = meta_equations,
+    meta_notes = meta_notes,
+    meta_abbrevs = meta_abbrevs,
+    table1_format = table1_format
+  )
+
+  json_path <- paste0(
+    tools::file_path_sans_ext(object_file),
+    "_",
+    tools::file_ext(object_file),
+    "_metadata.json"
+  )
+
+  metadata <- jsonlite::fromJSON(json_path, simplifyVector = FALSE)
+  log4r::debug(.le$logger, "Read generated metadata JSON")
+
+  if (source_type == "shiny_app") {
+    if (is.null(source_info) || is.null(source_info$app_name) || is.null(source_info$app_version)) {
+      log4r::error(.le$logger, "source_info must include app_name and app_version")
+      stop("For source_type='shiny_app', source_info must include app_name and app_version")
+    }
+
+    metadata$source_meta$path <- paste0(
+      source_info$app_name,
+      " v",
+      source_info$app_version
+    )
+    log4r::info(.le$logger, paste0("Modified source_meta for Shiny app: ", source_info$app_name))
+  }
+
+  # Add execution metadata if needed
+  if (!is.null(execution_info)) {
+    metadata$execution_meta <- execution_info
+    log4r::info(.le$logger, paste0("Added execution_meta: ", paste(names(execution_info), collapse = ", ")))
+  }
+
+  # Add additional metadata if needed
+  if (!is.null(additional_metadata)) {
+    metadata$additional_meta <- additional_metadata
+    log4r::info(.le$logger, paste0("Added additional metadata: ", paste(names(additional_metadata), collapse = ", ")))
+  }
+
+  json_data <- jsonlite::toJSON(metadata, pretty = TRUE, auto_unbox = TRUE)
+  write(json_data, file = json_path)
+
+  log4r::info(.le$logger, paste0("Enhanced metadata written to: ", json_path))
+  log4r::debug(.le$logger, "Exiting write_enhanced_object_metadata function")
+
+  invisible(json_path)
+}
