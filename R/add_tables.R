@@ -100,7 +100,8 @@ add_tables <- function(
         if (!(table_file %in% processed_files)) {
           document <- process_table_file(
             table_file,
-            document
+            document,
+            table_name
           )
           processed_files <- c(processed_files, table_file)
         } else {
@@ -137,7 +138,7 @@ add_tables <- function(
 }
 
 ### New function for processing #####
-process_table_file <- function(table_file, document) {
+process_table_file <- function(table_file, document, table_name) {
   log4r::info(
     .le$logger,
     paste0("Processing table file: ", table_file)
@@ -189,7 +190,7 @@ process_table_file <- function(table_file, document) {
 
   document <- officer::cursor_reach(
     document,
-    paste0("\\{rpfy\\}:", basename(table_file))
+    paste0("\\{rpfy\\}:", table_name)
   )
 
   flextable::body_add_flextable(
