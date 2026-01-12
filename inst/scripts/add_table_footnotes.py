@@ -48,9 +48,13 @@ def add_table_footnotes(
         for match in matches:
             # Generalized extraction of the table name
             table_name = match.replace("{rpfy}:", "").strip()
+            table_path = os.path.normpath(os.path.join(table_dir, table_name))
 
-            if table_name in os.listdir(table_dir):
-                metadata = helper.load_metadata(table_dir, table_name)
+            if os.path.exists(table_path):
+                metadata = helper.load_metadata(
+                    os.path.dirname(table_path),
+                    os.path.basename(table_path)
+                )
 
                 add_footnote = False
                 if metadata is None:
