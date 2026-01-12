@@ -53,7 +53,9 @@ def add_figure_footnotes(
             # enumerating here so i can use f to get label for
             # helper.create_label(f)
             for f, figure_name in enumerate(figure_args.keys()):
-                if figure_name in os.listdir(figure_dir):
+                figure_path = os.path.normpath(os.path.join(figure_dir, figure_name))
+                
+                if os.path.exists(figure_path):
                     metadata = helper.load_metadata(figure_dir, figure_name)
 
                     if metadata is not None:
