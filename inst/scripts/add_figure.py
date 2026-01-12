@@ -71,7 +71,7 @@ def add_figure(
                         add_label = True
 
                     found_magic_strings.append(figure)
-                    image_path = os.path.join(figure_dir, figure)
+                    image_path = os.path.normpath(os.path.join(figure_dir, figure))
                     if os.path.exists(image_path):
                         if add_label:
                             # since list is reversed need to use correct
