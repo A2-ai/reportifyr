@@ -15,17 +15,17 @@
 validate_input_args <- function(docx_in, docx_out) {
   log4r::debug(.le$logger, "Starting validate_input_args function")
 
-  if (!is.null(docx_out) && docx_in == docx_out) {
-    log4r::error(.le$logger, "Input and output files cannot be the same")
-    stop("You must save the output document as a new file.")
-  }
-
   if (!file.exists(docx_in)) {
     log4r::error(
       .le$logger,
       paste("The input document does not exist:", docx_in)
     )
     stop(paste("The input document does not exist:", docx_in))
+  }
+
+  if (docx_in == docx_out) {
+    log4r::error(.le$logger, "Input and output files cannot be the same")
+    stop("You must save the output document as a new file.")
   }
 
   if (!(tools::file_ext(docx_in) == "docx")) {
@@ -39,7 +39,7 @@ validate_input_args <- function(docx_in, docx_out) {
     stop(paste("The file must be a docx file not:", tools::file_ext(docx_in)))
   }
 
-  if (!is.null(docx_out) && !(tools::file_ext(docx_out) == "docx")) {
+  if (!(tools::file_ext(docx_out) == "docx")) {
     log4r::error(
       .le$logger,
       paste(
