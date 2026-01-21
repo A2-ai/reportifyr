@@ -94,7 +94,7 @@ add_tables <- function(
     table_name <- gsub("\\{rpfy\\}:", "", doc_summary$text[[i]]) |> trimws()
     table_file <- file.path(tables_path, table_name)
     # check extension is valid
-    if (tools::file_ext(table_file) %in% c("RDS", "csv")) {
+    if (tolower(tools::file_ext(table_file)) %in% c("rds", "csv")) {
       # Check if the file exists
       if (file.exists(table_file)) {
         if (!(table_file %in% processed_files)) {
@@ -145,9 +145,9 @@ process_table_file <- function(table_file, document) {
 
   # Load the table data
   data_in <- switch(
-    tools::file_ext(table_file),
+    tolower(tools::file_ext(table_file)),
     "csv" = utils::read.csv(table_file),
-    "RDS" = readRDS(table_file),
+    "rds" = readRDS(table_file),
     stop("Unsupported file type")
   )
 

@@ -1,3 +1,9 @@
+# reportifyr 0.3.4
+## Bug Fixes
+
+* Fixed an issue where magic strings with the extension `.rds` were not being processed correctly by `add_tables()`.
+* Fixed an issue where `docx_out = NULL` for `build_report()` was failing within `validate_input_args()`.
+
 # reportifyr 0.3.3
 ## Bug Fixes
 
