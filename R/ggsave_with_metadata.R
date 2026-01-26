@@ -61,7 +61,7 @@ ggsave_with_metadata <- function(
     log4r::debug(.le$logger, paste0("Reading config.yaml: ", config_yaml))
     config <- yaml::read_yaml(config_yaml)
 
-    if (isTRUE(config$add_path_overlay)) {
+    if (config$add_path_overlay) {
       log4r::info(.le$logger, "Path overlay enabled, adding source path to image")
       add_path_overlay(filename)
     }
