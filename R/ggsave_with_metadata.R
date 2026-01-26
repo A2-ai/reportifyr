@@ -3,11 +3,11 @@
 #' @description Extension to the `ggsave()` function that allows capturing object metadata as a separate `.json` file.
 #' @param filename The filename for the plot to save to.
 #' @param plot The plot object to save. Default is the last displayed plot (`ggplot2::last_plot()`).
-#' @param config_yaml The file path to the `config.yaml`. Default is `NULL`. If provided, can enable path overlay on saved images.
 #' @param meta_type A string to specify the type of object. Default is `"NA"`.
 #' @param meta_equations A string or vector of strings representing equations to include in the metadata. Default is `NULL`.
 #' @param meta_notes A string or vector of strings representing notes to include in the metadata. Default is `NULL`.
 #' @param meta_abbrevs A string or vector of strings representing abbreviations to include in the metadata. Default is `NULL`.
+#' @param config_yaml The file path to the `config.yaml`. Default is `NULL`. If provided, can enable path overlay on saved images.
 #' @param ... Additional arguments passed to the `ggplot2::ggsave()` function.
 #' @export
 #'
@@ -32,11 +32,11 @@
 ggsave_with_metadata <- function(
   filename,
   plot = ggplot2::last_plot(),
-  config_yaml = NULL,
   meta_type = "NA",
   meta_equations = NULL,
   meta_notes = NULL,
   meta_abbrevs = NULL,
+  config_yaml = NULL,
   ...
 ) {
   log4r::debug(.le$logger, "Starting ggsave_with_metadata function")

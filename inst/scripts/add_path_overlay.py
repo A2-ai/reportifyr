@@ -29,8 +29,8 @@ def add_path_overlay(image_path: str, source_path: str) -> None:
     padding = 10
     text_position = (padding, img_height - padding - font_size)
 
-    # Draw the source path text
-    draw.text(text_position, source_path, fill=(0, 0, 0), font=font)
+    # Draw the source path text with "source: " prefix
+    draw.text(text_position, f"source: {source_path}", fill=(0, 0, 0), font=font)
 
     # Save the modified image
     img.save(image_path, format=original_format, dpi=original_dpi)
