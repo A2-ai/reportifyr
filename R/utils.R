@@ -235,6 +235,46 @@ find_project_root <- function(start_path = getwd()) {
   return(NULL)
 }
 
+#' Detects the source path of the currently executing script
+#'
+#' @return Character string with the source path, or "SOURCE_PATH_NOT_DETECTED" if detection fails
+#'
+#' @keywords internal
+#' @noRd
+get_source_path <- function() {
+  source_path <- tryCatch({
+    qmd_path <- detect_quarto_render()
+    if (!is.null(qmd_path)) {
+      log4r::info(.le$logger,
+                  paste0("Detected Quarto render; using .qmd file: ", qmd_path))
+      qmd_path
+    } else if (requireNamespace("this.path", quietly = TRUE)) {
+      sp <- this.path::this.path()
+      if (!is.null(sp) && nzchar(sp)) {
+        sp <- normalizePath(sp)
+        log4r::info(.le$logger,
+                    paste0("Source path detected via this.path: ", sp))
+        sp
+      } else {
+        log4r::warn(.le$logger,
+                    "this.path did not return a valid script path; setting placeholder")
+        "SOURCE_PATH_NOT_DETECTED"
+      }
+    } else {
+      log4r::warn(.le$logger,
+                  "Unable to detect source path via Quarto or this.path(); setting placeholder")
+      "SOURCE_PATH_NOT_DETECTED"
+    }
+  },
+  error = function(e) {
+    log4r::warn(.le$logger,
+                paste0("Error detecting source path: ", e$message))
+    "SOURCE_PATH_NOT_DETECTED"
+  })
+
+  source_path
+}
+
 detect_quarto_render <- function() {
   log4r::debug(.le$logger, "Starting detect_quarto_render()")
 
@@ -279,3 +319,55 @@ detect_quarto_render <- function() {
   }
 }
 
+#' Adds source path overlay to an image using Pillow
+#'
+#' @param image_path Path to the image file
+#'
+#' @keywords internal
+#' @noRd
+add_path_overlay <- function(image_path) {
+  log4r::debug(.le$logger, "Starting add_path_overlay function")
+
+  # Get the source path
+  source_path <- get_source_path()
+
+  # Convert to relative path if project root is found
+  project_root <- find_project_root()
+  if (!is.null(project_root)) {
+    source_path_relative <- fs::path_rel(source_path, project_root)
+  } else {
+    source_path_relative <- source_path
+  }
+
+  # Get paths to uv and venv
+  paths <- get_venv_uv_paths()
+
+  # Path to the Python script
+  script_path <- system.file("scripts", "add_path_overlay.py", package = "reportifyr")
+
+  args <- c(
+    "run",
+    script_path,
+    "-i", normalizePath(image_path),
+    "-s", as.character(source_path_relative)
+  )
+
+  log4r::debug(.le$logger, "Running add_path_overlay Python script")
+  result <- tryCatch(
+    {
+      processx::run(
+        command = paths$uv,
+        args = args,
+        env = c("current", VIRTUAL_ENV = paths$venv),
+        error_on_status = TRUE
+      )
+    },
+    error = function(e) {
+      log4r::error(.le$logger, paste0("Error adding path overlay: ", e$message))
+      stop(paste0("Failed to add path overlay: ", e$message))
+    }
+  )
+
+  log4r::info(.le$logger, paste0("Path overlay added to: ", image_path))
+  log4r::debug(.le$logger, "Exiting add_path_overlay function")
+}

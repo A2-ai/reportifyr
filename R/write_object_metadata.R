@@ -49,35 +49,7 @@ write_object_metadata <- function(
   hash <- digest::digest(file = object_file, algo = "blake3")
   log4r::info(.le$logger, paste0("Generated file hash: ", hash))
 
-  source_path <- tryCatch({
-    qmd_path <- detect_quarto_render()
-    if (!is.null(qmd_path)) {
-      log4r::info(.le$logger,
-                  paste0("Detected Quarto render; using .qmd file: ", qmd_path))
-      qmd_path
-    } else if (requireNamespace("this.path", quietly = TRUE)) {
-      sp <- this.path::this.path()
-      if (!is.null(sp) && nzchar(sp)) {
-        sp <- normalizePath(sp)
-        log4r::info(.le$logger,
-                    paste0("Source path detected via this.path: ", sp))
-        sp
-      } else {
-        log4r::warn(.le$logger,
-                    "this.path did not return a valid script path; setting placeholder")
-        "SOURCE_PATH_NOT_DETECTED"
-      }
-    } else {
-      log4r::warn(.le$logger,
-                  "Unable to detect source path via Quarto or this.path(); setting placeholder")
-      "SOURCE_PATH_NOT_DETECTED"
-    }
-  },
-  error = function(e) {
-    log4r::warn(.le$logger,
-                paste0("Error detecting source path: ", e$message))
-    "SOURCE_PATH_NOT_DETECTED"
-  })
+  source_path <- get_source_path()
 
   # Find project root directory (containing .*_init.json)
   project_root <- find_project_root()

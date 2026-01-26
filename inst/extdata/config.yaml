@@ -28,3 +28,4 @@ use_artifact_size: TRUE
 default_fig_width: 6
 use_embedded_dimensions: TRUE
 label_multi_figures: FALSE
+add_path_overlay: FALSE
