@@ -73,7 +73,7 @@ add_tables <- function(
   doc_summary <- officer::docx_summary(document)
   magic_indices <- grep(magic_pattern, doc_summary$text)
   processed_files <- c()
-  # find duplicated tables
+  skipped_duplicates <- FALSE
   if (length(magic_indices) > 0) {
     log4r::info(
       .le$logger,
@@ -106,19 +106,21 @@ add_tables <- function(
           )
           processed_files <- c(processed_files, table_file)
         } else {
-          # strict mode fail - config option, deafult FALSE
-          # log4r::error
-          # else
-          log4r::warn(
-            .le$logger,
-            paste0("Duplicate table file fount: ", table_file)
-          )
+          skipped_duplicates <- TRUE
         }
       } else {
         log4r::warn(.le$logger, paste0("Table file not found: ", table_file))
       }
     }
   }
+
+  if (skipped_duplicates) {
+    log4r::warn(
+      .le$logger,
+      "Duplicate tables found in magic strings of document."
+    )
+  }
+
   intermediate_tabs_docx <- gsub(".docx", "-inttabs.docx", docx_out)
 
   print(document, target = intermediate_tabs_docx)
