@@ -40,7 +40,7 @@
 #' )
 #' }
 remove_bookmarks <- function(docx_in, docx_out) {
-  tictoc::tic()
+  tictoc::tic("remove bookmarks")
   log4r::debug(.le$logger, "Starting remove_bookmarks function")
 
   validate_input_args(docx_in, docx_out)

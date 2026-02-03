@@ -14,8 +14,8 @@ add_tables_alt_text <- function(
   docx_out,
   debug = FALSE
 ) {
-  log4r::debug(.le$logger, "Starting add_plots function")
-  tictoc::tic()
+  log4r::debug(.le$logger, "Starting add_tables_alt_text function")
+  tictoc::tic("add tables alt text")
 
   if (debug) {
     log4r::debug(.le$logger, "Debug mode enabled")
@@ -80,7 +80,7 @@ add_tables_alt_text <- function(
   log4r::info(.le$logger, paste0("Returning stdout: ", result$stdout))
   log4r::info(.le$logger, paste0("Returning stderr: ", result$stderr))
 
-  tictoc::toc()
+	tictoc::toc()
 
   log4r::debug(.le$logger, "Exiting add_alt_text function")
 }

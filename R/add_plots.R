@@ -52,7 +52,7 @@ add_plots <- function(
   debug = FALSE
 ) {
   log4r::debug(.le$logger, "Starting add_plots function")
-  tictoc::tic()
+  tictoc::tic("add plots")
 
   if (debug) {
     log4r::debug(.le$logger, "Debug mode enabled")
@@ -165,7 +165,7 @@ add_plots <- function(
   log4r::info(.le$logger, paste0("Returning stdout: ", result$stdout))
   log4r::info(.le$logger, paste0("Returning stderr: ", result$stderr))
 
-  tictoc::toc()
+	tictoc::toc()
 
   log4r::debug(.le$logger, "Exiting add_plots function")
 }

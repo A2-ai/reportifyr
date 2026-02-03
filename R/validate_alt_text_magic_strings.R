@@ -13,7 +13,7 @@ validate_alt_text_magic_strings <- function(
   debug = FALSE
 ) {
   log4r::debug(.le$logger, "Starting validate_alt_text_magic_strings function")
-  tictoc::tic()
+  tictoc::tic("validate alt text magic strings")
 
   if (debug) {
     log4r::debug(.le$logger, "Debug mode enabled")
@@ -82,7 +82,7 @@ validate_alt_text_magic_strings <- function(
   log4r::info(.le$logger, paste0("Returning stdout: ", result$stdout))
   log4r::info(.le$logger, paste0("Returning stderr: ", result$stderr))
 
-  tictoc::toc()
+	tictoc::toc()
 
   log4r::debug(.le$logger, "Exiting check_alt_text_magic function")
 }

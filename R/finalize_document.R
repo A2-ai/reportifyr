@@ -47,7 +47,7 @@ finalize_document <- function(
   docx_out = NULL,
   config_yaml = NULL
 ) {
-  tictoc::tic()
+  tictoc::tic("finalize document")
   log4r::debug(.le$logger, "Starting finalize_document function")
 
   if (is.null(docx_out)) {

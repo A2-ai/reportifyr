@@ -71,7 +71,7 @@ add_footnotes <- function(
 ) {
   log4r::debug(.le$logger, "Starting add_footnotes function")
 
-  tictoc::tic()
+  tictoc::tic("add footnotes")
 
   if (debug) {
     log4r::debug(.le$logger, "Debug mode enabled")
@@ -251,7 +251,8 @@ add_footnotes <- function(
       )
     }
   )
+	
+	tictoc::toc()
 
-  tictoc::toc()
   log4r::debug(.le$logger, "Exiting add_footnotes function")
 }
