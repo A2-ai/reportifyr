@@ -163,5 +163,5 @@ remove_tables_figures_footnotes <- function(
   log4r::info(.le$logger, paste0("Returning stderr: ", fig_result$stderr))
 
   log4r::debug(.le$logger, "Exiting remove_tables_figures_footnotes function")
-	tictoc::toc()
+  tictoc::toc()
 }

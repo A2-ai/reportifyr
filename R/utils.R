@@ -156,9 +156,9 @@ get_uv_path <- function(quiet = FALSE) {
     # Windows paths
     uv_paths <- c(
       file.path(home_dir, ".local", "bin", "uv.exe"),
-      file.path(home_dir, ".local", "bin", "uv"),      # for tests without .exe
+      file.path(home_dir, ".local", "bin", "uv"), # for tests without .exe
       file.path(home_dir, ".cargo", "bin", "uv.exe"),
-      file.path(home_dir, ".cargo", "bin", "uv")       # for tests without .exe
+      file.path(home_dir, ".cargo", "bin", "uv") # for tests without .exe
     )
   } else {
     # Unix paths
@@ -215,7 +215,12 @@ find_project_root <- function(start_path = getwd()) {
 
   while (TRUE) {
     # Look for any .*_init.json file (e.g., .report_init.json, .custom_init.json)
-    init_files <- list.files(current_path, pattern = "^\\.[^.]*_init\\.json$", full.names = TRUE, all.files = TRUE)
+    init_files <- list.files(
+      current_path,
+      pattern = "^\\.[^.]*_init\\.json$",
+      full.names = TRUE,
+      all.files = TRUE
+    )
     if (length(init_files) > 0) {
       return(current_path)
     }
@@ -239,9 +244,16 @@ detect_quarto_render <- function() {
   log4r::debug(.le$logger, "Starting detect_quarto_render()")
 
   # --- Detect Quarto context ---
-  quarto_vars <- Sys.getenv(c("QUARTO_PROJECT_ROOT", "QUARTO_BIN_PATH", "QUARTO_RENDER_TOKEN"))
+  quarto_vars <- Sys.getenv(c(
+    "QUARTO_PROJECT_ROOT",
+    "QUARTO_BIN_PATH",
+    "QUARTO_RENDER_TOKEN"
+  ))
   is_quarto <- any(quarto_vars != "")
-  log4r::debug(.le$logger, paste0("Quarto environment vars detected: ", is_quarto))
+  log4r::debug(
+    .le$logger,
+    paste0("Quarto environment vars detected: ", is_quarto)
+  )
 
   if (!is_quarto) {
     log4r::debug(.le$logger, "Not running in a Quarto context, returning NULL")
@@ -250,11 +262,23 @@ detect_quarto_render <- function() {
 
   # --- Get current input ---
   current <- tryCatch(knitr::current_input(), error = function(e) NULL)
-  log4r::debug(.le$logger, paste0("knitr::current_input() returned: ", ifelse(is.null(current), "NULL", current)))
+  log4r::debug(
+    .le$logger,
+    paste0(
+      "knitr::current_input() returned: ",
+      ifelse(is.null(current), "NULL", current)
+    )
+  )
 
   # --- Validate current file pattern ---
-  if (is.null(current) || !grepl("\\.(Rmd|rmarkdown)$", current, ignore.case = TRUE)) {
-    log4r::debug(.le$logger, "Current input is NULL or not an .Rmd/.rmarkdown file, returning NULL")
+  if (
+    is.null(current) ||
+      !grepl("\\.(Rmd|rmarkdown)$", current, ignore.case = TRUE)
+  ) {
+    log4r::debug(
+      .le$logger,
+      "Current input is NULL or not an .Rmd/.rmarkdown file, returning NULL"
+    )
     return(NULL)
   }
 
@@ -265,17 +289,25 @@ detect_quarto_render <- function() {
   log4r::debug(.le$logger, paste0("Candidate .qmd path: ", qmd_path))
 
   if (file.exists(qmd_path)) {
-    log4r::info(.le$logger, paste0(
-      "Detected Quarto render: .Rmd intermediate '", current,
-      "' mapped to existing .qmd: ", qmd_path
-    ))
+    log4r::info(
+      .le$logger,
+      paste0(
+        "Detected Quarto render: .Rmd intermediate '",
+        current,
+        "' mapped to existing .qmd: ",
+        qmd_path
+      )
+    )
     return(normalizePath(qmd_path))
   } else {
-    log4r::warn(.le$logger, paste0(
-      "Quarto environment detected, but .qmd not found at: ", qmd_path,
-      ", returning NULL"
-    ))
+    log4r::warn(
+      .le$logger,
+      paste0(
+        "Quarto environment detected, but .qmd not found at: ",
+        qmd_path,
+        ", returning NULL"
+      )
+    )
     return(NULL)
   }
 }
-

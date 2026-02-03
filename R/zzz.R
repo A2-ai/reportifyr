@@ -1,8 +1,21 @@
 .onLoad <- function(libname, pkgname) {
-  toggle_logger(quiet = TRUE)
+  toggle_logger(quiet = TRUE) # console only initially
 }
 
 .onAttach <- function(libname, pkgname) {
+  # Set up file logging
+  project_root <- find_project_root()
+  if (is.null(project_root)) {
+    project_root <- here::here()
+  }
+  session_timestamp <- format(Sys.time(), "%Y-%m-%d-%H-%M-%S")
+  .le$log_file <- file.path(
+    project_root,
+    ".rpfy-logs",
+    paste0(session_timestamp, "-rpfy.log")
+  )
+  toggle_logger(quiet = TRUE, log_file = .le$log_file)
+
   msg <- reportifyr_options_message()
   packageStartupMessage(msg)
 }

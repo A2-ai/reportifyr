@@ -251,8 +251,8 @@ add_footnotes <- function(
       )
     }
   )
-	
-	tictoc::toc()
+
+  tictoc::toc()
 
   log4r::debug(.le$logger, "Exiting add_footnotes function")
 }

@@ -83,7 +83,7 @@ add_plots_alt_text <- function(
   log4r::info(.le$logger, paste0("Returning stdout: ", result$stdout))
   log4r::info(.le$logger, paste0("Returning stderr: ", result$stderr))
 
-	tictoc::toc()
+  tictoc::toc()
 
   log4r::debug(.le$logger, "Exiting add_plot_alt_text function")
 }

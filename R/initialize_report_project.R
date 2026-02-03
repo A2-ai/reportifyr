@@ -69,7 +69,10 @@ initialize_report_project <- function(
     venv_dir <- file.path(args[[1]], ".venv")
 
     if (!dir.exists(venv_dir)) {
-      log4r::warn(.le$logger, ".venv directory missing, reinitializing Python environment")
+      log4r::warn(
+        .le$logger,
+        ".venv directory missing, reinitializing Python environment"
+      )
       message("Python virtual environment missing. Reinitializing...")
       metadata_path <- initialize_python()
     }

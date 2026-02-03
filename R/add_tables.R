@@ -84,8 +84,8 @@ add_tables <- function(
     )
   } else {
     log4r::warn(.le$logger, "No magic strings were found in the document.")
-   
-		tictoc::toc()
+
+    tictoc::toc()
 
     print(document, target = docx_out)
     return(invisible(NULL))
@@ -137,8 +137,8 @@ add_tables <- function(
   log4r::debug(.le$logger, "Deleting intermediate tabs document")
 
   log4r::info(.le$logger, paste0("Final document saved to: ", docx_out))
-	
-	tictoc::toc()
+
+  tictoc::toc()
 }
 
 ### New function for processing #####
