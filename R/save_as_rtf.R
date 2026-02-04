@@ -29,10 +29,15 @@ save_rtf <- function(object, file, table1_format) {
       error = function(e) {
         log4r::error(
           .le$logger,
-          paste("Failed to convert object to flextable:", e$message)
+          paste0("save_as_rtf: Failed to format flextable: ", e$message)
         )
+        NULL
       }
     )
+  }
+
+  if (is.null(object)) {
+    stop("Failed to format flextable for RTF export")
   }
 
   flextable::save_as_rtf(object, path = rtf_file)

@@ -1,5 +1,4 @@
 import os
-import re
 
 import helper
 import tempfile
@@ -15,10 +14,6 @@ from PIL import Image, ImageDraw, ImageFont
 from parse_magic_string import parse_magic_string
 from rpfy_logger import setup_logger
 
-# Module-level logger, initialized in add_figure()
-logger = None
-
-
 def add_figure(
     docx_in: str,
     docx_out: str,
@@ -28,7 +23,6 @@ def add_figure(
     fig_height: Optional[float] = None,
     log_file: Optional[str] = None,
 ):
-    global logger
     logger = setup_logger(log_file)
     logger.debug("Starting add_figure function")
     logger.debug(f"Loading document from: {docx_in}")
@@ -43,11 +37,7 @@ def add_figure(
     else:
         config = {}
 
-    # Define magic string pattern
-    # Matches "{rpfy}:" and any directory structure following it
-    start_pattern = r"\{rpfy\}\:"
-    end_pattern = r"\.[^.]+$"
-    magic_pattern = re.compile(start_pattern + ".*?" + end_pattern)
+    magic_pattern = helper.get_magic_pattern()
 
     found_magic_strings = []
 
@@ -58,10 +48,9 @@ def add_figure(
 
         matches = magic_pattern.findall(par.text)
         if matches:
-            if len(matches) > len(set(matches)):
-                logger.warning(
-                    f"Duplicate figure names found in paragraph {actual_index+1}"
-                )
+            helper.check_duplicates(
+                matches, f"figure names in paragraph {actual_index+1}", logger
+            )
 
             for match in matches:
                 logger.debug(f"Processing magic string: {match}")
@@ -96,7 +85,7 @@ def add_figure(
                             # index, index 0 corresponds to the last
                             # element in list so len(figures) - 1 for 1-index
                             labeled_image = add_label_to_image(
-                                image_path, len(figures) - fig_idx - 1
+                                image_path, len(figures) - fig_idx - 1, logger
                             )
                         else:
                             labeled_image = image_path
@@ -216,7 +205,7 @@ def add_figure(
     logger.debug("Exiting add_figure function")
 
 
-def add_label_to_image(image_path: str, index: int) -> str:
+def add_label_to_image(image_path: str, index: int, logger) -> str:
     """
     This function takes in a path to an image and an index
     and adds the corresponding letter to the image upper
@@ -228,13 +217,16 @@ def add_label_to_image(image_path: str, index: int) -> str:
     This function saves the updated image to tmp and returns
     the path to the temp image.
     """
-    global logger
-
     label = helper.create_label(index)
 
     # load in image and create draw object
     # and set font
-    img = Image.open(image_path)
+    try:
+        img = Image.open(image_path)
+    except Exception as e:
+        logger.error(f"Failed to open image {image_path}: {e}")
+        raise
+
     draw = ImageDraw.Draw(img)
     font = ImageFont.load_default(size=56)
 
@@ -264,7 +256,12 @@ def add_label_to_image(image_path: str, index: int) -> str:
     temp_path = temp_file.name
     temp_file.close()
 
-    img.save(temp_path, format=original_format, dpi=original_dpi)
+    try:
+        img.save(temp_path, format=original_format, dpi=original_dpi)
+    except Exception as e:
+        logger.error(f"Failed to save labeled image: {e}")
+        raise
+
     return temp_path
 
 
@@ -280,8 +277,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "-c", "--config", type=str, default=None, help="Config yaml path"
     )
-    parser.add_argument("-w", "--width", type=str, default=None, help="Figure width")
-    parser.add_argument("-g", "--height", type=str, default=None, help="Figure height")
+    parser.add_argument("-w", "--width", type=float, default=None, help="Figure width")
+    parser.add_argument("-g", "--height", type=float, default=None, help="Figure height")
     parser.add_argument("-l", "--log", type=str, default=None, help="Log file path")
     args = parser.parse_args()
 

@@ -1,5 +1,4 @@
 import os
-import re
 import sys
 import helper
 import argparse
@@ -37,11 +36,7 @@ def add_figure_footnotes(
 
     document = Document(docx_in)
 
-    # define magic string pattern
-    # matches "{rpfy}:" and any directory structure following it
-    start_pattern = r"\{rpfy\}\:"
-    end_pattern = r"\.[^.]+$"
-    magic_pattern = re.compile(start_pattern + ".*?" + end_pattern)
+    magic_pattern = helper.get_magic_pattern()
 
     paragraphs = document.paragraphs
     missing_metadata = False
@@ -51,8 +46,7 @@ def add_figure_footnotes(
         if not matches:
             continue
 
-        if len(matches) > len(set(matches)):
-            logger.warning(f"Duplicate figure names found in paragraph {i+1}")
+        helper.check_duplicates(matches, f"figure names in paragraph {i+1}", logger)
 
         for match in matches:
             logger.debug(f"Processing magic string: {match}")
@@ -148,7 +142,7 @@ def add_figure_footnotes(
     if missing_metadata and fail_on_missing_metadata:
         logger.error("Output not created due to missing metadata")
         print(
-            "output not created due to missing metadata. please check logs for missing metadata files."
+            "Output not created due to missing metadata. Please check logs for missing metadata files."
         )
         sys.exit(1)
     else:

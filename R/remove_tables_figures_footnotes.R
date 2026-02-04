@@ -42,70 +42,22 @@ remove_tables_figures_footnotes <- function(
   notes_args <- c("run", notes_script, "-i", docx_in, "-o", docx_out)
 
   log4r::debug(.le$logger, "Running remove footnotes script")
-  notes_result <- tryCatch(
-    {
-      processx::run(
-        command = paths$uv,
-        args = notes_args,
-        env = c("current", VIRTUAL_ENV = paths$venv),
-        error_on_status = TRUE
-      )
-    },
-    error = function(e) {
-      log4r::error(
-        .le$logger,
-        paste0("Remove footnotes script failed. Status: ", e$status)
-      )
-      log4r::error(
-        .le$logger,
-        paste0("Remove footnotes script failed. Stderr: ", e$stderr)
-      )
-      log4r::info(
-        .le$logger,
-        paste0("Remove footnotes script failed. Stdout: ", e$stdout)
-      )
-      stop(paste(
-        "Remove footnotes script failed. Status: ",
-        e$status,
-        "Stderr: ",
-        e$stderr
-      ))
-    }
+  run_python_script(
+    paths$uv,
+    notes_args,
+    paths$venv,
+    "Remove footnotes script"
   )
 
   tab_script <- system.file("scripts/remove_tables.py", package = "reportifyr")
   tab_args <- c("run", tab_script, "-i", docx_out, "-o", docx_out)
 
   log4r::debug(.le$logger, "Running remove tables script")
-  tab_result <- tryCatch(
-    {
-      processx::run(
-        command = paths$uv,
-        args = tab_args,
-        env = c("current", VIRTUAL_ENV = paths$venv),
-        error_on_status = TRUE
-      )
-    },
-    error = function(e) {
-      log4r::error(
-        .le$logger,
-        paste0("Remove tables script failed. Status: ", e$status)
-      )
-      log4r::error(
-        .le$logger,
-        paste0("Remove tables strings script failed. Stderr: ", e$stderr)
-      )
-      log4r::info(
-        .le$logger,
-        paste0("Remove tables strings script failed. Stdout: ", e$stdout)
-      )
-      stop(paste(
-        "Remove tables strings script failed. Status: ",
-        e$status,
-        "Stderr: ",
-        e$stderr
-      ))
-    }
+  run_python_script(
+    paths$uv,
+    tab_args,
+    paths$venv,
+    "Remove tables script"
   )
 
   # input file is output of previous step
@@ -119,35 +71,11 @@ remove_tables_figures_footnotes <- function(
   log4r::info(.le$logger, paste0("config yaml set: ", config_yaml))
 
   log4r::debug(.le$logger, "Running remove figures script")
-  fig_result <- tryCatch(
-    {
-      processx::run(
-        command = paths$uv,
-        args = fig_args,
-        env = c("current", VIRTUAL_ENV = paths$venv),
-        error_on_status = TRUE
-      )
-    },
-    error = function(e) {
-      log4r::error(
-        .le$logger,
-        paste0("Remove figures script failed. Status: ", e$status)
-      )
-      log4r::error(
-        .le$logger,
-        paste0("Remove figures strings script failed. Stderr: ", e$stderr)
-      )
-      log4r::info(
-        .le$logger,
-        paste0("Remove figures strings script failed. Stdout: ", e$stdout)
-      )
-      stop(paste(
-        "Remove figures strings script failed. Status: ",
-        e$status,
-        "Stderr: ",
-        e$stderr
-      ))
-    }
+  run_python_script(
+    paths$uv,
+    fig_args,
+    paths$venv,
+    "Remove figures script"
   )
 
   log4r::debug(.le$logger, "Exiting remove_tables_figures_footnotes function")

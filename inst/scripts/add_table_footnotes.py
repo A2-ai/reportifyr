@@ -1,5 +1,4 @@
 import os
-import re
 import sys
 import helper
 import argparse
@@ -37,12 +36,7 @@ def add_table_footnotes(
 
     document = Document(docx_in)
 
-    # Define magic string pattern that allows for flexible paths
-    start_pattern = (
-        r"\{rpfy\}\:"  # Matches "{rpfy}:" and any directory structure following it
-    )
-    end_pattern = r"\.[^.]+$"
-    magic_pattern = re.compile(start_pattern + ".*?" + end_pattern)
+    magic_pattern = helper.get_magic_pattern()
     paragraphs = document.paragraphs
     missing_metadata = False
 
@@ -51,8 +45,7 @@ def add_table_footnotes(
         if not matches:
             continue
 
-        if len(matches) > len(set(matches)):
-            logger.warning(f"Duplicate table names found in paragraph {i+1}")
+        helper.check_duplicates(matches, f"table names in paragraph {i+1}", logger)
 
         for match in matches:
             # Generalized extraction of the table name

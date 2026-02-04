@@ -77,35 +77,11 @@ remove_bookmarks <- function(docx_in, docx_out) {
     args <- c("run", script, "-i", docx_in, "-o", docx_out)
 
     log4r::debug(.le$logger, "Running remove bookmarks script")
-    result <- tryCatch(
-      {
-        processx::run(
-          command = paths$uv,
-          args = args,
-          env = c("current", VIRTUAL_ENV = paths$venv),
-          error_on_status = TRUE
-        )
-      },
-      error = function(e) {
-        log4r::error(
-          .le$logger,
-          paste0("Remove bookmarks script failed. Status: ", e$status)
-        )
-        log4r::error(
-          .le$logger,
-          paste0("Remove bookmarks script failed. Stderr: ", e$stderr)
-        )
-        log4r::info(
-          .le$logger,
-          paste0("Remove bookmarks script failed. Stdout: ", e$stdout)
-        )
-        stop(paste(
-          "Remove bookmarks script failed. Status: ",
-          e$status,
-          "Stderr: ",
-          e$stderr
-        ))
-      }
+    run_python_script(
+      paths$uv,
+      args,
+      paths$venv,
+      "Remove bookmarks script"
     )
   } else if (tolower(continue) == "n") {
     log4r::info(

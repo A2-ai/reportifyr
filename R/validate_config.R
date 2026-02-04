@@ -71,14 +71,14 @@ validate_config <- function(path_to_config_yaml) {
     }
   }
 
-  log4r::debug(.le$logger, "combine_duplicate_footnotes")
-  if (!is.null(config$`wrap_path_in_[]`)) {
-    if (typeof(config$`wrap_path_in_[]`) != "logical") {
+  log4r::debug(.le$logger, "Checking combine_duplicate_footnotes")
+  if (!is.null(config$combine_duplicate_footnotes)) {
+    if (typeof(config$combine_duplicate_footnotes) != "logical") {
       log4r::error(
         .le$logger,
         paste0(
-          "wrap_path_in_[] should be logical, not: ",
-          typeof(config$`wrap_path_in_[]`)
+          "combine_duplicate_footnotes should be logical, not: ",
+          typeof(config$combine_duplicate_footnotes)
         )
       )
       valid <- FALSE
@@ -206,7 +206,7 @@ validate_config <- function(path_to_config_yaml) {
         .le$logger,
         paste0(
           "strict should be logical, not: ",
-          typeof(config$label_multi_figures)
+          typeof(config$strict)
         )
       )
       valid <- FALSE

@@ -240,6 +240,33 @@ find_project_root <- function(start_path = getwd()) {
   return(NULL)
 }
 
+#' Run a Python script via uv
+#'
+#' @param uv_path Path to the uv executable
+#' @param args Arguments to pass to uv
+#' @param venv_path Path to the virtual environment
+#' @param script_name Name of the script for logging purposes
+#'
+#' @return The result from processx::run
+#'
+#' @keywords internal
+#' @noRd
+run_python_script <- function(uv_path, args, venv_path, script_name) {
+  tryCatch(
+    {
+      processx::run(
+        command = uv_path,
+        args = args,
+        env = c("current", VIRTUAL_ENV = venv_path),
+        error_on_status = TRUE
+      )
+    },
+    error = function(e) {
+      stop(paste0(script_name, " failed: ", e$message))
+    }
+  )
+}
+
 detect_quarto_render <- function() {
   log4r::debug(.le$logger, "Starting detect_quarto_render()")
 

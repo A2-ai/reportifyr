@@ -1,5 +1,5 @@
-import re
 import argparse
+import helper
 from typing import Optional
 from docx import Document
 from docx.oxml import OxmlElement
@@ -23,11 +23,7 @@ def tag_tables_with_magic(docx_in: str, docx_out: str, log_file: Optional[str] =
     logger.debug("Starting add_table_alt_text function")
     logger.debug(f"Loading document from: {docx_in}")
 
-    # Define magic string pattern
-    # Matches "{rpfy}:" and any directory structure following it
-    start_pattern = r"\{rpfy\}\:"
-    end_pattern = r"\.[^.]+$"
-    magic_pattern = re.compile(start_pattern + ".*?" + end_pattern)
+    magic_pattern = helper.get_magic_pattern()
 
     doc = Document(docx_in)
 
@@ -37,8 +33,6 @@ def tag_tables_with_magic(docx_in: str, docx_out: str, log_file: Optional[str] =
     # Get the direct children of <w:body>: paragraphs and tables in order
     body = doc._element.body
     siblings = list(body)
-
-    tables_processed = 0
 
     for idx, el in enumerate(siblings):
         if not el.tag.endswith("}tbl"):
@@ -59,7 +53,6 @@ def tag_tables_with_magic(docx_in: str, docx_out: str, log_file: Optional[str] =
             table = tbl_map.get(el)
             if table:
                 set_table_alt_text(table, para_text)
-                tables_processed += 1
                 logger.info(f"Inserted alt text for table: {table_name}")
             else:
                 logger.warning(

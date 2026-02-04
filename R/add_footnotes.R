@@ -168,85 +168,19 @@ add_footnotes <- function(
 
   paths <- get_venv_uv_paths()
   log4r::debug(.le$logger, "Running figure footnotes script")
-  tryCatch(
-    {
-      result <- processx::run(
-        command = paths$uv,
-        args = fig_args,
-        env = c("current", VIRTUAL_ENV = paths$venv),
-        error_on_status = TRUE
-      )
-      if (nzchar(result$stderr)) {
-        log4r::warn(
-          .le$logger,
-          paste0("Figure footnotes script stderr: ", result$stderr)
-        )
-      }
-    },
-    error = function(e) {
-      log4r::error(
-        .le$logger,
-        paste0("Figure footnotes script failed. Status: ", e$status)
-      )
-      log4r::error(
-        .le$logger,
-        paste0("Figure footnotes script failed. Stderr: ", e$stderr)
-      )
-      log4r::info(
-        .le$logger,
-        paste0("Figure footnotes script failed. Stdout: ", e$stdout)
-      )
-      stop(
-        paste(
-          "Figure footnotes script failed. Status: ",
-          e$status,
-          "Stderr: ",
-          e$stderr
-        ),
-        call. = FALSE
-      )
-    }
+  run_python_script(
+    paths$uv,
+    fig_args,
+    paths$venv,
+    "Figure footnotes script"
   )
 
   log4r::debug(.le$logger, "Running table footnotes script")
-  tryCatch(
-    {
-      result <- processx::run(
-        command = paths$uv,
-        args = tab_args,
-        env = c("current", VIRTUAL_ENV = paths$venv),
-        error_on_status = TRUE
-      )
-      if (nzchar(result$stderr)) {
-        log4r::warn(
-          .le$logger,
-          paste0("Table footnotes script stderr: ", result$stderr)
-        )
-      }
-    },
-    error = function(e) {
-      log4r::error(
-        .le$logger,
-        paste0("Table footnotes script failed. Status: ", e$status)
-      )
-      log4r::error(
-        .le$logger,
-        paste0("Table footnotes script failed. Stderr: ", e$stderr)
-      )
-      log4r::info(
-        .le$logger,
-        paste0("Table footnotes script failed. Stdout: ", e$stdout)
-      )
-      stop(
-        paste(
-          "Table footnotes script failed. Status: ",
-          e$status,
-          "Stderr: ",
-          e$stderr
-        ),
-        call. = FALSE
-      )
-    }
+  run_python_script(
+    paths$uv,
+    tab_args,
+    paths$venv,
+    "Table footnotes script"
   )
 
   tictoc::toc()

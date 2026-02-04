@@ -34,35 +34,11 @@ validate_alt_text_magic_strings <- function(
   paths <- get_venv_uv_paths()
 
   log4r::debug(.le$logger, "Running check_alt_text_magic_strings script")
-  result <- tryCatch(
-    {
-      processx::run(
-        command = paths$uv,
-        args = args,
-        env = c("current", VIRTUAL_ENV = paths$venv),
-        error_on_status = TRUE
-      )
-    },
-    error = function(e) {
-      log4r::error(
-        .le$logger,
-        paste0("Check alt text magic string script failed. Status: ", e$status)
-      )
-      log4r::error(
-        .le$logger,
-        paste0("Check alt text magic string script failed. Stderr: ", e$stderr)
-      )
-      log4r::info(
-        .le$logger,
-        paste0("Check alt text magic string script failed. Stdout: ", e$stdout)
-      )
-      stop(paste(
-        "Check alt text magic string script failed. Status: ",
-        e$status,
-        "Stderr: ",
-        e$stderr
-      ))
-    }
+  result <- run_python_script(
+    paths$uv,
+    args,
+    paths$venv,
+    "Check alt text magic string script"
   )
 
   if (grepl("Magic mismatch!", result$stdout)) {

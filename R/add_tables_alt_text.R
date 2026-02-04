@@ -32,35 +32,11 @@ add_tables_alt_text <- function(
   paths <- get_venv_uv_paths()
 
   log4r::debug(.le$logger, "Running add table alt text script")
-  result <- tryCatch(
-    {
-      processx::run(
-        command = paths$uv,
-        args = args,
-        env = c("current", VIRTUAL_ENV = paths$venv),
-        error_on_status = TRUE
-      )
-    },
-    error = function(e) {
-      log4r::error(
-        .le$logger,
-        paste0("Add table alt text script failed. Status: ", e$status)
-      )
-      log4r::error(
-        .le$logger,
-        paste0("Add table alt text script failed. Stderr: ", e$stderr)
-      )
-      log4r::info(
-        .le$logger,
-        paste0("Add table alt text script failed. Stdout: ", e$stdout)
-      )
-      stop(paste(
-        "Add table alt text script failed. Status: ",
-        e$status,
-        "Stderr: ",
-        e$stderr
-      ))
-    }
+  run_python_script(
+    paths$uv,
+    args,
+    paths$venv,
+    "Add table alt text script"
   )
 
   tictoc::toc()

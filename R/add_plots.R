@@ -108,35 +108,11 @@ add_plots <- function(
   paths <- get_venv_uv_paths()
 
   log4r::debug(.le$logger, "Running add plots script")
-  result <- tryCatch(
-    {
-      processx::run(
-        command = paths$uv,
-        args = args,
-        env = c("current", VIRTUAL_ENV = paths$venv),
-        error_on_status = TRUE
-      )
-    },
-    error = function(e) {
-      log4r::error(
-        .le$logger,
-        paste0("Add plots script failed. Status: ", e$status)
-      )
-      log4r::error(
-        .le$logger,
-        paste0("Add plots script failed. Stderr: ", e$stderr)
-      )
-      log4r::info(
-        .le$logger,
-        paste0("Add plots script failed. Stdout: ", e$stdout)
-      )
-      stop(paste(
-        "Add plots script failed. Status: ",
-        e$status,
-        "Stderr: ",
-        e$stderr
-      ))
-    }
+  run_python_script(
+    paths$uv,
+    args,
+    paths$venv,
+    "Add plots script"
   )
 
   add_plots_alt_text(

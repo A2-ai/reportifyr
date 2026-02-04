@@ -8,6 +8,20 @@ from docx.oxml.text import run, paragraph
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
+# Compiled regex for matching {rpfy}: magic strings
+MAGIC_PATTERN = re.compile(r"\{rpfy\}\:.*?\.[^.]+$")
+
+
+def get_magic_pattern():
+    """Returns compiled regex for matching {rpfy}: magic strings."""
+    return MAGIC_PATTERN
+
+
+def check_duplicates(matches: list, context: str, logger) -> None:
+    """Warn if duplicate items found in matches list."""
+    if len(matches) > len(set(matches)):
+        logger.warning(f"Duplicate {context} found")
+
 
 def create_label(index: int) -> str:
     """
@@ -28,8 +42,13 @@ def create_label(index: int) -> str:
 
 def load_yaml(yaml_file: str) -> dict:
     """Load contents from a YAML file."""
-    with open(yaml_file, "r") as y:
-        return yaml.safe_load(y)
+    try:
+        with open(yaml_file, "r") as y:
+            return yaml.safe_load(y)
+    except FileNotFoundError:
+        raise FileNotFoundError(f"YAML file not found: {yaml_file}")
+    except yaml.YAMLError as e:
+        raise ValueError(f"Invalid YAML in {yaml_file}: {e}")
 
 
 def load_metadata(artifact_dir: str, artifact_file: str) -> dict | None:
@@ -79,7 +98,7 @@ def create_meta_text_lines(
         "notes"
     ]  # If empty this might be a list -- should be ok because len will still work.
 
-    if type(meta_type) == str and meta_type != "NA":
+    if isinstance(meta_type, str) and meta_type != "NA":
         n = footnotes[f"{artifact_type}_footnotes"][meta_type]
         if n:
             if n.endswith("."):

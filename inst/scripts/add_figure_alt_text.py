@@ -1,6 +1,6 @@
 import os
-import re
 import argparse
+import helper
 from typing import Optional
 from docx import Document
 from rpfy_logger import setup_logger
@@ -11,17 +11,12 @@ def tag_figures_with_magic(docx_in: str, docx_out: str, log_file: Optional[str] 
     logger.debug("Starting add_figure_alt_text function")
     logger.debug(f"Loading document from: {docx_in}")
 
-    # Define magic string pattern
-    start_pattern = r"\{rpfy\}\:"
-    end_pattern = r"\.[^.]+$"
-    magic_pattern = re.compile(start_pattern + ".*?" + end_pattern)
+    magic_pattern = helper.get_magic_pattern()
 
     doc = Document(docx_in)
 
     body = doc._element.body
     paragraphs = list(body)
-
-    figures_processed = 0
 
     # Find magic paragraphs and process the next paragraph for images
     for idx, para in enumerate(paragraphs):
@@ -50,7 +45,6 @@ def tag_figures_with_magic(docx_in: str, docx_out: str, log_file: Optional[str] 
                     doc_pr = inline.xpath(".//wp:docPr")
                     if doc_pr:
                         doc_pr[0].set("descr", para_text)
-                        figures_processed += 1
                         logger.info(f"Inserted alt text for figure: {filename}")
 
     doc.save(docx_out)
