@@ -14,6 +14,7 @@
 ^rv\.toml$
 ^\.Rprofile$
 
-^inst/scripts/__pycache__$
+^\.pytest_cache$
+^inst/python/.*/__pycache__$
 ^\.rpfy\-logs$
 ^\.venv$
