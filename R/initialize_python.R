@@ -41,13 +41,13 @@ initialize_python <- function(continue = NULL) {
 
   # Detect platform and choose appropriate script
   if (.Platform$OS.type == "windows") {
-    cmd <- system.file("scripts/uv_setup.ps1", package = "reportifyr")
+    cmd <- system.file("extdata/uv_setup.ps1", package = "reportifyr")
     log4r::info(
       .le$logger,
       "Windows platform detected, using PowerShell script"
     )
   } else {
-    cmd <- system.file("scripts/uv_setup.sh", package = "reportifyr")
+    cmd <- system.file("extdata/uv_setup.sh", package = "reportifyr")
     log4r::info(.le$logger, "Unix-like platform detected, using bash script")
   }
   log4r::info(

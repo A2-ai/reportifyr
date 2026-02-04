@@ -20,13 +20,11 @@ validate_alt_text_magic_strings <- function(
     browser()
   }
 
-  script <- system.file(
-    "scripts/check_alt_text_magic.py",
-    package = "reportifyr"
-  )
   args <- c(
     "run",
-    script,
+    "-m",
+    "reportipyr.cli",
+    "check-alt-text-magic",
     "-i",
     docx_in
   )

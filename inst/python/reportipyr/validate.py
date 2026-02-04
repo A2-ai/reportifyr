@@ -1,10 +1,7 @@
-import argparse
 import json
-import re
-import sys
 from docx import Document
 
-from parse_magic_string import parse_magic_string
+from .magic import parse_magic_entries, parse_magic_string
 
 SUPPORTED_EXTENSIONS = {"csv", "rds", "png"}
 
@@ -49,8 +46,8 @@ def validate_docx(docx_in: str, strict: bool = True) -> dict:
     # Parse filenames from magic strings
     file_names = []
     for magic_string in magic_strings:
-        parsed = parse_magic_string(magic_string)
-        file_names.extend(parsed.keys())
+        entries = parse_magic_entries(magic_string)
+        file_names.extend([fname for fname, _ in entries])
 
     result["file_names"] = file_names
 
@@ -101,7 +98,9 @@ def validate_docx(docx_in: str, strict: bool = True) -> dict:
     return result
 
 
-if __name__ == "__main__":
+def main_validate_docx():
+    import argparse
+
     parser = argparse.ArgumentParser(
         description="Validate a docx file for reportifyr compatibility"
     )
@@ -120,4 +119,8 @@ if __name__ == "__main__":
     print(json.dumps(result))
 
     if not result["success"]:
-        sys.exit(1)
+        raise SystemExit(1)
+
+
+if __name__ == "__main__":
+    main_validate_docx()

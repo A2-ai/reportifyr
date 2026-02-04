@@ -254,10 +254,15 @@ find_project_root <- function(start_path = getwd()) {
 run_python_script <- function(uv_path, args, venv_path, script_name) {
   tryCatch(
     {
+      python_path <- system.file("python", package = "reportifyr")
+      env_vars <- c("current", VIRTUAL_ENV = venv_path)
+      if (nzchar(python_path)) {
+        env_vars <- c(env_vars, PYTHONPATH = python_path)
+      }
       processx::run(
         command = uv_path,
         args = args,
-        env = c("current", VIRTUAL_ENV = venv_path),
+        env = env_vars,
         error_on_status = TRUE
       )
     },

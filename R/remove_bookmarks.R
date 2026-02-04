@@ -73,8 +73,16 @@ remove_bookmarks <- function(docx_in, docx_out) {
     }
     paths <- get_venv_uv_paths()
 
-    script <- system.file("scripts/remove_bookmarks.py", package = "reportifyr")
-    args <- c("run", script, "-i", docx_in, "-o", docx_out)
+    args <- c(
+      "run",
+      "-m",
+      "reportipyr.cli",
+      "remove-bookmarks",
+      "-i",
+      docx_in,
+      "-o",
+      docx_out
+    )
 
     log4r::debug(.le$logger, "Running remove bookmarks script")
     run_python_script(

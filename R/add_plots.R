@@ -73,10 +73,11 @@ add_plots <- function(
 
   intermediate_figs_docx <- gsub(".docx", "-intfigs.docx", docx_out)
 
-  script <- system.file("scripts/add_figure.py", package = "reportifyr")
   args <- c(
     "run",
-    script,
+    "-m",
+    "reportipyr.cli",
+    "add-figure",
     "-i",
     intermediate_docx,
     "-o",

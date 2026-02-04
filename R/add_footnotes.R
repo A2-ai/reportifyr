@@ -82,13 +82,11 @@ add_footnotes <- function(
   validate_docx(docx_in, config_yaml)
   log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
 
-  fig_script <- system.file(
-    "scripts/add_figure_footnotes.py",
-    package = "reportifyr"
-  )
   fig_args <- c(
     "run",
-    fig_script,
+    "-m",
+    "reportipyr.cli",
+    "add-figure-footnotes",
     "-i",
     docx_in,
     "-o",
@@ -104,13 +102,11 @@ add_footnotes <- function(
   )
 
   # input file should be output file from call above
-  tab_script <- system.file(
-    "scripts/add_table_footnotes.py",
-    package = "reportifyr"
-  )
   tab_args <- c(
     "run",
-    tab_script,
+    "-m",
+    "reportipyr.cli",
+    "add-table-footnotes",
     "-i",
     docx_out,
     "-o",

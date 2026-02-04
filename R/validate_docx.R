@@ -59,20 +59,28 @@ validate_docx <- function(docx_in, config_yaml) {
     stop("Please install uv with initialize_python")
   }
 
-  validator <- system.file(
-    "scripts/validate_docx.py",
-    package = "reportifyr"
+  args <- c(
+    "run",
+    "-m",
+    "reportipyr.cli",
+    "validate-docx",
+    "-i",
+    docx_in
   )
-
-  args <- c("run", validator, "-i", docx_in)
   if (!strict_mode) {
     args <- c(args, "--no-strict")
+  }
+
+  python_path <- system.file("python", package = "reportifyr")
+  env_vars <- c("current", VIRTUAL_ENV = venv_path)
+  if (nzchar(python_path)) {
+    env_vars <- c(env_vars, PYTHONPATH = python_path)
   }
 
   result <- processx::run(
     command = uv_path,
     args = args,
-    env = c("current", VIRTUAL_ENV = venv_path),
+    env = env_vars,
     error_on_status = FALSE
   )
 

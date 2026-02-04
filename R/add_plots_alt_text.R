@@ -26,11 +26,18 @@ add_plots_alt_text <- function(
 
   log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
 
-  script <- system.file(
-    "scripts/add_figure_alt_text.py",
-    package = "reportifyr"
+  args <- c(
+    "run",
+    "-m",
+    "reportipyr.cli",
+    "add-figure-alt-text",
+    "-i",
+    docx_in,
+    "-o",
+    docx_out,
+    "-l",
+    .le$log_file
   )
-  args <- c("run", script, "-i", docx_in, "-o", docx_out, "-l", .le$log_file)
 
   paths <- get_venv_uv_paths()
 

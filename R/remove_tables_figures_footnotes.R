@@ -35,11 +35,16 @@ remove_tables_figures_footnotes <- function(
   validate_alt_text_magic_strings(docx_in)
 
   paths <- get_venv_uv_paths()
-  notes_script <- system.file(
-    "scripts/remove_footnotes.py",
-    package = "reportifyr"
+  notes_args <- c(
+    "run",
+    "-m",
+    "reportipyr.cli",
+    "remove-footnotes",
+    "-i",
+    docx_in,
+    "-o",
+    docx_out
   )
-  notes_args <- c("run", notes_script, "-i", docx_in, "-o", docx_out)
 
   log4r::debug(.le$logger, "Running remove footnotes script")
   run_python_script(
@@ -49,8 +54,16 @@ remove_tables_figures_footnotes <- function(
     "Remove footnotes script"
   )
 
-  tab_script <- system.file("scripts/remove_tables.py", package = "reportifyr")
-  tab_args <- c("run", tab_script, "-i", docx_out, "-o", docx_out)
+  tab_args <- c(
+    "run",
+    "-m",
+    "reportipyr.cli",
+    "remove-tables",
+    "-i",
+    docx_out,
+    "-o",
+    docx_out
+  )
 
   log4r::debug(.le$logger, "Running remove tables script")
   run_python_script(
@@ -61,8 +74,16 @@ remove_tables_figures_footnotes <- function(
   )
 
   # input file is output of previous step
-  fig_script <- system.file("scripts/remove_figures.py", package = "reportifyr")
-  fig_args <- c("run", fig_script, "-i", docx_out, "-o", docx_out)
+  fig_args <- c(
+    "run",
+    "-m",
+    "reportipyr.cli",
+    "remove-figures",
+    "-i",
+    docx_out,
+    "-o",
+    docx_out
+  )
 
   if (is.null(config_yaml)) {
     config_yaml <- system.file("extdata", "config.yaml", package = "reportifyr")

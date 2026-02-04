@@ -1,7 +1,8 @@
-import argparse
-import re
 from docx import Document
 from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
+
+from .magic import get_magic_pattern
 
 CAPTION_STYLE = "Caption"
 
@@ -11,9 +12,7 @@ def keep_caption_next(docx_in, docx_out):
     paras = doc.paragraphs
     n = len(paras)
 
-    start_pattern = r"\{rpfy\}\:"
-    end_pattern = r"\.[^.]+$"
-    magic_pattern = re.compile(start_pattern + ".*?" + end_pattern)
+    magic_pattern = get_magic_pattern()
 
     for i, p in enumerate(paras):
         is_caption = (p.style and p.style.name == CAPTION_STYLE) or any(
@@ -43,19 +42,28 @@ def keep_caption_next(docx_in, docx_out):
                 break
 
     doc.save(docx_out)
-    print(f"Processed file saved at '{docx_out}'.")
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Keep captions with artifacts in input docx document"
-    )
-    parser.add_argument(
-        "-i", "--input", type=str, required=True, help="input docx file path"
-    )
-    parser.add_argument(
-        "-o", "--output", type=str, required=True, help="output docx file path"
-    )
-    args = parser.parse_args()
+def remove_bookmarks(docx_in, docx_out):
+    doc = Document(docx_in)
 
-    keep_caption_next(args.input, args.output)
+    fp_bookmark_ids = set()
+
+    for element in doc.element.findall(
+        ".//w:bookmarkStart", namespaces=doc.element.nsmap
+    ):
+        bookmark_name = element.get(qn("w:name"))
+        if bookmark_name and bookmark_name.startswith("fp_"):
+            fp_bookmark_ids.add(element.get(qn("w:id")))
+            parent = element.getparent()
+            parent.remove(element)
+
+    for element in doc.element.findall(
+        ".//w:bookmarkEnd", namespaces=doc.element.nsmap
+    ):
+        bookmark_id = element.get(qn("w:id"))
+        if bookmark_id in fp_bookmark_ids:
+            parent = element.getparent()
+            parent.remove(element)
+
+    doc.save(docx_out)

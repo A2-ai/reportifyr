@@ -74,11 +74,16 @@ remove_magic_strings <- function(docx_in, docx_out) {
 
     paths <- get_venv_uv_paths()
 
-    script <- system.file(
-      "scripts/remove_magic_strings.py",
-      package = "reportifyr"
+    args <- c(
+      "run",
+      "-m",
+      "reportipyr.cli",
+      "remove-magic-strings",
+      "-i",
+      docx_in,
+      "-o",
+      docx_out
     )
-    args <- c("run", script, "-i", docx_in, "-o", docx_out)
 
     log4r::debug(.le$logger, "Running remove magic strings script")
     run_python_script(
