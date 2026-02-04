@@ -13,3 +13,7 @@
 ^rproject.toml$
 ^rv\.toml$
 ^\.Rprofile$
+
+^inst/scripts/__pycache__$
+^\.rpfy\-logs$
+^\.venv$

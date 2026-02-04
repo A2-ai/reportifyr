@@ -5,6 +5,7 @@
 #'
 #' @param quiet suppresses messaging about log level.
 #' @param log_file path to log file. If NULL, only console logging is enabled.
+#' @param lazy_file if TRUE, delay log file creation until first log write.
 #'
 #' @export
 #'
@@ -12,7 +13,7 @@
 #' Sys.setenv("RPFY_VERBOSE" = "DEBUG")
 #' toggle_logger()
 #' }
-toggle_logger <- function(quiet = FALSE, log_file = NULL) {
+toggle_logger <- function(quiet = FALSE, log_file = NULL, lazy_file = FALSE) {
   LEVEL_NAMES <- c("DEBUG", "INFO", "WARN", "ERROR", "FATAL")
   verbosity <- Sys.getenv("RPFY_VERBOSE", unset = "WARN")
   if (!(verbosity %in% LEVEL_NAMES)) {
@@ -41,19 +42,41 @@ toggle_logger <- function(quiet = FALSE, log_file = NULL) {
   appenders <- list(filtered_console)
 
   if (!is.null(log_file)) {
-    # Ensure directory exists
-    log_dir <- dirname(log_file)
-    if (!dir.exists(log_dir)) {
-      dir.create(log_dir, recursive = TRUE)
+    if (lazy_file) {
+      lazy_appender <- local({
+        initialized <- FALSE
+        delegate <- NULL
+        function(level, ...) {
+          if (!initialized) {
+            log_dir <- dirname(log_file)
+            if (!dir.exists(log_dir)) {
+              dir.create(log_dir, recursive = TRUE)
+            }
+            if (!file.exists(log_file)) {
+              file.create(log_file)
+            }
+            delegate <<- log4r::file_appender(log_file, layout = my_layout)
+            initialized <<- TRUE
+          }
+          delegate(level, ...)
+        }
+      })
+      appenders <- c(appenders, list(lazy_appender))
+    } else {
+      # Ensure directory exists
+      log_dir <- dirname(log_file)
+      if (!dir.exists(log_dir)) {
+        dir.create(log_dir, recursive = TRUE)
+      }
+      # Create file if it doesn't exist
+      if (!file.exists(log_file)) {
+        file.create(log_file)
+      }
+      appenders <- c(
+        appenders,
+        list(log4r::file_appender(log_file, layout = my_layout))
+      )
     }
-    # Create file if it doesn't exist
-    if (!file.exists(log_file)) {
-      file.create(log_file)
-    }
-    appenders <- c(
-      appenders,
-      list(log4r::file_appender(log_file, layout = my_layout))
-    )
     assign("log_file", log_file, envir = .le)
   }
 

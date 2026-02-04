@@ -14,7 +14,7 @@
     ".rpfy-logs",
     paste0(session_timestamp, "-rpfy.log")
   )
-  toggle_logger(quiet = TRUE, log_file = .le$log_file)
+  toggle_logger(quiet = TRUE, log_file = .le$log_file, lazy_file = TRUE)
 
   msg <- reportifyr_options_message()
   packageStartupMessage(msg)

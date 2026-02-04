@@ -24,9 +24,6 @@
 #'   creates metadata for tabular object and saves as rtf
 #'   \item \code{\link{write_csv_with_metadata}}: Wrapper for write.csv that
 #'   also creates metadata for tabular object and saves as rtf
-#'   \item \code{\link{save_as_rtf}}: Saves tabular object (.csv or flextable)
-#'    as rtf.
-#'    This is called within [save_rds_with_metadata] and [write_csv_with_metadata]
 #'   \item \code{\link{format_flextable}}: Formats a tabular data object as a
 #'   flextable with simple formatting.
 #' }
