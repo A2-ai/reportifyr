@@ -62,7 +62,9 @@ def validate_docx(docx_in: str, strict: bool = True) -> dict:
             unsupported_files.append(fname)
 
     if unsupported_files:
-        message = f"Unsupported file types found in document: {', '.join(unsupported_files)}"
+        message = (
+            f"Unsupported file types found in document: {', '.join(unsupported_files)}"
+        )
         if strict:
             result["success"] = False
             result["errors"].append(message)
@@ -88,7 +90,9 @@ def validate_docx(docx_in: str, strict: bool = True) -> dict:
             result["errors"].append(
                 f"Found duplicate files, please fix: {', '.join(duplicates)}"
             )
-            result["errors"].append("Using strict mode. Fix duplicate artifacts to continue.")
+            result["errors"].append(
+                "Using strict mode. Fix duplicate artifacts to continue."
+            )
         else:
             result["warnings"].append(
                 f"Found duplicate files, artifact addition might not work properly: {', '.join(duplicates)}"

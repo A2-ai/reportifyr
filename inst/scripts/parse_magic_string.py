@@ -2,6 +2,7 @@ import re
 import json
 import argparse
 
+
 def parse_magic_string(input_string: str) -> dict[str, dict[str, str]]:
     """
     Parse the magic string format where arguments can be tied to individual files.

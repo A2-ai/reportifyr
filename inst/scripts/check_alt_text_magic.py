@@ -12,7 +12,7 @@ def check_alt_text_magic_string(docx_in: str):
     magic_pattern = re.compile(start_pattern + ".*?" + end_pattern)
 
     doc = Document(docx_in)
-    
+
     # Map raw <w:tbl> elements back to their Table objects
     tbl_map = {tbl._element: tbl for tbl in doc.tables}
 
@@ -28,9 +28,10 @@ def check_alt_text_magic_string(docx_in: str):
         para_text = "".join([t.text for t in text_elements if t.text])
 
         if magic_pattern.search(para_text) and idx + 1 < len(paragraphs):
-            # check for drawing and tbl 
+            # check for drawing and tbl
             check_drawing_alt_text(paragraphs[idx + 1], para_text)
-            check_table_alt_text(tbl_map.get(paragraphs[idx + 1]), para_text) 
+            check_table_alt_text(tbl_map.get(paragraphs[idx + 1]), para_text)
+
 
 def check_drawing_alt_text(paragraph, para_text: str):
     drawings = paragraph.xpath(".//w:drawing")
@@ -41,9 +42,13 @@ def check_drawing_alt_text(paragraph, para_text: str):
             if doc_pr:
                 alt_text = doc_pr[0].get("descr")
                 if alt_text is None:
-                    print(f"Magic mismatch! Alt text MISSING for magic string: {para_text}")
+                    print(
+                        f"Magic mismatch! Alt text MISSING for magic string: {para_text}"
+                    )
                 elif alt_text != para_text:
-                    print(f"Magic mismatch! Magic string: {para_text} != alt text: {alt_text}")
+                    print(
+                        f"Magic mismatch! Magic string: {para_text} != alt text: {alt_text}"
+                    )
 
 
 def check_table_alt_text(table, para_text: str):
@@ -55,12 +60,13 @@ def check_table_alt_text(table, para_text: str):
     if desc is None:
         print("Table found but it has no alt text description or title.")
         return
-    
+
     alt_text = desc.get(qn("w:val"))
     if alt_text is None:
         print(f"Magic mismatch! Alt text MISSING for magic string: {para_text}")
     elif alt_text != para_text:
         print(f"Magic mismatch! Magic string: {para_text} != alt text: {alt_text}")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

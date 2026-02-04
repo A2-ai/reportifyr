@@ -8,6 +8,7 @@ from docx.oxml.text import run, paragraph
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
+
 def create_label(index: int) -> str:
     """
     This function takes in an index and returns
@@ -124,6 +125,7 @@ def create_meta_text_lines(
         else:
             del meta_text_lines["Object"]
             return meta_text_lines
+
 
 def format_metadata_line(meta_key, meta_value, config):
     """Format a metadata line based on its key."""
@@ -253,7 +255,7 @@ def create_footnote_paragraph(
     for line_idx, (meta, value) in enumerate(meta_text_dict.items()):
         # Format the line based on metadata type
         formatted_line = format_metadata_line(meta, "".join(value), config)
-        
+
         # Create run with formatted text
         runs = create_formatted_runs(formatted_line, config)
         for run in runs:
