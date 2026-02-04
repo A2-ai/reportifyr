@@ -107,10 +107,6 @@ remove_bookmarks <- function(docx_in, docx_out) {
         ))
       }
     )
-
-    log4r::info(.le$logger, paste0("Returning status: ", result$status))
-    log4r::info(.le$logger, paste0("Returning stdout: ", result$stdout))
-    log4r::info(.le$logger, paste0("Returning stderr: ", result$stderr))
   } else if (tolower(continue) == "n") {
     log4r::info(
       .le$logger,

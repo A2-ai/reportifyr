@@ -111,6 +111,8 @@ add_tables <- function(
       } else {
         log4r::warn(.le$logger, paste0("Table file not found: ", table_file))
       }
+    } else {
+      log4r::debug(.le$logger, paste0("Skipping non-table file: ", table_name))
     }
   }
 

@@ -78,11 +78,7 @@ validate_alt_text_magic_strings <- function(
     log4r::warn(.le$logger, matching_lines)
   }
 
-  log4r::info(.le$logger, paste0("Returning status: ", result$status))
-  log4r::info(.le$logger, paste0("Returning stdout: ", result$stdout))
-  log4r::info(.le$logger, paste0("Returning stderr: ", result$stderr))
-
   tictoc::toc()
 
-  log4r::debug(.le$logger, "Exiting check_alt_text_magic function")
+  log4r::debug(.le$logger, "Exiting validate_alt_text_magic_strings function")
 }

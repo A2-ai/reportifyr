@@ -48,9 +48,5 @@ keep_caption_next <- function(docx_in, docx_out) {
     }
   )
 
-  log4r::info(.le$logger, paste0("Returning status: ", result$status))
-  log4r::info(.le$logger, paste0("Returning stdout: ", result$stdout))
-  log4r::info(.le$logger, paste0("Returning stderr: ", result$stderr))
-
   log4r::debug(.le$logger, "Exiting keep_caption_next function")
 }

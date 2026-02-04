@@ -50,7 +50,7 @@ get_meta_abbrevs <- function(path_to_footnotes_yaml) {
         .le$logger,
         "Meta abbreviations successfully retrieved from YAML content"
       )
-      log4r::debug(.le$logger, "Exiting get_meta_abbbrevs function")
+      log4r::debug(.le$logger, "Exiting get_meta_abbrevs function")
 
       return(meta_abbrevs)
     },

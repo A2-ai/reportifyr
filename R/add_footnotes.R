@@ -98,7 +98,9 @@ add_footnotes <- function(
     "-b",
     include_object_path,
     "-m",
-    footnotes_fail_on_missing_metadata
+    footnotes_fail_on_missing_metadata,
+    "-l",
+    .le$log_file
   )
 
   # input file should be output file from call above
@@ -118,7 +120,9 @@ add_footnotes <- function(
     "-b",
     include_object_path,
     "-m",
-    footnotes_fail_on_missing_metadata
+    footnotes_fail_on_missing_metadata,
+    "-l",
+    .le$log_file
   )
 
   if (!is.null(standard_footnotes_yaml)) {
@@ -178,9 +182,6 @@ add_footnotes <- function(
           paste0("Figure footnotes script stderr: ", result$stderr)
         )
       }
-      log4r::info(.le$logger, paste0("Returning status: ", result$status))
-      log4r::info(.le$logger, paste0("Returning stderr: ", result$stderr))
-      log4r::info(.le$logger, paste0("Returning stdout: ", result$stdout))
     },
     error = function(e) {
       log4r::error(
@@ -222,10 +223,6 @@ add_footnotes <- function(
           paste0("Table footnotes script stderr: ", result$stderr)
         )
       }
-
-      log4r::info(.le$logger, paste0("Returning status: ", result$status))
-      log4r::info(.le$logger, paste0("Returning stderr: ", result$stderr))
-      log4r::info(.le$logger, paste0("Returning stdout: ", result$stdout))
     },
     error = function(e) {
       log4r::error(

@@ -73,10 +73,6 @@ remove_tables_figures_footnotes <- function(
     }
   )
 
-  log4r::info(.le$logger, paste0("Returning status: ", notes_result$status))
-  log4r::info(.le$logger, paste0("Returning stdout: ", notes_result$stdout))
-  log4r::info(.le$logger, paste0("Returning stderr: ", notes_result$stderr))
-
   tab_script <- system.file("scripts/remove_tables.py", package = "reportifyr")
   tab_args <- c("run", tab_script, "-i", docx_out, "-o", docx_out)
 
@@ -111,10 +107,6 @@ remove_tables_figures_footnotes <- function(
       ))
     }
   )
-
-  log4r::info(.le$logger, paste0("Returning status: ", tab_result$status))
-  log4r::info(.le$logger, paste0("Returning stdout: ", tab_result$stdout))
-  log4r::info(.le$logger, paste0("Returning stderr: ", tab_result$stderr))
 
   # input file is output of previous step
   fig_script <- system.file("scripts/remove_figures.py", package = "reportifyr")
@@ -157,10 +149,6 @@ remove_tables_figures_footnotes <- function(
       ))
     }
   )
-
-  log4r::info(.le$logger, paste0("Returning status: ", fig_result$status))
-  log4r::info(.le$logger, paste0("Returning stdout: ", fig_result$stdout))
-  log4r::info(.le$logger, paste0("Returning stderr: ", fig_result$stderr))
 
   log4r::debug(.le$logger, "Exiting remove_tables_figures_footnotes function")
   tictoc::toc()
