@@ -1,10 +1,26 @@
 .le <- new.env() # parent = emptyenv()
 
+#' Get the current log file path
+#'
+#' @return path to the log file, or NULL if not set
+#'
+#' @export
+get_log_file <- function() {
+  if (exists("log_file", envir = .le)) {
+    .le$log_file
+  } else {
+    message("No log file set. Log file is created on package load.")
+    NULL
+  }
+}
+
 #' Updates the logging level for console output. Default is set to WARN.
 #' File logging is always at DEBUG level when log_file is provided.
 #'
 #' @param quiet suppresses messaging about log level.
-#' @param log_file path to log file. If NULL, only console logging is enabled.
+#' @param log_file path to log file. Defaults to the current session log file
+#'   set on package load. Use \code{get_log_file()} to retrieve the current
+#'   path. Pass a custom path to write to a different file.
 #' @param lazy_file if TRUE, delay log file creation until first log write.
 #'
 #' @export
@@ -13,7 +29,7 @@
 #' Sys.setenv("RPFY_VERBOSE" = "DEBUG")
 #' toggle_logger()
 #' }
-toggle_logger <- function(quiet = FALSE, log_file = NULL, lazy_file = FALSE) {
+toggle_logger <- function(quiet = FALSE, log_file = get_log_file(), lazy_file = FALSE) {
   LEVEL_NAMES <- c("DEBUG", "INFO", "WARN", "ERROR", "FATAL")
   verbosity <- Sys.getenv("RPFY_VERBOSE", unset = "WARN")
   if (!(verbosity %in% LEVEL_NAMES)) {
