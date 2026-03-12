@@ -267,7 +267,20 @@ run_python_script <- function(uv_path, args, venv_path, script_name) {
       )
     },
     error = function(e) {
-      stop(paste0(script_name, " failed: ", e$message))
+      py_err <- e$stderr %||% ""
+      if (nzchar(py_err)) {
+        log4r::error(
+          .le$logger,
+          paste0(script_name, " Python error:\n", py_err)
+        )
+      }
+      stop(
+        paste0(
+          script_name, " failed:\n",
+          if (nzchar(py_err)) py_err else e$message
+        ),
+        call. = FALSE
+      )
     }
   )
 }
