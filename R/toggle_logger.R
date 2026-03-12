@@ -61,9 +61,15 @@ toggle_logger <- function(quiet = FALSE, log_file = get_log_file(), lazy_file = 
     if (lazy_file) {
       lazy_appender <- local({
         initialized <- FALSE
+        disabled <- FALSE
         delegate <- NULL
         function(level, ...) {
+          if (disabled) return(invisible(NULL))
           if (!initialized) {
+            if (getOption("rpfy.no_log", FALSE)) {
+              disabled <<- TRUE
+              return(invisible(NULL))
+            }
             log_dir <- dirname(log_file)
             if (!dir.exists(log_dir)) {
               dir.create(log_dir, recursive = TRUE)
@@ -71,7 +77,10 @@ toggle_logger <- function(quiet = FALSE, log_file = get_log_file(), lazy_file = 
             if (!file.exists(log_file)) {
               file.create(log_file)
             }
-            delegate <<- log4r::file_appender(log_file, layout = my_layout)
+            delegate <<- log4r::file_appender(
+              log_file,
+              layout = my_layout
+            )
             initialized <<- TRUE
           }
           delegate(level, ...)
