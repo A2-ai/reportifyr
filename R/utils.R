@@ -267,12 +267,18 @@ run_python_script <- function(uv_path, args, venv_path, script_name) {
       )
     },
     error = function(e) {
-      py_err <- e$stderr %||% ""
+      py_err <- trimws(e$stderr %||% "")
       if (nzchar(py_err)) {
-        log4r::error(
-          .le$logger,
-          paste0(script_name, " Python error:\n", py_err)
-        )
+        log4r::error(.le$logger, py_err)
+        # Show only the traceback in the R error
+        lines <- strsplit(py_err, "\n")[[1]]
+        tb_start <- grep("Traceback", lines)
+        if (length(tb_start)) {
+          py_err <- paste(
+            lines[tb_start[1]:length(lines)],
+            collapse = "\n"
+          )
+        }
       }
       stop(
         paste0(
