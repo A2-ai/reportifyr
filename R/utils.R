@@ -252,25 +252,47 @@ find_project_root <- function(start_path = getwd()) {
 #' @keywords internal
 #' @noRd
 run_python_script <- function(uv_path, args, venv_path, script_name) {
+  log_file <- .le$log_file
+  no_log <- getOption("rpfy.no_log", FALSE)
+
   tryCatch(
     {
       python_path <- system.file("python", package = "reportifyr")
-      env_vars <- c("current", VIRTUAL_ENV = venv_path)
+      env_vars <- c(
+        "current",
+        VIRTUAL_ENV = venv_path,
+        RPFY_VERBOSE = Sys.getenv("RPFY_VERBOSE", unset = "WARN")
+      )
       if (nzchar(python_path)) {
         env_vars <- c(env_vars, PYTHONPATH = python_path)
       }
+
+      # Callback: pass Python's pre-formatted lines through raw
+      py_callback <- function(line, proc) {
+        line <- sub("\r?\n$", "", line)
+        if (nchar(line) == 0) return(invisible(NULL))
+
+        # Console: Python already filtered by RPFY_VERBOSE
+        cat(line, "\n")
+
+        # Log file: always write
+        if (!is.null(log_file) && !no_log) {
+          cat(line, "\n", file = log_file, append = TRUE)
+        }
+      }
+
       processx::run(
         command = uv_path,
         args = args,
         env = env_vars,
+        stderr_callback = py_callback,
         error_on_status = TRUE
       )
     },
     error = function(e) {
       py_err <- trimws(e$stderr %||% "")
       if (nzchar(py_err)) {
-        log4r::error(.le$logger, py_err)
-        # Show only the traceback in the R error
+        # Extract traceback from stderr (log lines already handled by callback)
         lines <- strsplit(py_err, "\n")[[1]]
         tb_start <- grep("Traceback", lines)
         if (length(tb_start)) {

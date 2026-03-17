@@ -29,7 +29,6 @@ def main():
     p.add_argument("-c", "--config", default=None)
     p.add_argument("-w", "--width", type=float, default=None)
     p.add_argument("-g", "--height", type=float, default=None)
-    p.add_argument("-l", "--log", default=None)
 
     # add-figure-alt-text
     p = subparsers.add_parser(
@@ -37,13 +36,11 @@ def main():
     )
     p.add_argument("-i", "--input", required=True)
     p.add_argument("-o", "--output", required=True)
-    p.add_argument("-l", "--log", default=None)
 
     # add-table-alt-text
     p = subparsers.add_parser("add-table-alt-text", help="Insert alt text for tables")
     p.add_argument("-i", "--input", required=True)
     p.add_argument("-o", "--output", required=True)
-    p.add_argument("-l", "--log", default=None)
 
     # add-figure-footnotes
     p = subparsers.add_parser("add-figure-footnotes", help="Insert figure footnotes")
@@ -54,7 +51,6 @@ def main():
     p.add_argument("-c", "--config", required=True)
     p.add_argument("-b", "--object", type=_parse_bool)
     p.add_argument("-m", "--fail-metadata", type=_parse_bool)
-    p.add_argument("-l", "--log", default=None)
 
     # add-table-footnotes
     p = subparsers.add_parser("add-table-footnotes", help="Insert table footnotes")
@@ -65,7 +61,6 @@ def main():
     p.add_argument("-c", "--config", required=True)
     p.add_argument("-b", "--object", type=_parse_bool)
     p.add_argument("-m", "--fail-metadata", type=_parse_bool)
-    p.add_argument("-l", "--log", default=None)
 
     # remove-footnotes
     p = subparsers.add_parser("remove-footnotes", help="Remove footnotes")
@@ -123,12 +118,11 @@ def main():
             args.config,
             args.width,
             args.height,
-            args.log,
         )
     elif args.command == "add-figure-alt-text":
-        add_figure_alt_text(args.input, args.output, args.log)
+        add_figure_alt_text(args.input, args.output)
     elif args.command == "add-table-alt-text":
-        add_table_alt_text(args.input, args.output, args.log)
+        add_table_alt_text(args.input, args.output)
     elif args.command == "add-figure-footnotes":
         add_figure_footnotes(
             args.input,
@@ -138,7 +132,6 @@ def main():
             args.config,
             args.object,
             args.fail_metadata,
-            args.log,
         )
     elif args.command == "add-table-footnotes":
         add_table_footnotes(
@@ -149,7 +142,6 @@ def main():
             args.config,
             args.object,
             args.fail_metadata,
-            args.log,
         )
     elif args.command == "remove-footnotes":
         remove_footnotes(args.input, args.output)

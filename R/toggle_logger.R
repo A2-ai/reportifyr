@@ -120,5 +120,5 @@ toggle_logger <- function(quiet = FALSE, log_file = get_log_file(), lazy_file = 
 }
 
 my_layout <- function(level, ...) {
-  paste0(format(Sys.time()), " [", level, "] ", ..., "\n", collapse = "")
+  paste0(format(Sys.time()), " [R] [", level, "] ", ..., "\n", collapse = "")
 }

@@ -83,9 +83,7 @@ add_plots <- function(
     "-o",
     intermediate_figs_docx,
     "-d",
-    figures_path,
-    "-l",
-    .le$log_file
+    figures_path
   )
 
   if (is.null(config_yaml)) {

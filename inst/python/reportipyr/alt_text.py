@@ -1,5 +1,4 @@
 import os
-from typing import Optional
 
 from docx import Document
 from docx.oxml import OxmlElement
@@ -9,8 +8,8 @@ from .logging import setup_logger
 from .magic import get_magic_pattern
 
 
-def add_figure_alt_text(docx_in: str, docx_out: str, log_file: Optional[str] = None):
-    logger = setup_logger(log_file)
+def add_figure_alt_text(docx_in: str, docx_out: str):
+    logger = setup_logger()
     logger.debug("Starting add_figure_alt_text function")
     logger.debug(f"Loading document from: {docx_in}")
 
@@ -66,8 +65,8 @@ def set_table_alt_text(table, alt_text):
     tblPr.append(desc)
 
 
-def add_table_alt_text(docx_in: str, docx_out: str, log_file: Optional[str] = None):
-    logger = setup_logger(log_file)
+def add_table_alt_text(docx_in: str, docx_out: str):
+    logger = setup_logger()
     logger.debug("Starting add_table_alt_text function")
     logger.debug(f"Loading document from: {docx_in}")
 

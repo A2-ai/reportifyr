@@ -34,9 +34,7 @@ add_plots_alt_text <- function(
     "-i",
     docx_in,
     "-o",
-    docx_out,
-    "-l",
-    .le$log_file
+    docx_out
   )
 
   paths <- get_venv_uv_paths()

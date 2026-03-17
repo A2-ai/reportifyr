@@ -265,9 +265,8 @@ def add_figure_footnotes(
     config_yaml: Optional[str],
     include_object_path: bool = False,
     fail_on_missing_metadata: bool = True,
-    log_file: Optional[str] = None,
 ):
-    logger = setup_logger(log_file)
+    logger = setup_logger()
     logger.debug("Starting add_figure_footnotes function")
     logger.debug(f"Loading document from: {docx_in}")
     logger.debug(f"Figure directory: {figure_dir}")
@@ -409,9 +408,8 @@ def add_table_footnotes(
     config_yaml: Optional[str],
     include_object_path: bool = False,
     fail_on_missing_metadata: bool = True,
-    log_file: Optional[str] = None,
 ):
-    logger = setup_logger(log_file)
+    logger = setup_logger()
     logger.debug("Starting add_table_footnotes function")
     logger.debug(f"Loading document from: {docx_in}")
     logger.debug(f"Table directory: {table_dir}")

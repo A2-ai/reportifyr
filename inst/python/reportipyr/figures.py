@@ -21,9 +21,8 @@ def add_figure(
     config_yaml: Optional[str],
     fig_width: Optional[float] = None,
     fig_height: Optional[float] = None,
-    log_file: Optional[str] = None,
 ):
-    logger = setup_logger(log_file)
+    logger = setup_logger()
     logger.debug("Starting add_figure function")
     logger.debug(f"Loading document from: {docx_in}")
     logger.debug(f"Figure directory: {figure_dir}")
