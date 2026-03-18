@@ -309,6 +309,17 @@ run_python_script <- function(uv_path, args, venv_path, script_name) {
       )
     },
     error = function(e) {
+      py_err <- trimws(e$stderr %||% "")
+      if (nzchar(py_err)) {
+        # Filter out log lines (already handled by callback), keep raw output
+        lines <- strsplit(py_err, "\n")[[1]]
+        raw_lines <- lines[!grepl("^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2} \\[py\\]", lines)]
+        raw <- paste(trimws(raw_lines), collapse = "\n")
+        # Write raw output (tracebacks, etc.) to log file
+        if (nzchar(raw) && !is.null(log_file) && !no_log) {
+          cat(raw, "\n", file = log_file, append = TRUE)
+        }
+      }
       stop(paste0(script_name, " failed."), call. = FALSE)
     }
   )
