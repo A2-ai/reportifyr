@@ -328,6 +328,7 @@ def add_figure_footnotes(
                 else:
                     logger.warning(f"Metadata file not found for: {figure_name}")
                     missing_metadata = True
+                    continue
 
                 if len(figure_args) > 1:
                     for key in meta_text_dict.keys():
