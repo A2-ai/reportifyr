@@ -147,7 +147,8 @@ def create_formatted_run(
     rFonts = OxmlElement("w:rFonts")
     rFonts.set(qn("w:ascii"), config.get("footnotes_font", "Arial Narrow"))
     sz = OxmlElement("w:sz")
-    sz.set(qn("w:val"), str(2 * config.get("footnotes_font_size", "10")))
+    font_size = int(config.get("footnotes_font_size", 10))
+    sz.set(qn("w:val"), str(2 * font_size))
     rPr.append(rFonts)
     rPr.append(sz)
 
