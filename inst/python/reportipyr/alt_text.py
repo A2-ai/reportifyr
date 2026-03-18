@@ -5,7 +5,7 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
 from .logging import setup_logger
-from .magic import get_magic_pattern
+from .magic import get_magic_pattern, parse_magic_entries
 
 
 def add_figure_alt_text(docx_in: str, docx_out: str):
@@ -31,7 +31,10 @@ def add_figure_alt_text(docx_in: str, docx_out: str):
         match = magic_pattern.search(para_text)
         if match and idx + 1 < len(paragraphs):
             # Extract filename and check extension
-            filename = match.group().replace("{rpfy}:", "").strip()
+            entries = parse_magic_entries(match.group())
+            if not entries:
+                continue
+            filename, _args = entries[0]
             extension = os.path.splitext(filename)[1].lower()
             if extension != ".png":
                 logger.debug(f"Skipping non-png magic string: {filename}")
