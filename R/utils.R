@@ -268,16 +268,35 @@ run_python_script <- function(uv_path, args, venv_path, script_name) {
       }
 
       # Callback: pass Python's pre-formatted lines through raw
-      py_callback <- function(line, proc) {
-        line <- sub("\r?\n$", "", line)
-        if (nchar(line) == 0) return(invisible(NULL))
+      py_levels <- c(
+        "DEBUG" = 1, "INFO" = 2, "WARNING" = 3, "ERROR" = 4, "FATAL" = 5
+      )
+      r_levels <- c(
+        "DEBUG" = 1, "INFO" = 2, "WARN" = 3, "ERROR" = 4, "FATAL" = 5
+      )
+      threshold <- r_levels[[Sys.getenv("RPFY_VERBOSE", unset = "WARN")]]
 
-        # Console: Python already filtered by RPFY_VERBOSE
-        cat(line, "\n")
+      py_callback <- function(chunk, proc) {
+        lines <- strsplit(chunk, "\n")[[1]]
+        for (line in lines) {
+          line <- trimws(line)
+          if (nchar(line) == 0) next
 
-        # Log file: always write
-        if (!is.null(log_file) && !no_log) {
-          cat(line, "\n", file = log_file, append = TRUE)
+          # Log file: always write (DEBUG level)
+          if (!is.null(log_file) && !no_log) {
+            cat(line, "\n", file = log_file, append = TRUE)
+          }
+
+          # Console: filter by verbosity
+          show <- TRUE
+          level_match <- regmatches(
+            line, regexpr("\\[(DEBUG|INFO|WARNING|ERROR|FATAL)\\]", line)
+          )
+          if (length(level_match) == 1) {
+            level <- gsub("\\[|\\]", "", level_match)
+            show <- py_levels[[level]] >= threshold
+          }
+          if (show) cat(line, "\n")
         }
       }
 

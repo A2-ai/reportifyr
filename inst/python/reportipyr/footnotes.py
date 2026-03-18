@@ -26,7 +26,7 @@ def load_metadata(artifact_dir: str, artifact_file: str) -> dict | None:
         with open(metadata_file, "r") as m:
             return json.load(m)
     except FileNotFoundError:
-        print(f"Metadata file not found: {metadata_file}", file=sys.stderr)
+        logging.getLogger("rpfy").warning(f"Metadata file not found: {metadata_file}")
         return None
 
 
@@ -388,9 +388,9 @@ def add_figure_footnotes(
 
     # save the processed document
     if missing_metadata and fail_on_missing_metadata:
-        logger.error("Output not created due to missing metadata")
-        print(
-            "Output not created due to missing metadata. Please check logs for missing metadata files."
+        logger.error(
+            "Output not created due to missing metadata. "
+            "Please check logs for missing metadata files."
         )
         sys.exit(1)
     else:
@@ -478,9 +478,9 @@ def add_table_footnotes(
 
     # Save the processed document
     if missing_metadata and fail_on_missing_metadata:
-        logger.error("Output not created due to missing metadata")
-        print(
-            "Output not created due to missing metadata. Please check logs for missing metadata files."
+        logger.error(
+            "Output not created due to missing metadata. "
+            "Please check logs for missing metadata files."
         )
         sys.exit(1)
     else:
