@@ -389,10 +389,7 @@ def add_figure_footnotes(
 
     # save the processed document
     if missing_metadata and fail_on_missing_metadata:
-        logger.error(
-            "Output not created due to missing metadata. "
-            "Please check logs for missing metadata files."
-        )
+        logger.error("Output not created due to missing metadata.")
         sys.exit(1)
     else:
         document.save(docx_out)
@@ -479,10 +476,7 @@ def add_table_footnotes(
 
     # Save the processed document
     if missing_metadata and fail_on_missing_metadata:
-        logger.error(
-            "Output not created due to missing metadata. "
-            "Please check logs for missing metadata files."
-        )
+        logger.error("Output not created due to missing metadata.")
         sys.exit(1)
     else:
         document.save(docx_out)
