@@ -2,6 +2,7 @@ import os
 import re
 import sys
 import json
+import logging
 from typing import Optional
 
 from docx import Document
