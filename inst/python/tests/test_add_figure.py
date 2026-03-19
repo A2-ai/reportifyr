@@ -56,3 +56,39 @@ def test_add_figure_respects_cli_dimensions():
     expected_height = int(5.0 * 914400)
     assert extent[0] == expected_width
     assert extent[1] == expected_height
+
+
+def _write_yaml(contents: str) -> str:
+    path = tempfile.NamedTemporaryFile(suffix=".yaml", delete=False).name
+    Path(path).write_text(contents)
+    return path
+
+
+def test_add_figure_respects_embedded_size():
+    figure_dir = Path(tempfile.mkdtemp())
+    img_path = figure_dir / "figure.png"
+    _make_png(img_path)
+
+    docx_in = tempfile.NamedTemporaryFile(suffix=".docx", delete=False).name
+    doc = Document()
+    doc.add_paragraph("{rpfy}:figure.png<width: 4, height: 5>")
+    doc.save(docx_in)
+
+    config_yaml = _write_yaml("use_embedded_size: true\n")
+
+    docx_out = tempfile.NamedTemporaryFile(suffix=".docx", delete=False).name
+    add_figure(
+        docx_in=docx_in,
+        docx_out=docx_out,
+        figure_dir=str(figure_dir),
+        config_yaml=config_yaml,
+    )
+
+    out_doc = Document(docx_out)
+    extent = _get_first_extent(out_doc)
+    assert extent is not None
+
+    expected_width = int(4.0 * 914400)
+    expected_height = int(5.0 * 914400)
+    assert extent[0] == expected_width
+    assert extent[1] == expected_height

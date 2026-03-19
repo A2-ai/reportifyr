@@ -17,6 +17,14 @@ def _make_docx_with_text(text: str) -> str:
     return path
 
 
+def test_validate_docx_corrupt_file():
+    path = tempfile.NamedTemporaryFile(suffix=".docx", delete=False).name
+    Path(path).write_text("this is not a docx file")
+    result = validate_docx(path, strict=True)
+    assert result["success"] is False
+    assert any("Failed to read document" in msg for msg in result["errors"])
+
+
 def test_validate_docx_missing_magic():
     path = _make_docx_with_text("no magic here")
     result = validate_docx(path, strict=True)
@@ -29,6 +37,13 @@ def test_validate_docx_invalid_extension_strict():
     result = validate_docx(path, strict=True)
     assert result["success"] is False
     assert any("Unsupported file types" in msg for msg in result["errors"])
+
+
+def test_validate_docx_invalid_extension_nonstrict():
+    path = _make_docx_with_text("{rpfy}:example.doc")
+    result = validate_docx(path, strict=False)
+    assert result["success"] is True
+    assert any("Unsupported file types" in msg for msg in result["warnings"])
 
 
 def test_validate_docx_duplicates_strict():
