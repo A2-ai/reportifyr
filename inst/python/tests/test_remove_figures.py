@@ -40,3 +40,28 @@ def test_remove_figures_updates_magic_string_with_dimensions():
     text = out_doc.paragraphs[0].text
     assert "width: 2.0" in text
     assert "height: 3.0" in text
+
+
+def test_remove_figures_no_dimensions_when_disabled():
+    img_path = _make_png()
+
+    docx_in = tempfile.NamedTemporaryFile(suffix=".docx", delete=False).name
+    doc = Document()
+    doc.add_paragraph("{rpfy}:figure.png")
+    fig_par = doc.add_paragraph()
+    fig_par.add_run().add_picture(img_path, width=Inches(2), height=Inches(3))
+    doc.save(docx_in)
+
+    config_yaml = _write_yaml("use_embedded_dimensions: false\n")
+
+    docx_out = tempfile.NamedTemporaryFile(suffix=".docx", delete=False).name
+    remove_figures(docx_in, docx_out, config_yaml)
+
+    out_doc = Document(docx_out)
+    # Magic string should be unchanged
+    assert out_doc.paragraphs[0].text.strip() == "{rpfy}:figure.png"
+    # Image paragraph should be removed
+    has_drawing = any(
+        p._element.xpath(".//w:drawing") for p in out_doc.paragraphs
+    )
+    assert has_drawing is False
