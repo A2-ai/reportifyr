@@ -2,6 +2,7 @@ import os
 import re
 import sys
 import json
+import logging
 from typing import Optional
 
 from docx import Document
@@ -26,7 +27,7 @@ def load_metadata(artifact_dir: str, artifact_file: str) -> dict | None:
         with open(metadata_file, "r") as m:
             return json.load(m)
     except FileNotFoundError:
-        print(f"Metadata file not found: {metadata_file}", file=sys.stderr)
+        logging.getLogger("rpfy").warning(f"Metadata file not found: {metadata_file}")
         return None
 
 
@@ -146,7 +147,8 @@ def create_formatted_run(
     rFonts = OxmlElement("w:rFonts")
     rFonts.set(qn("w:ascii"), config.get("footnotes_font", "Arial Narrow"))
     sz = OxmlElement("w:sz")
-    sz.set(qn("w:val"), str(2 * config.get("footnotes_font_size", "10")))
+    font_size = int(config.get("footnotes_font_size", 10))
+    sz.set(qn("w:val"), str(2 * font_size))
     rPr.append(rFonts)
     rPr.append(sz)
 
@@ -265,9 +267,8 @@ def add_figure_footnotes(
     config_yaml: Optional[str],
     include_object_path: bool = False,
     fail_on_missing_metadata: bool = True,
-    log_file: Optional[str] = None,
 ):
-    logger = setup_logger(log_file)
+    logger = setup_logger()
     logger.debug("Starting add_figure_footnotes function")
     logger.debug(f"Loading document from: {docx_in}")
     logger.debug(f"Figure directory: {figure_dir}")
@@ -328,6 +329,7 @@ def add_figure_footnotes(
                 else:
                     logger.warning(f"Metadata file not found for: {figure_name}")
                     missing_metadata = True
+                    continue
 
                 if len(figure_args) > 1:
                     for key in meta_text_dict.keys():
@@ -389,10 +391,7 @@ def add_figure_footnotes(
 
     # save the processed document
     if missing_metadata and fail_on_missing_metadata:
-        logger.error("Output not created due to missing metadata")
-        print(
-            "Output not created due to missing metadata. Please check logs for missing metadata files."
-        )
+        logger.error("Output not created due to missing metadata.")
         sys.exit(1)
     else:
         document.save(docx_out)
@@ -409,9 +408,8 @@ def add_table_footnotes(
     config_yaml: Optional[str],
     include_object_path: bool = False,
     fail_on_missing_metadata: bool = True,
-    log_file: Optional[str] = None,
 ):
-    logger = setup_logger(log_file)
+    logger = setup_logger()
     logger.debug("Starting add_table_footnotes function")
     logger.debug(f"Loading document from: {docx_in}")
     logger.debug(f"Table directory: {table_dir}")
@@ -480,10 +478,7 @@ def add_table_footnotes(
 
     # Save the processed document
     if missing_metadata and fail_on_missing_metadata:
-        logger.error("Output not created due to missing metadata")
-        print(
-            "Output not created due to missing metadata. Please check logs for missing metadata files."
-        )
+        logger.error("Output not created due to missing metadata.")
         sys.exit(1)
     else:
         document.save(docx_out)

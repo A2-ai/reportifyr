@@ -1,16 +1,15 @@
 import os
-from typing import Optional
 
 from docx import Document
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
 from .logging import setup_logger
-from .magic import get_magic_pattern
+from .magic import get_magic_pattern, parse_magic_entries
 
 
-def add_figure_alt_text(docx_in: str, docx_out: str, log_file: Optional[str] = None):
-    logger = setup_logger(log_file)
+def add_figure_alt_text(docx_in: str, docx_out: str):
+    logger = setup_logger()
     logger.debug("Starting add_figure_alt_text function")
     logger.debug(f"Loading document from: {docx_in}")
 
@@ -32,7 +31,10 @@ def add_figure_alt_text(docx_in: str, docx_out: str, log_file: Optional[str] = N
         match = magic_pattern.search(para_text)
         if match and idx + 1 < len(paragraphs):
             # Extract filename and check extension
-            filename = match.group().replace("{rpfy}:", "").strip()
+            entries = parse_magic_entries(match.group())
+            if not entries:
+                continue
+            filename, _args = entries[0]
             extension = os.path.splitext(filename)[1].lower()
             if extension != ".png":
                 logger.debug(f"Skipping non-png magic string: {filename}")
@@ -66,8 +68,8 @@ def set_table_alt_text(table, alt_text):
     tblPr.append(desc)
 
 
-def add_table_alt_text(docx_in: str, docx_out: str, log_file: Optional[str] = None):
-    logger = setup_logger(log_file)
+def add_table_alt_text(docx_in: str, docx_out: str):
+    logger = setup_logger()
     logger.debug("Starting add_table_alt_text function")
     logger.debug(f"Loading document from: {docx_in}")
 
@@ -114,6 +116,9 @@ def add_table_alt_text(docx_in: str, docx_out: str, log_file: Optional[str] = No
 
 
 def check_alt_text_magic_string(docx_in: str):
+    logger = setup_logger()
+    logger.debug("Starting check_alt_text_magic_string function")
+
     magic_pattern = get_magic_pattern()
 
     doc = Document(docx_in)
@@ -134,11 +139,13 @@ def check_alt_text_magic_string(docx_in: str):
 
         if magic_pattern.search(para_text) and idx + 1 < len(paragraphs):
             # check for drawing and tbl
-            check_drawing_alt_text(paragraphs[idx + 1], para_text)
-            check_table_alt_text(tbl_map.get(paragraphs[idx + 1]), para_text)
+            check_drawing_alt_text(logger, paragraphs[idx + 1], para_text)
+            check_table_alt_text(logger, tbl_map.get(paragraphs[idx + 1]), para_text)
+
+    logger.debug("Exiting check_alt_text_magic_string function")
 
 
-def check_drawing_alt_text(paragraph, para_text: str):
+def check_drawing_alt_text(logger, paragraph, para_text: str):
     drawings = paragraph.xpath(".//w:drawing")
     for drawing in drawings:
         inlines = drawing.xpath(".//wp:inline")
@@ -147,27 +154,27 @@ def check_drawing_alt_text(paragraph, para_text: str):
             if doc_pr:
                 alt_text = doc_pr[0].get("descr")
                 if alt_text is None:
-                    print(
+                    logger.warning(
                         f"Magic mismatch! Alt text MISSING for magic string: {para_text}"
                     )
                 elif alt_text != para_text:
-                    print(
+                    logger.warning(
                         f"Magic mismatch! Magic string: {para_text} != alt text: {alt_text}"
                     )
 
 
-def check_table_alt_text(table, para_text: str):
+def check_table_alt_text(logger, table, para_text: str):
     if table is None:
         return
 
     tbl_pr = table._tbl.tblPr
     desc = tbl_pr.find(qn("w:tblDescription"))
     if desc is None:
-        print("Table found but it has no alt text description or title.")
+        logger.warning("Table found but it has no alt text description or title.")
         return
 
     alt_text = desc.get(qn("w:val"))
     if alt_text is None:
-        print(f"Magic mismatch! Alt text MISSING for magic string: {para_text}")
+        logger.warning(f"Magic mismatch! Alt text MISSING for magic string: {para_text}")
     elif alt_text != para_text:
-        print(f"Magic mismatch! Magic string: {para_text} != alt text: {alt_text}")
+        logger.warning(f"Magic mismatch! Magic string: {para_text} != alt text: {alt_text}")

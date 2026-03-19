@@ -252,22 +252,75 @@ find_project_root <- function(start_path = getwd()) {
 #' @keywords internal
 #' @noRd
 run_python_script <- function(uv_path, args, venv_path, script_name) {
+  log_file <- .le$log_file
+  no_log <- getOption("rpfy.no_log", FALSE)
+
   tryCatch(
     {
       python_path <- system.file("python", package = "reportifyr")
-      env_vars <- c("current", VIRTUAL_ENV = venv_path)
+      env_vars <- c(
+        "current",
+        VIRTUAL_ENV = venv_path,
+        RPFY_VERBOSE = Sys.getenv("RPFY_VERBOSE", unset = "WARN")
+      )
       if (nzchar(python_path)) {
         env_vars <- c(env_vars, PYTHONPATH = python_path)
       }
+
+      # Callback: pass Python's pre-formatted lines through raw
+      py_levels <- c(
+        "DEBUG" = 1, "INFO" = 2, "WARNING" = 3, "ERROR" = 4, "FATAL" = 5
+      )
+      r_levels <- c(
+        "DEBUG" = 1, "INFO" = 2, "WARN" = 3, "ERROR" = 4, "FATAL" = 5
+      )
+      threshold <- r_levels[[Sys.getenv("RPFY_VERBOSE", unset = "WARN")]]
+
+      py_callback <- function(chunk, proc) {
+        lines <- strsplit(chunk, "\n")[[1]]
+        for (line in lines) {
+          line <- trimws(line)
+          if (nchar(line) == 0) next
+
+          # Log file: always write (DEBUG level)
+          if (!is.null(log_file) && !no_log) {
+            cat(line, "\n", file = log_file, append = TRUE)
+          }
+
+          # Console: filter by verbosity
+          show <- TRUE
+          level_match <- regmatches(
+            line, regexpr("\\[(DEBUG|INFO|WARNING|ERROR|FATAL)\\]", line)
+          )
+          if (length(level_match) == 1) {
+            level <- gsub("\\[|\\]", "", level_match)
+            show <- py_levels[[level]] >= threshold
+          }
+          if (show) cat(line, "\n")
+        }
+      }
+
       processx::run(
         command = uv_path,
         args = args,
         env = env_vars,
+        stderr_callback = py_callback,
         error_on_status = TRUE
       )
     },
     error = function(e) {
-      stop(paste0(script_name, " failed: ", e$message))
+      py_err <- trimws(e$stderr %||% "")
+      if (nzchar(py_err)) {
+        # Filter out log lines (already handled by callback), keep raw output
+        lines <- strsplit(py_err, "\n")[[1]]
+        raw_lines <- lines[!grepl("^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2} \\[py\\]", lines)]
+        raw <- paste(trimws(raw_lines), collapse = "\n")
+        # Write raw output (tracebacks, etc.) to log file
+        if (nzchar(raw) && !is.null(log_file) && !no_log) {
+          cat(raw, "\n", file = log_file, append = TRUE)
+        }
+      }
+      stop(paste0(script_name, " failed."), call. = FALSE)
     }
   )
 }

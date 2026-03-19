@@ -41,23 +41,7 @@ validate_docx <- function(docx_in, config_yaml) {
     log4r::info(.le$logger, "config.yaml not supplied, using strict mode")
   }
 
-  venv_path <- file.path(getOption("venv_dir"), ".venv")
-  if (!dir.exists(venv_path)) {
-    log4r::error(
-      .le$logger,
-      "Virtual environment not found. Please initialize with initialize_python."
-    )
-    stop("Create virtual environment with initialize_python")
-  }
-
-  uv_path <- get_uv_path()
-  if (is.null(uv_path)) {
-    log4r::error(
-      .le$logger,
-      "uv not found. Please install with initialize_python"
-    )
-    stop("Please install uv with initialize_python")
-  }
+  paths <- get_venv_uv_paths()
 
   args <- c(
     "run",
@@ -72,17 +56,22 @@ validate_docx <- function(docx_in, config_yaml) {
   }
 
   python_path <- system.file("python", package = "reportifyr")
-  env_vars <- c("current", VIRTUAL_ENV = venv_path)
+  env_vars <- c("current", VIRTUAL_ENV = paths$venv)
   if (nzchar(python_path)) {
     env_vars <- c(env_vars, PYTHONPATH = python_path)
   }
 
   result <- processx::run(
-    command = uv_path,
+    command = paths$uv,
     args = args,
     env = env_vars,
     error_on_status = FALSE
   )
+
+  if (!nzchar(trimws(result$stdout))) {
+    log4r::error(.le$logger, "validate-docx returned no output")
+    stop("validate-docx failed — check log file for Python errors.")
+  }
 
   validation <- jsonlite::fromJSON(result$stdout)
 

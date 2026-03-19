@@ -32,25 +32,12 @@ validate_alt_text_magic_strings <- function(
   paths <- get_venv_uv_paths()
 
   log4r::debug(.le$logger, "Running check_alt_text_magic_strings script")
-  result <- run_python_script(
+  run_python_script(
     paths$uv,
     args,
     paths$venv,
     "Check alt text magic string script"
   )
-
-  if (grepl("Magic mismatch!", result$stdout)) {
-    log4r::warn(
-      .le$logger,
-      "Mismatching magic strings found!"
-    )
-  }
-
-  if (grepl("Magic mismatch", result$stdout)) {
-    stdout_lines <- strsplit(result$stdout, "\n")[[1]]
-    matching_lines <- stdout_lines[grepl("Magic mismatch", stdout_lines)]
-    log4r::warn(.le$logger, matching_lines)
-  }
 
   tictoc::toc()
 

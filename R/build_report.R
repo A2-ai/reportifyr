@@ -113,10 +113,7 @@ build_report <- function(
       },
       error = function(e) {
         log4r::error(.le$logger, paste("Footnotes scripts failed:", e$message))
-        stop(
-          "build_report stopped: Failed to add footnotes due to an error in add_footnotes.",
-          call. = FALSE
-        )
+        stop(paste0("build_report stopped: ", e$message), call. = FALSE)
       }
     )
   }

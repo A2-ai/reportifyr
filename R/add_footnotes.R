@@ -96,9 +96,7 @@ add_footnotes <- function(
     "-b",
     include_object_path,
     "-m",
-    footnotes_fail_on_missing_metadata,
-    "-l",
-    .le$log_file
+    footnotes_fail_on_missing_metadata
   )
 
   # input file should be output file from call above
@@ -116,9 +114,7 @@ add_footnotes <- function(
     "-b",
     include_object_path,
     "-m",
-    footnotes_fail_on_missing_metadata,
-    "-l",
-    .le$log_file
+    footnotes_fail_on_missing_metadata
   )
 
   if (!is.null(standard_footnotes_yaml)) {

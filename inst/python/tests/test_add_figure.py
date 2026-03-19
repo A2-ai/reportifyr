@@ -46,7 +46,6 @@ def test_add_figure_respects_cli_dimensions():
         config_yaml=None,
         fig_width=4.0,
         fig_height=5.0,
-        log_file=None,
     )
 
     out_doc = Document(docx_out)
