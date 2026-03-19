@@ -1,4 +1,5 @@
 import argparse
+import json
 
 from .alt_text import (
     add_figure_alt_text,
@@ -159,14 +160,10 @@ def main():
         check_alt_text_magic_string(args.input)
     elif args.command == "validate-docx":
         result = validate_docx(args.input, strict=not args.no_strict)
-        import json
-
         print(json.dumps(result))
         if not result.get("success", False):
             raise SystemExit(1)
     elif args.command == "parse-magic-string":
-        import json
-
         print(json.dumps(parse_magic_string(args.input)))
 
 

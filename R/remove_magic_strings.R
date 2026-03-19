@@ -102,6 +102,6 @@ remove_magic_strings <- function(docx_in, docx_out) {
     log4r::error(.le$logger, "Invalid response from user. Must enter Y or n.")
     stop("You must enter Y or n")
   }
-  log4r::debug(.le$logger, "Exiting remove_bookmarks function")
+  log4r::debug(.le$logger, "Exiting remove_magic_strings function")
   tictoc::toc()
 }

@@ -1,7 +1,7 @@
 import json
 from docx import Document
 
-from .magic import parse_magic_entries, parse_magic_string
+from .magic import parse_magic_entries
 
 SUPPORTED_EXTENSIONS = {"csv", "rds", "png"}
 

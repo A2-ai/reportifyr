@@ -9,7 +9,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from PIL import Image, ImageDraw, ImageFont
 
 from .config import load_yaml
-from .magic import parse_magic_string
+from .magic import get_magic_pattern, parse_magic_string
 from .logging import setup_logger
 from .util import check_duplicates, create_label
 
@@ -35,8 +35,6 @@ def add_figure(
         config = load_yaml(config_yaml)
     else:
         config = {}
-
-    from .magic import get_magic_pattern
 
     magic_pattern = get_magic_pattern()
 

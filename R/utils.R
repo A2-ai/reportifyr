@@ -269,7 +269,7 @@ run_python_script <- function(uv_path, args, venv_path, script_name) {
 
       # Callback: pass Python's pre-formatted lines through raw
       py_levels <- c(
-        "DEBUG" = 1, "INFO" = 2, "WARNING" = 3, "ERROR" = 4, "FATAL" = 5
+        "DEBUG" = 1, "INFO" = 2, "WARNING" = 3, "ERROR" = 4, "CRITICAL" = 5
       )
       r_levels <- c(
         "DEBUG" = 1, "INFO" = 2, "WARN" = 3, "ERROR" = 4, "FATAL" = 5
@@ -290,7 +290,7 @@ run_python_script <- function(uv_path, args, venv_path, script_name) {
           # Console: filter by verbosity
           show <- TRUE
           level_match <- regmatches(
-            line, regexpr("\\[(DEBUG|INFO|WARNING|ERROR|FATAL)\\]", line)
+            line, regexpr("\\[(DEBUG|INFO|WARNING|ERROR|CRITICAL)\\]", line)
           )
           if (length(level_match) == 1) {
             level <- gsub("\\[|\\]", "", level_match)

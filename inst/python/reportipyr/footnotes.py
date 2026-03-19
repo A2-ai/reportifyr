@@ -1,6 +1,5 @@
 import os
 import re
-import sys
 import json
 import logging
 from typing import Optional
@@ -64,7 +63,13 @@ def create_meta_text_lines(
     ]  # If empty this might be a list -- should be ok because len will still work.
 
     if isinstance(meta_type, str) and meta_type != "NA":
-        n = footnotes[f"{artifact_type}_footnotes"][meta_type]
+        footnote_section = footnotes.get(f"{artifact_type}_footnotes", {})
+        if meta_type not in footnote_section:
+            raise KeyError(
+                f"meta_type '{meta_type}' not found in "
+                f"{artifact_type}_footnotes section of footnotes YAML"
+            )
+        n = footnote_section[meta_type]
         if n:
             if n.endswith("."):
                 notes_text += f"{n} "
@@ -87,8 +92,14 @@ def create_meta_text_lines(
     abbrev_text = ""
     abbrev_list = metadata["object_meta"]["footnotes"]["abbreviations"]
     if len(abbrev_list) > 0:
+        abbrev_section = footnotes.get("abbreviations", {})
         for abbrev in abbrev_list:
-            full_form = footnotes["abbreviations"][abbrev]
+            if abbrev not in abbrev_section:
+                raise KeyError(
+                    f"Abbreviation '{abbrev}' not found in "
+                    f"abbreviations section of footnotes YAML"
+                )
+            full_form = abbrev_section[abbrev]
             if full_form.endswith("."):
                 abbrev_text += f"{abbrev}: {full_form} "
             else:
@@ -392,7 +403,7 @@ def add_figure_footnotes(
     # save the processed document
     if missing_metadata and fail_on_missing_metadata:
         logger.error("Output not created due to missing metadata.")
-        sys.exit(1)
+        raise SystemExit(1)
     else:
         document.save(docx_out)
         logger.info(f"Figure footnotes saved to '{docx_out}'")
@@ -479,7 +490,7 @@ def add_table_footnotes(
     # Save the processed document
     if missing_metadata and fail_on_missing_metadata:
         logger.error("Output not created due to missing metadata.")
-        sys.exit(1)
+        raise SystemExit(1)
     else:
         document.save(docx_out)
         logger.info(f"Table footnotes saved to '{docx_out}'")
