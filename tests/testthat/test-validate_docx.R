@@ -14,13 +14,13 @@ create_config_yaml <- function(strict = TRUE) {
   path
 }
 
+mock_paths <- list(venv = "/fake/.venv", uv = "/fake/uv")
+
 test_that("validate_docx succeeds with valid docx and .csv file", {
   docx <- create_docx_with_magic_string("{rpfy}:example.csv")
   config <- create_config_yaml(strict = TRUE)
 
-  mockery::stub(validate_docx, "file.exists", function(x) TRUE)
-  mockery::stub(validate_docx, "dir.exists", function(x) TRUE)
-  mockery::stub(validate_docx, "get_uv_path", function() "~/.local/bin/uv")
+  mockery::stub(validate_docx, "get_venv_uv_paths", function() mock_paths)
   mockery::stub(validate_docx, "processx::run", function(...) {
     list(stdout = jsonlite::toJSON(list(
       success = TRUE,
@@ -37,10 +37,7 @@ test_that("validate_docx errors if file extension is invalid", {
   docx <- create_docx_with_magic_string("{rpfy}:example.doc")
   config <- create_config_yaml(strict = TRUE)
 
-  mockery::stub(validate_docx, "file.exists", function(x) TRUE)
-  mockery::stub(validate_docx, "dir.exists", function(x) TRUE)
-  mockery::stub(validate_docx, "get_uv_path", function() "~/.local/bin/uv")
-
+  mockery::stub(validate_docx, "get_venv_uv_paths", function() mock_paths)
   mockery::stub(validate_docx, "processx::run", function(...) {
     list(stdout = jsonlite::toJSON(list(
       success = FALSE,
@@ -60,10 +57,7 @@ test_that("validate_docx errors on duplicated files in strict mode", {
   docx <- create_docx_with_magic_string("{rpfy}:[example.csv, example.csv]")
   config <- create_config_yaml(strict = TRUE)
 
-  mockery::stub(validate_docx, "file.exists", function(x) TRUE)
-  mockery::stub(validate_docx, "dir.exists", function(x) TRUE)
-  mockery::stub(validate_docx, "get_uv_path", function() "~/.local/bin/uv")
-
+  mockery::stub(validate_docx, "get_venv_uv_paths", function() mock_paths)
   mockery::stub(validate_docx, "processx::run", function(...) {
     list(stdout = jsonlite::toJSON(list(
       success = FALSE,
@@ -96,9 +90,7 @@ test_that("validate_docx errors if magic string is missing", {
   print(officer::read_docx(), target = docx)
   config <- create_config_yaml()
 
-  mockery::stub(validate_docx, "file.exists", function(x) TRUE)
-  mockery::stub(validate_docx, "dir.exists", function(x) TRUE)
-  mockery::stub(validate_docx, "get_uv_path", function() "~/.local/bin/uv")
+  mockery::stub(validate_docx, "get_venv_uv_paths", function() mock_paths)
   mockery::stub(validate_docx, "processx::run", function(...) {
     list(stdout = jsonlite::toJSON(list(
       success = FALSE,
@@ -114,8 +106,9 @@ test_that("validate_docx errors if magic string is missing", {
 test_that("validate_docx errors if .venv directory is missing", {
   docx <- create_docx_with_magic_string("{rpfy}:example.csv")
 
-  mockery::stub(validate_docx, "file.exists", function(x) TRUE)
-  mockery::stub(validate_docx, "dir.exists", function(x) FALSE)
+  mockery::stub(validate_docx, "get_venv_uv_paths", function() {
+    stop("Create virtual environment with initialize_python")
+  })
 
   expect_error(
     validate_docx(docx, NULL),
@@ -126,9 +119,9 @@ test_that("validate_docx errors if .venv directory is missing", {
 test_that("validate_docx errors if uv path is NULL", {
   docx <- create_docx_with_magic_string("{rpfy}:example.csv")
 
-  mockery::stub(validate_docx, "file.exists", function(x) TRUE)
-  mockery::stub(validate_docx, "dir.exists", function(x) TRUE)
-  mockery::stub(validate_docx, "get_uv_path", function() NULL)
+  mockery::stub(validate_docx, "get_venv_uv_paths", function() {
+    stop("Please install uv with initialize_python")
+  })
 
   expect_error(
     validate_docx(docx, NULL),
