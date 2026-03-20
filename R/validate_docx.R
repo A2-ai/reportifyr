@@ -70,7 +70,7 @@ validate_docx <- function(docx_in, config_yaml) {
 
   if (!nzchar(trimws(result$stdout))) {
     log4r::error(.le$logger, "validate-docx returned no output")
-    stop("validate-docx failed — check log file for Python errors.")
+    stop("validate-docx failed -- check log file for Python errors.")
   }
 
   validation <- jsonlite::fromJSON(result$stdout)
