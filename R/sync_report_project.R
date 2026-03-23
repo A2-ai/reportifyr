@@ -103,7 +103,10 @@ sync_report_project <- function(project_dir, report_dir_name = NULL) {
         to = file.path(report_dir, basename(metadata_path)),
         overwrite = TRUE
       )
-      log4r::debug(.le$logger, "Updating .python_dependency_versions.json in report_dir_name")
+      log4r::debug(
+        .le$logger,
+        "Updating .python_dependency_versions.json in report_dir_name"
+      )
     }
   }
   # Check config

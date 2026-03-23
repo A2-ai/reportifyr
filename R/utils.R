@@ -156,9 +156,9 @@ get_uv_path <- function(quiet = FALSE) {
     # Windows paths
     uv_paths <- c(
       file.path(home_dir, ".local", "bin", "uv.exe"),
-      file.path(home_dir, ".local", "bin", "uv"),      # for tests without .exe
+      file.path(home_dir, ".local", "bin", "uv"), # for tests without .exe
       file.path(home_dir, ".cargo", "bin", "uv.exe"),
-      file.path(home_dir, ".cargo", "bin", "uv")       # for tests without .exe
+      file.path(home_dir, ".cargo", "bin", "uv") # for tests without .exe
     )
   } else {
     # Unix paths
@@ -215,7 +215,12 @@ find_project_root <- function(start_path = getwd()) {
 
   while (TRUE) {
     # Look for any .*_init.json file (e.g., .report_init.json, .custom_init.json)
-    init_files <- list.files(current_path, pattern = "^\\.[^.]*_init\\.json$", full.names = TRUE, all.files = TRUE)
+    init_files <- list.files(
+      current_path,
+      pattern = "^\\.[^.]*_init\\.json$",
+      full.names = TRUE,
+      all.files = TRUE
+    )
     if (length(init_files) > 0) {
       return(current_path)
     }
@@ -235,13 +240,105 @@ find_project_root <- function(start_path = getwd()) {
   return(NULL)
 }
 
+#' Run a Python script via uv
+#'
+#' @param uv_path Path to the uv executable
+#' @param args Arguments to pass to uv
+#' @param venv_path Path to the virtual environment
+#' @param script_name Name of the script for logging purposes
+#'
+#' @return The result from processx::run
+#'
+#' @keywords internal
+#' @noRd
+run_python_script <- function(uv_path, args, venv_path, script_name) {
+  log_file <- .le$log_file
+  no_log <- getOption("rpfy.no_log", FALSE)
+
+  tryCatch(
+    {
+      python_path <- system.file("python", package = "reportifyr")
+      env_vars <- c(
+        "current",
+        VIRTUAL_ENV = venv_path,
+        RPFY_VERBOSE = Sys.getenv("RPFY_VERBOSE", unset = "WARN")
+      )
+      if (nzchar(python_path)) {
+        env_vars <- c(env_vars, PYTHONPATH = python_path)
+      }
+
+      # Callback: pass Python's pre-formatted lines through raw
+      py_levels <- c(
+        "DEBUG" = 1, "INFO" = 2, "WARNING" = 3, "ERROR" = 4, "CRITICAL" = 5
+      )
+      r_levels <- c(
+        "DEBUG" = 1, "INFO" = 2, "WARN" = 3, "ERROR" = 4, "FATAL" = 5
+      )
+      threshold <- r_levels[[Sys.getenv("RPFY_VERBOSE", unset = "WARN")]]
+
+      py_callback <- function(chunk, proc) {
+        lines <- strsplit(chunk, "\n")[[1]]
+        for (line in lines) {
+          line <- trimws(line)
+          if (nchar(line) == 0) next
+
+          # Log file: always write (DEBUG level)
+          if (!is.null(log_file) && !no_log) {
+            cat(line, "\n", file = log_file, append = TRUE)
+          }
+
+          # Console: filter by verbosity
+          show <- TRUE
+          level_match <- regmatches(
+            line, regexpr("\\[(DEBUG|INFO|WARNING|ERROR|CRITICAL)\\]", line)
+          )
+          if (length(level_match) == 1) {
+            level <- gsub("\\[|\\]", "", level_match)
+            show <- py_levels[[level]] >= threshold
+          }
+          if (show) cat(line, "\n")
+        }
+      }
+
+      processx::run(
+        command = uv_path,
+        args = args,
+        env = env_vars,
+        stderr_callback = py_callback,
+        error_on_status = TRUE
+      )
+    },
+    error = function(e) {
+      py_err <- trimws(e$stderr %||% "")
+      if (nzchar(py_err)) {
+        # Filter out log lines (already handled by callback), keep raw output
+        lines <- strsplit(py_err, "\n")[[1]]
+        raw_lines <- lines[!grepl("^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2} \\[py\\]", lines)]
+        raw <- paste(trimws(raw_lines), collapse = "\n")
+        # Write raw output (tracebacks, etc.) to log file
+        if (nzchar(raw) && !is.null(log_file) && !no_log) {
+          cat(raw, "\n", file = log_file, append = TRUE)
+        }
+      }
+      stop(paste0(script_name, " failed."), call. = FALSE)
+    }
+  )
+}
+
 detect_quarto_render <- function() {
   log4r::debug(.le$logger, "Starting detect_quarto_render()")
 
   # --- Detect Quarto context ---
-  quarto_vars <- Sys.getenv(c("QUARTO_PROJECT_ROOT", "QUARTO_BIN_PATH", "QUARTO_RENDER_TOKEN"))
+  quarto_vars <- Sys.getenv(c(
+    "QUARTO_PROJECT_ROOT",
+    "QUARTO_BIN_PATH",
+    "QUARTO_RENDER_TOKEN"
+  ))
   is_quarto <- any(quarto_vars != "")
-  log4r::debug(.le$logger, paste0("Quarto environment vars detected: ", is_quarto))
+  log4r::debug(
+    .le$logger,
+    paste0("Quarto environment vars detected: ", is_quarto)
+  )
 
   if (!is_quarto) {
     log4r::debug(.le$logger, "Not running in a Quarto context, returning NULL")
@@ -250,11 +347,23 @@ detect_quarto_render <- function() {
 
   # --- Get current input ---
   current <- tryCatch(knitr::current_input(), error = function(e) NULL)
-  log4r::debug(.le$logger, paste0("knitr::current_input() returned: ", ifelse(is.null(current), "NULL", current)))
+  log4r::debug(
+    .le$logger,
+    paste0(
+      "knitr::current_input() returned: ",
+      ifelse(is.null(current), "NULL", current)
+    )
+  )
 
   # --- Validate current file pattern ---
-  if (is.null(current) || !grepl("\\.(Rmd|rmarkdown)$", current, ignore.case = TRUE)) {
-    log4r::debug(.le$logger, "Current input is NULL or not an .Rmd/.rmarkdown file, returning NULL")
+  if (
+    is.null(current) ||
+      !grepl("\\.(Rmd|rmarkdown)$", current, ignore.case = TRUE)
+  ) {
+    log4r::debug(
+      .le$logger,
+      "Current input is NULL or not an .Rmd/.rmarkdown file, returning NULL"
+    )
     return(NULL)
   }
 
@@ -265,17 +374,25 @@ detect_quarto_render <- function() {
   log4r::debug(.le$logger, paste0("Candidate .qmd path: ", qmd_path))
 
   if (file.exists(qmd_path)) {
-    log4r::info(.le$logger, paste0(
-      "Detected Quarto render: .Rmd intermediate '", current,
-      "' mapped to existing .qmd: ", qmd_path
-    ))
+    log4r::info(
+      .le$logger,
+      paste0(
+        "Detected Quarto render: .Rmd intermediate '",
+        current,
+        "' mapped to existing .qmd: ",
+        qmd_path
+      )
+    )
     return(normalizePath(qmd_path))
   } else {
-    log4r::warn(.le$logger, paste0(
-      "Quarto environment detected, but .qmd not found at: ", qmd_path,
-      ", returning NULL"
-    ))
+    log4r::warn(
+      .le$logger,
+      paste0(
+        "Quarto environment detected, but .qmd not found at: ",
+        qmd_path,
+        ", returning NULL"
+      )
+    )
     return(NULL)
   }
 }
-

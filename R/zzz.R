@@ -1,5 +1,16 @@
 .onLoad <- function(libname, pkgname) {
-  toggle_logger(quiet = TRUE)
+  # Set up log file path (lazy — file created on first write)
+  project_root <- find_project_root()
+  if (is.null(project_root)) {
+    project_root <- here::here()
+  }
+  session_timestamp <- format(Sys.time(), "%Y-%m-%d-%H-%M-%S")
+  log_file <- file.path(
+    project_root,
+    ".rpfy-logs",
+    paste0(session_timestamp, "-rpfy.log")
+  )
+  toggle_logger(quiet = TRUE, log_file = log_file, lazy_file = TRUE)
 }
 
 .onAttach <- function(libname, pkgname) {
@@ -86,7 +97,7 @@ reportifyr_options_message <- function() {
   if (is.null(pillow_vers)) {
     optional_options <- c(
       optional_options,
-      "Using pillow v11.1.0, set options('pillow.version') to change"
+      "Using pillow version 11.1.0, set options('pillow.version') to change"
     )
   } else {
     set_options <- c(set_options, paste("pillow.version:", pillow_vers))

@@ -40,7 +40,7 @@
 #' )
 #' }
 remove_bookmarks <- function(docx_in, docx_out) {
-  tictoc::tic()
+  tictoc::tic("remove bookmarks")
   log4r::debug(.le$logger, "Starting remove_bookmarks function")
 
   validate_input_args(docx_in, docx_out)
@@ -73,44 +73,24 @@ remove_bookmarks <- function(docx_in, docx_out) {
     }
     paths <- get_venv_uv_paths()
 
-    script <- system.file("scripts/remove_bookmarks.py", package = "reportifyr")
-    args <- c("run", script, "-i", docx_in, "-o", docx_out)
-
-    log4r::debug(.le$logger, "Running remove bookmarks script")
-    result <- tryCatch(
-      {
-        processx::run(
-          command = paths$uv,
-          args = args,
-          env = c("current", VIRTUAL_ENV = paths$venv),
-          error_on_status = TRUE
-        )
-      },
-      error = function(e) {
-        log4r::error(
-          .le$logger,
-          paste0("Remove bookmarks script failed. Status: ", e$status)
-        )
-        log4r::error(
-          .le$logger,
-          paste0("Remove bookmarks script failed. Stderr: ", e$stderr)
-        )
-        log4r::info(
-          .le$logger,
-          paste0("Remove bookmarks script failed. Stdout: ", e$stdout)
-        )
-        stop(paste(
-          "Remove bookmarks script failed. Status: ",
-          e$status,
-          "Stderr: ",
-          e$stderr
-        ))
-      }
+    args <- c(
+      "run",
+      "-m",
+      "reportipyr.cli",
+      "remove-bookmarks",
+      "-i",
+      docx_in,
+      "-o",
+      docx_out
     )
 
-    log4r::info(.le$logger, paste0("Returning status: ", result$status))
-    log4r::info(.le$logger, paste0("Returning stdout: ", result$stdout))
-    log4r::info(.le$logger, paste0("Returning stderr: ", result$stderr))
+    log4r::debug(.le$logger, "Running remove bookmarks script")
+    run_python_script(
+      paths$uv,
+      args,
+      paths$venv,
+      "Remove bookmarks script"
+    )
   } else if (tolower(continue) == "n") {
     log4r::info(
       .le$logger,

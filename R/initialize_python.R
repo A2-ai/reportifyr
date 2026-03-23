@@ -41,10 +41,13 @@ initialize_python <- function(continue = NULL) {
 
   # Detect platform and choose appropriate script
   if (.Platform$OS.type == "windows") {
-    cmd <- system.file("scripts/uv_setup.ps1", package = "reportifyr")
-    log4r::info(.le$logger, "Windows platform detected, using PowerShell script")
+    cmd <- system.file("extdata/uv_setup.ps1", package = "reportifyr")
+    log4r::info(
+      .le$logger,
+      "Windows platform detected, using PowerShell script"
+    )
   } else {
-    cmd <- system.file("scripts/uv_setup.sh", package = "reportifyr")
+    cmd <- system.file("extdata/uv_setup.sh", package = "reportifyr")
     log4r::info(.le$logger, "Unix-like platform detected, using bash script")
   }
   log4r::info(
@@ -89,9 +92,9 @@ initialize_python <- function(continue = NULL) {
     # Find the index for "python.version" in args_name
     idx <- match("python.version", args_name)
     if (!is.na(idx) && length(args) >= idx) {
-      args[idx] <- pyvers  # replace existing value
+      args[idx] <- pyvers # replace existing value
     } else {
-      args <- c(args, pyvers)  # append if not already present
+      args <- c(args, pyvers) # append if not already present
     }
   } else {
     log4r::warn(.le$logger, "Python version could not be detected")

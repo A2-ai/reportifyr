@@ -13,3 +13,8 @@
 ^rproject.toml$
 ^rv\.toml$
 ^\.Rprofile$
+
+^\.pytest_cache$
+^inst/python/.*/__pycache__$
+^\.rpfy\-logs$
+^\.venv$

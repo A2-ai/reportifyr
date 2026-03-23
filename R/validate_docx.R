@@ -30,7 +30,8 @@ validate_docx <- function(docx_in, config_yaml) {
     )
     stop(paste("The file must be a docx file not:", tools::file_ext(docx_in)))
   }
-  strict_mode <- TRUE # Default value
+
+  strict_mode <- TRUE
   if (!is.null(config_yaml)) {
     config <- yaml::read_yaml(config_yaml)
     if (!is.null(config$strict)) {
@@ -40,99 +41,50 @@ validate_docx <- function(docx_in, config_yaml) {
     log4r::info(.le$logger, "config.yaml not supplied, using strict mode")
   }
 
-  start_pattern <- "\\{rpfy\\}:" # matches "{rpfy}:"
-  end_pattern <- "\\.[^.]+$" # matches the file extension (e.g., ".csv", ".rds")
-  magic_pattern <- paste0(start_pattern, ".*?", end_pattern)
+  paths <- get_venv_uv_paths()
 
-  doc <- officer::read_docx(docx_in)
-  doc_summary <- officer::docx_summary(doc)
-  magic_indices <- grep(magic_pattern, doc_summary$text)
-
-  if (length(magic_indices) == 0) {
-    log4r::error(
-      .le$logger,
-      "The file does not contain magic strings."
-    )
-    stop("The file does not contain magic strings.")
+  args <- c(
+    "run",
+    "-m",
+    "reportipyr.cli",
+    "validate-docx",
+    "-i",
+    docx_in
+  )
+  if (!strict_mode) {
+    args <- c(args, "--no-strict")
   }
 
-  venv_path <- file.path(getOption("venv_dir"), ".venv")
-  if (!dir.exists(venv_path)) {
-    log4r::error(
-      .le$logger,
-      "Virtual environment not found. Please initialize with initialize_python."
-    )
-    stop("Create virtual environment with initialize_python")
+  python_path <- system.file("python", package = "reportifyr")
+  env_vars <- c("current", VIRTUAL_ENV = paths$venv)
+  if (nzchar(python_path)) {
+    env_vars <- c(env_vars, PYTHONPATH = python_path)
   }
 
-  uv_path <- get_uv_path()
-  if (is.null(uv_path)) {
-    log4r::error(
-      .le$logger,
-      "uv not found. Please install with initialize_python"
-    )
-    stop("Please install uv with initialize_python")
-  }
-  file_names <- c()
-  for (i in magic_indices) {
-    magic_string <- doc_summary$text[[i]]
-    parser <- system.file(
-      "scripts/parse_magic_string.py",
-      package = "reportifyr"
-    )
-    args <- c("run", parser, "-i", magic_string)
+  result <- processx::run(
+    command = paths$uv,
+    args = args,
+    env = env_vars,
+    error_on_status = FALSE
+  )
 
-    result <- processx::run(
-      command = uv_path,
-      args = args,
-      env = c("current", VIRTUAL_ENV = venv_path),
-    )
-
-    j <- jsonlite::fromJSON(result$stdout)
-    file_names <- c(file_names, names(j))
+  if (!nzchar(trimws(result$stdout))) {
+    log4r::error(.le$logger, "validate-docx returned no output")
+    stop("validate-docx failed -- check log file for Python errors.")
   }
 
-  # check for unsupported file extensions:
-  unsupported_files <- file_names[
-    !(tolower(tools::file_ext(file_names)) %in% c("csv", "rds", "png"))
-  ]
+  validation <- jsonlite::fromJSON(result$stdout)
 
-  if (length(unsupported_files) != 0) {
-    message <- paste0(
-      "Unsupported file types found in document: ",
-      paste0(unsupported_files, collapse = ", ")
-    )
-    if (strict_mode) {
-      log4r::error(.le$logger, message)
-      stop(paste0(
-        "Fix artifact extensions to continue. ",
-        "Currently .csv, .RDS are accepted for tables ",
-        "and .png is accepted for figures."
-      ))
-    } else {
-      log4r::warn(.le$logger, message)
+  # Log warnings
+  for (warning_msg in validation$warnings) {
+    log4r::warn(.le$logger, warning_msg)
+  }
+
+  # Handle errors
+  if (!validation$success) {
+    for (error_msg in validation$errors) {
+      log4r::error(.le$logger, error_msg)
     }
-  }
-
-  duplicated_files <- file_names[duplicated(file_names)]
-  if (length(duplicated_files) > 0) {
-    if (strict_mode) {
-      log4r::error(
-        .le$logger,
-        paste0(
-          "Found duplicate files, please fix: ",
-          paste0(duplicated_files, collapse = ", ")
-        )
-      )
-      stop("Using strict mode. Fix duplicate artifacts to continue.")
-    } else {
-      log4r::warn(
-        .le$logger,
-        paste0(
-          "Found duplicate files, artifact addition might not work properly: ",
-          paste0(duplicated_files, collapse = ", ")
-        )
-      )
-    }
+    stop(validation$errors[[length(validation$errors)]])
   }
 }

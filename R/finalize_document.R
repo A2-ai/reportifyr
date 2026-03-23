@@ -28,7 +28,7 @@
 #'   docx_out = doc_dirs$doc_draft,
 #'   figures_path = figures_path,
 #'   tables_path = tables_path,
-#'   standard_footnotes_yaml = standard_footnote_yaml
+#'   standard_footnotes_yaml = standard_footnotes_yaml
 #' )
 #'
 #' # ---------------------------------------------------------------------------
@@ -47,7 +47,7 @@ finalize_document <- function(
   docx_out = NULL,
   config_yaml = NULL
 ) {
-  tictoc::tic()
+  tictoc::tic("finalize document")
   log4r::debug(.le$logger, "Starting finalize_document function")
 
   if (is.null(docx_out)) {

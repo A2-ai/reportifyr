@@ -1,6 +1,6 @@
 test_that("get_uv_path returns ~/.local/bin/uv if it exists", {
   home_tmp <- tempdir()
-  withr::local_envvar(c(HOME = home_tmp, PATH = ""))  # isolate from system uv
+  withr::local_envvar(c(HOME = home_tmp, PATH = "")) # isolate from system uv
   local_path <- file.path(home_tmp, ".local", "bin", "uv")
   dir.create(dirname(local_path), recursive = TRUE, showWarnings = FALSE)
   file.create(local_path)
@@ -12,7 +12,7 @@ test_that("get_uv_path returns ~/.local/bin/uv if it exists", {
 
 test_that("get_uv_path returns ~/.cargo/bin/uv if ~/.local/bin/uv does not exist", {
   home_tmp <- tempdir()
-  withr::local_envvar(c(HOME = home_tmp, PATH = ""))  # isolate from system uv
+  withr::local_envvar(c(HOME = home_tmp, PATH = "")) # isolate from system uv
   local_path <- file.path(home_tmp, ".local", "bin", "uv")
   cargo_path <- file.path(home_tmp, ".cargo", "bin", "uv")
 
@@ -28,9 +28,9 @@ test_that("get_uv_path returns ~/.cargo/bin/uv if ~/.local/bin/uv does not exist
 test_that("get_uv_path handles the quiet flag correctly when uv is absent", {
   home_tmp <- withr::local_tempdir()
   withr::local_envvar(c(
-    HOME = home_tmp,                # new empty HOME
-    PATH = "",                      # prevent Sys.which from finding real uv
-    UV_PATH = ""                    # ensure no explicit override
+    HOME = home_tmp, # new empty HOME
+    PATH = "", # prevent Sys.which from finding real uv
+    UV_PATH = "" # ensure no explicit override
   ))
 
   # Ensure no uv files exist
@@ -55,9 +55,9 @@ test_that("get_uv_path handles the quiet flag correctly when uv is absent", {
 test_that("get_uv_path returns NULL when no uv binary is present", {
   home_tmp <- withr::local_tempdir()
   withr::local_envvar(c(
-    HOME = home_tmp,               # new empty HOME
-    PATH = "",                     # prevent Sys.which from finding real uv
-    UV_PATH = ""                   # ensure no explicit override
+    HOME = home_tmp, # new empty HOME
+    PATH = "", # prevent Sys.which from finding real uv
+    UV_PATH = "" # ensure no explicit override
   ))
 
   # Ensure no uv files exist
