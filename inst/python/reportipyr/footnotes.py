@@ -324,14 +324,15 @@ def add_figure_footnotes(
                     logger.debug(f"Skipping non-png file: {figure_name}")
                     continue
 
-                if figure_name not in os.listdir(figure_dir):
+                figure_path = os.path.normpath(os.path.join(figure_dir, figure_name))
+                if not os.path.exists(figure_path):
                     logger.debug(
                         f"Skipping {figure_name} - not found in figure directory"
                     )
                     continue
 
                 logger.info(f"Processing footnote for figure: {figure_name}")
-                metadata = load_metadata(figure_dir, figure_name)
+                metadata = load_metadata(os.path.dirname(figure_path), os.path.basename(figure_path))
 
                 if metadata is not None:
                     meta_text_dict = create_meta_text_lines(
@@ -453,12 +454,13 @@ def add_table_footnotes(
             # Generalized extraction of the table name
             table_name = match.replace("{rpfy}:", "").strip()
 
-            if table_name not in os.listdir(table_dir):
+            table_path = os.path.normpath(os.path.join(table_dir, table_name))
+            if not os.path.exists(table_path):
                 logger.debug(f"Skipping {table_name} - not found in table directory")
                 continue
 
             logger.info(f"Processing footnote for table: {table_name}")
-            metadata = load_metadata(table_dir, table_name)
+            metadata = load_metadata(os.path.dirname(table_path), os.path.basename(table_path))
 
             add_footnote = False
             if metadata is None:
