@@ -202,14 +202,23 @@ get_uv_version <- function(uv_path) {
   uv_version
 }
 
-#' Find the project root directory by looking for *_init.json files
+#' Find the reportifyr project root directory
 #'
-#' @param start_path Path to start searching from. Defaults to current directory.
+#' Searches upward from `start_path` for a reportifyr init file
+#' (e.g., `.report_init.json`). Returns the directory containing
+#' the init file, or `NULL` if none is found.
 #'
-#' @return Path to project root directory, or NULL if not found
+#' @param start_path Path to start searching from.
+#'   Defaults to the current working directory.
 #'
-#' @keywords internal
-#' @noRd
+#' @return Absolute path to the project root directory,
+#'   or `NULL` if no init file is found.
+#'
+#' @export
+#'
+#' @examples \dontrun{
+#' find_project_root()
+#' }
 find_project_root <- function(start_path = getwd()) {
   current_path <- normalizePath(start_path)
 
