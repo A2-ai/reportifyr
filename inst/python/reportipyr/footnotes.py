@@ -324,7 +324,11 @@ def add_figure_footnotes(
                     logger.debug(f"Skipping non-png file: {figure_name}")
                     continue
 
-                figure_path = safe_resolve(figure_dir, figure_name)
+                try:
+                    figure_path = safe_resolve(figure_dir, figure_name)
+                except ValueError:
+                    logger.warning(f"Path traversal blocked for: {figure_name}")
+                    continue
                 if not os.path.exists(figure_path):
                     logger.debug(
                         f"Skipping {figure_name} - not found in figure directory"
@@ -454,7 +458,11 @@ def add_table_footnotes(
             # Generalized extraction of the table name
             table_name = match.replace("{rpfy}:", "").strip()
 
-            table_path = safe_resolve(table_dir, table_name)
+            try:
+                table_path = safe_resolve(table_dir, table_name)
+            except ValueError:
+                logger.warning(f"Path traversal blocked for: {table_name}")
+                continue
             if not os.path.exists(table_path):
                 logger.debug(f"Skipping {table_name} - not found in table directory")
                 continue

@@ -408,7 +408,7 @@ detect_quarto_render <- function() {
 safe_resolve <- function(artifact_dir, relative_path) {
   boundary <- normalizePath(artifact_dir, mustWork = TRUE)
   resolved <- normalizePath(file.path(boundary, relative_path), mustWork = FALSE)
-  if (!startsWith(resolved, paste0(boundary, "/"))) {
+  if (resolved != boundary && !startsWith(resolved, paste0(boundary, .Platform$file.sep))) {
     log4r::error(
       .le$logger,
       paste0("Path '", relative_path, "' resolves outside of '", artifact_dir, "'")

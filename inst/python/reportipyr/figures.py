@@ -75,7 +75,11 @@ def add_figure(
                         add_label = True
 
                     found_magic_strings.append(figure)
-                    image_path = safe_resolve(figure_dir, figure)
+                    try:
+                        image_path = safe_resolve(figure_dir, figure)
+                    except ValueError:
+                        logger.warning(f"Path traversal blocked for: {figure}")
+                        continue
                     if os.path.exists(image_path):
                         if add_label:
                             # since list is reversed need to use correct
