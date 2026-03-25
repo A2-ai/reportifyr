@@ -70,6 +70,10 @@ sync_report_project <- function(project_dir, report_dir_name = NULL) {
   args[idx] <- pyvers
 
   py_version_data <- stats::setNames(as.list(args), args_name)
+  # Convert venv_dir to relative for comparison with init file
+  py_version_data$venv_dir <- fs::path_rel(
+    py_version_data$venv_dir, project_dir
+  )
   formatted_deps <- paste0(
     names(py_version_data),
     "=",
@@ -98,10 +102,14 @@ sync_report_project <- function(project_dir, report_dir_name = NULL) {
     update_init_file <- TRUE
 
     if (file.exists(metadata_path) && dir.exists(report_dir)) {
-      file.copy(
-        from = metadata_path,
-        to = file.path(report_dir, basename(metadata_path)),
-        overwrite = TRUE
+      # Write with venv_dir relative to report_dir
+      py_meta <- jsonlite::read_json(metadata_path)
+      py_meta$venv_dir <- fs::path_rel(
+        py_meta$venv_dir, report_dir
+      )
+      write(
+        jsonlite::toJSON(py_meta, pretty = TRUE, auto_unbox = TRUE),
+        file = file.path(report_dir, basename(metadata_path))
       )
       log4r::debug(
         .le$logger,
