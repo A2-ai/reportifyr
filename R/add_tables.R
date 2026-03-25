@@ -94,7 +94,7 @@ add_tables <- function(
   for (i in magic_indices) {
     # Remove "{rpfy}:"
     table_name <- gsub("\\{rpfy\\}:", "", doc_summary$text[[i]]) |> trimws()
-    table_file <- file.path(tables_path, table_name)
+    table_file <- safe_resolve(tables_path, table_name)
     # check extension is valid
     if (tolower(tools::file_ext(table_file)) %in% c("rds", "csv")) {
       # Check if the file exists

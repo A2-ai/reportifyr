@@ -1,4 +1,16 @@
+import os
 import string
+
+
+def safe_resolve(artifact_dir: str, relative_path: str) -> str:
+    """Resolve a relative path within artifact_dir, raising if it escapes."""
+    boundary = os.path.realpath(artifact_dir)
+    resolved = os.path.realpath(os.path.join(boundary, relative_path))
+    if resolved != boundary and not resolved.startswith(boundary + os.sep):
+        raise ValueError(
+            f"Path '{relative_path}' resolves outside of '{artifact_dir}'"
+        )
+    return resolved
 
 
 def create_label(index: int) -> str:

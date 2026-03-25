@@ -11,7 +11,7 @@ from PIL import Image, ImageDraw, ImageFont
 from .config import load_yaml
 from .magic import get_magic_pattern, parse_magic_string
 from .logging import setup_logger
-from .util import check_duplicates, create_label
+from .util import check_duplicates, create_label, safe_resolve
 
 
 def add_figure(
@@ -75,7 +75,7 @@ def add_figure(
                         add_label = True
 
                     found_magic_strings.append(figure)
-                    image_path = os.path.join(figure_dir, figure)
+                    image_path = safe_resolve(figure_dir, figure)
                     if os.path.exists(image_path):
                         if add_label:
                             # since list is reversed need to use correct

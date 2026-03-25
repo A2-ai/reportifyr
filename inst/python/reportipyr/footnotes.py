@@ -12,7 +12,7 @@ from docx.oxml import OxmlElement
 from .config import load_yaml
 from .logging import setup_logger
 from .magic import get_magic_pattern, parse_magic_string
-from .util import create_label, check_duplicates
+from .util import create_label, check_duplicates, safe_resolve
 
 
 def load_metadata(artifact_dir: str, artifact_file: str) -> dict | None:
@@ -324,7 +324,7 @@ def add_figure_footnotes(
                     logger.debug(f"Skipping non-png file: {figure_name}")
                     continue
 
-                figure_path = os.path.normpath(os.path.join(figure_dir, figure_name))
+                figure_path = safe_resolve(figure_dir, figure_name)
                 if not os.path.exists(figure_path):
                     logger.debug(
                         f"Skipping {figure_name} - not found in figure directory"
@@ -454,7 +454,7 @@ def add_table_footnotes(
             # Generalized extraction of the table name
             table_name = match.replace("{rpfy}:", "").strip()
 
-            table_path = os.path.normpath(os.path.join(table_dir, table_name))
+            table_path = safe_resolve(table_dir, table_name)
             if not os.path.exists(table_path):
                 logger.debug(f"Skipping {table_name} - not found in table directory")
                 continue
