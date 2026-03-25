@@ -396,3 +396,37 @@ detect_quarto_render <- function() {
     return(NULL)
   }
 }
+
+#' Resolve a relative path within an artifact directory
+#'
+#' @param artifact_dir The artifact directory (figures/tables) to resolve within
+#' @param relative_path The relative path to resolve
+#' @return The resolved absolute path
+#'
+#' @keywords internal
+#' @noRd
+safe_resolve <- function(artifact_dir, relative_path) {
+  boundary <- as.character(fs::path_norm(
+    normalizePath(artifact_dir, mustWork = TRUE)
+  ))
+  resolved <- as.character(
+    fs::path_norm(file.path(boundary, relative_path))
+  )
+  sep <- .Platform$file.sep
+  outside <- resolved != boundary &&
+    !startsWith(resolved, paste0(boundary, sep))
+  if (outside) {
+    log4r::error(
+      .le$logger,
+      paste0(
+        "Path '", relative_path,
+        "' resolves outside of '", artifact_dir, "'"
+      )
+    )
+    stop(
+      "Path '", relative_path,
+      "' resolves outside of '", artifact_dir, "'"
+    )
+  }
+  resolved
+}

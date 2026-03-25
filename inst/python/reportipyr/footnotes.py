@@ -12,7 +12,7 @@ from docx.oxml import OxmlElement
 from .config import load_yaml
 from .logging import setup_logger
 from .magic import get_magic_pattern, parse_magic_string
-from .util import create_label, check_duplicates
+from .util import create_label, check_duplicates, safe_resolve
 
 
 def load_metadata(artifact_dir: str, artifact_file: str) -> dict | None:
@@ -324,14 +324,19 @@ def add_figure_footnotes(
                     logger.debug(f"Skipping non-png file: {figure_name}")
                     continue
 
-                if figure_name not in os.listdir(figure_dir):
+                try:
+                    figure_path = safe_resolve(figure_dir, figure_name)
+                except ValueError:
+                    logger.warning(f"Path traversal blocked for: {figure_name}")
+                    continue
+                if not os.path.exists(figure_path):
                     logger.debug(
                         f"Skipping {figure_name} - not found in figure directory"
                     )
                     continue
 
                 logger.info(f"Processing footnote for figure: {figure_name}")
-                metadata = load_metadata(figure_dir, figure_name)
+                metadata = load_metadata(os.path.dirname(figure_path), os.path.basename(figure_path))
 
                 if metadata is not None:
                     meta_text_dict = create_meta_text_lines(
@@ -453,12 +458,17 @@ def add_table_footnotes(
             # Generalized extraction of the table name
             table_name = match.replace("{rpfy}:", "").strip()
 
-            if table_name not in os.listdir(table_dir):
+            try:
+                table_path = safe_resolve(table_dir, table_name)
+            except ValueError:
+                logger.warning(f"Path traversal blocked for: {table_name}")
+                continue
+            if not os.path.exists(table_path):
                 logger.debug(f"Skipping {table_name} - not found in table directory")
                 continue
 
             logger.info(f"Processing footnote for table: {table_name}")
-            metadata = load_metadata(table_dir, table_name)
+            metadata = load_metadata(os.path.dirname(table_path), os.path.basename(table_path))
 
             add_footnote = False
             if metadata is None:

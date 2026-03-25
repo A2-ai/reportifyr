@@ -1,6 +1,9 @@
 import logging
+import os
 
-from reportipyr.util import create_label, check_duplicates
+import pytest
+
+from reportipyr.util import create_label, check_duplicates, safe_resolve
 from reportipyr.cli import _parse_bool
 from reportipyr.logging import RStyleFormatter
 
@@ -81,3 +84,52 @@ def test_rstyle_formatter_output_format():
     # Format: "YYYY-MM-DD HH:MM:SS [py] [LEVEL] message"
     parts = output.split(" ")
     assert len(parts) >= 5  # date, time, [py], [LEVEL], message...
+
+
+# ---------------------------------------------------------------------------
+# safe_resolve
+# ---------------------------------------------------------------------------
+
+def test_safe_resolve_simple_filename(tmp_path):
+    (tmp_path / "table.csv").touch()
+    result = safe_resolve(str(tmp_path), "table.csv")
+    assert result == os.path.join(str(tmp_path), "table.csv")
+
+
+def test_safe_resolve_subdirectory(tmp_path):
+    sub = tmp_path / "sub"
+    sub.mkdir()
+    (sub / "fig.png").touch()
+    result = safe_resolve(str(tmp_path), "sub/fig.png")
+    assert result == str(sub / "fig.png")
+
+
+def test_safe_resolve_blocks_traversal(tmp_path):
+    with pytest.raises(ValueError, match="resolves outside"):
+        safe_resolve(str(tmp_path), "../../etc/passwd")
+
+
+def test_safe_resolve_blocks_absolute_path(tmp_path):
+    with pytest.raises(ValueError, match="resolves outside"):
+        safe_resolve(str(tmp_path), "/etc/passwd")
+
+
+def test_safe_resolve_blocks_symlink_escape(tmp_path):
+    """Symlink inside boundary that points outside should be rejected."""
+    target = tmp_path / "outside"
+    target.mkdir()
+    (target / "secret.txt").touch()
+
+    inside = tmp_path / "artifacts"
+    inside.mkdir()
+    link = inside / "escape"
+    link.symlink_to(target)
+
+    with pytest.raises(ValueError, match="resolves outside"):
+        safe_resolve(str(inside), "escape/secret.txt")
+
+
+def test_safe_resolve_boundary_itself(tmp_path):
+    """Resolving to the boundary directory itself should not raise."""
+    result = safe_resolve(str(tmp_path), ".")
+    assert result == os.path.realpath(str(tmp_path))
