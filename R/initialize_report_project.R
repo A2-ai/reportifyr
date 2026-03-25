@@ -48,10 +48,12 @@ initialize_report_project <- function(
     metadata_path <- initialize_python()
 
     if (file.exists(metadata_path)) {
-      file.copy(
-        from = metadata_path,
-        to = file.path(report_dir, basename(metadata_path)),
-        overwrite = TRUE
+      # Copy version info to report dir with venv_dir relative to report_dir
+      py_meta <- jsonlite::read_json(metadata_path)
+      py_meta$venv_dir <- fs::path_rel(py_meta$venv_dir, report_dir)
+      write(
+        jsonlite::toJSON(py_meta, pretty = TRUE, auto_unbox = TRUE),
+        file = file.path(report_dir, basename(metadata_path))
       )
     }
 
@@ -271,6 +273,9 @@ create_init_file <- function(project_dir, report_dir, outputs_dir) {
   py_versions <- jsonlite::read_json(
     file.path(report_dir, ".python_dependency_versions.json")
   )
+  # Add venv_dir as relative path for portability (init file is committed)
+  venv_dir_abs <- getOption("venv_dir")
+  py_versions$venv_dir <- fs::path_rel(venv_dir_abs, project_dir)
   data$python_versions <- py_versions
 
   log4r::debug(.le$logger, "Assembled data for saving as JSON")
