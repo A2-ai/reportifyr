@@ -406,7 +406,9 @@ detect_quarto_render <- function() {
 #' @keywords internal
 #' @noRd
 safe_resolve <- function(artifact_dir, relative_path) {
-  boundary <- normalizePath(artifact_dir, mustWork = TRUE)
+  boundary <- as.character(fs::path_norm(
+    normalizePath(artifact_dir, mustWork = TRUE)
+  ))
   resolved <- as.character(
     fs::path_norm(file.path(boundary, relative_path))
   )
