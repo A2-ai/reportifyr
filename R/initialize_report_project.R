@@ -273,7 +273,8 @@ create_init_file <- function(project_dir, report_dir, outputs_dir) {
   py_versions <- jsonlite::read_json(
     file.path(report_dir, ".python_dependency_versions.json")
   )
-  # Add venv_dir as relative path for portability (init file is committed)
+  # the report-dir copy already has venv_dir relative to report_dir,
+  # but the init file needs it relative to project_dir instead
   venv_dir_abs <- getOption("venv_dir")
   py_versions$venv_dir <- fs::path_rel(venv_dir_abs, project_dir)
   data$python_versions <- py_versions
