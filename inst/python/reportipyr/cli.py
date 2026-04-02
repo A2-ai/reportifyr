@@ -7,7 +7,7 @@ from .alt_text import (
     check_alt_text_magic_string,
 )
 from .docx_utils import keep_caption_next, remove_bookmarks
-from .figures import add_figure, remove_figures
+from .figures import add_figure, add_path_overlay_to_image, remove_figures
 from .footnotes import add_figure_footnotes, add_table_footnotes, remove_footnotes
 from .magic import remove_magic_strings, parse_magic_string
 from .tables import remove_tables
@@ -105,6 +105,13 @@ def main():
     p.add_argument("-i", "--input", required=True)
     p.add_argument("--no-strict", action="store_true")
 
+    # add-path-overlay
+    p = subparsers.add_parser(
+        "add-path-overlay", help="Stamp source path onto image"
+    )
+    p.add_argument("-i", "--input", required=True)
+    p.add_argument("-s", "--source-text", required=True)
+
     # parse-magic-string (optional)
     p = subparsers.add_parser("parse-magic-string", help="Parse a magic string")
     p.add_argument("-i", "--input", required=True)
@@ -163,6 +170,8 @@ def main():
         print(json.dumps(result))
         if not result.get("success", False):
             raise SystemExit(1)
+    elif args.command == "add-path-overlay":
+        add_path_overlay_to_image(args.input, args.source_text)
     elif args.command == "parse-magic-string":
         print(json.dumps(parse_magic_string(args.input)))
 

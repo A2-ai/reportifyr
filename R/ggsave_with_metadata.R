@@ -6,8 +6,14 @@
 #' @param meta_type A string to specify the type of object. Default is `"NA"`.
 #' @param meta_equations A string or vector of strings representing equations to include in the metadata. Default is `NULL`.
 #' @param meta_notes A string or vector of strings representing notes to include in the metadata. Default is `NULL`.
-#' @param meta_abbrevs A string or vector of strings representing abbreviations to include in the metadata. Default is `NULL`.
-#' @param ... Additional arguments passed to the `ggplot2::ggsave()` function.
+#' @param meta_abbrevs A string or vector of strings representing abbreviations
+#'   to include in the metadata. Default is `NULL`.
+#' @param config_yaml The file path to the `config.yaml`.
+#'   Default is `NULL`. If provided and `add_path_overlay` is
+#'   `TRUE` in the config, the source script path is stamped
+#'   onto the saved image.
+#' @param ... Additional arguments passed to the
+#'   `ggplot2::ggsave()` function.
 #' @export
 #'
 #' @examples \dontrun{
@@ -35,6 +41,7 @@ ggsave_with_metadata <- function(
   meta_equations = NULL,
   meta_notes = NULL,
   meta_abbrevs = NULL,
+  config_yaml = NULL,
   ...
 ) {
   log4r::debug(.le$logger, "Starting ggsave_with_metadata function")
@@ -45,6 +52,53 @@ ggsave_with_metadata <- function(
     ...
   )
   log4r::info(.le$logger, paste0("Plot saved to file: ", filename))
+
+  # Overlay runs before metadata so the hash reflects the final image
+  if (!is.null(config_yaml)) {
+    config <- yaml::read_yaml(config_yaml)
+    if (
+      isTRUE(config$add_path_overlay) &&
+        grepl("\\.png$", filename, ignore.case = TRUE)
+    ) {
+      source_path <- get_source_path()
+      project_root <- find_project_root()
+      if (
+        !is.null(project_root) &&
+          source_path != "SOURCE_PATH_NOT_DETECTED"
+      ) {
+        source_rel <- as.character(
+          fs::path_rel(source_path, project_root)
+        )
+        paths <- get_venv_uv_paths()
+        args <- c(
+          "run",
+          "-m",
+          "reportipyr.cli",
+          "add-path-overlay",
+          "-i", normalizePath(filename),
+          "-s", source_rel
+        )
+        run_python_script(
+          paths$uv,
+          args,
+          paths$venv,
+          "Add path overlay script"
+        )
+        log4r::info(
+          .le$logger,
+          paste0("Path overlay added to: ", filename)
+        )
+      } else {
+        log4r::warn(
+          .le$logger,
+          paste0(
+            "Skipping path overlay: could not determine",
+            " source path or project root"
+          )
+        )
+      }
+    }
+  }
 
   write_object_metadata(
     filename,
