@@ -11,6 +11,7 @@ ggsave_with_metadata(
   meta_equations = NULL,
   meta_notes = NULL,
   meta_abbrevs = NULL,
+  config_yaml = NULL,
   ...
 )
 }
@@ -25,9 +26,16 @@ ggsave_with_metadata(
 
 \item{meta_notes}{A string or vector of strings representing notes to include in the metadata. Default is \code{NULL}.}
 
-\item{meta_abbrevs}{A string or vector of strings representing abbreviations to include in the metadata. Default is \code{NULL}.}
+\item{meta_abbrevs}{A string or vector of strings representing abbreviations
+to include in the metadata. Default is \code{NULL}.}
 
-\item{...}{Additional arguments passed to the \code{ggplot2::ggsave()} function.}
+\item{config_yaml}{The file path to the \code{config.yaml}.
+Default is \code{NULL}. If provided and \code{add_path_overlay} is
+\code{TRUE} in the config, the source script path is stamped
+onto the saved image.}
+
+\item{...}{Additional arguments passed to the
+\code{ggplot2::ggsave()} function.}
 }
 \description{
 Extension to the \code{ggsave()} function that allows capturing object metadata as a separate \code{.json} file.

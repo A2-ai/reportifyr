@@ -199,6 +199,20 @@ validate_config <- function(path_to_config_yaml) {
     }
   }
 
+  log4r::debug(.le$logger, "Checking add_path_overlay now")
+  if (!is.null(config$add_path_overlay)) {
+    if (typeof(config$add_path_overlay) != "logical") {
+      log4r::error(
+        .le$logger,
+        paste0(
+          "add_path_overlay should be logical, not: ",
+          typeof(config$add_path_overlay)
+        )
+      )
+      valid <- FALSE
+    }
+  }
+
   log4r::debug(.le$logger, "Checking strict now")
   if (!is.null(config$strict)) {
     if (typeof(config$strict) != "logical") {

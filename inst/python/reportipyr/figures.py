@@ -371,3 +371,38 @@ def get_figure_dimensions(paragraph) -> dict[str, Optional[int]]:
     height = int(cy)
 
     return {"width": width, "height": height}
+
+
+def add_path_overlay_to_image(image_path: str, source_text: str) -> None:
+    """Stamp a source-path label onto the bottom-left of an image, in-place."""
+    logger = setup_logger()
+    logger.debug(f"Adding path overlay to {image_path}: {source_text}")
+
+    if not image_path.lower().endswith(".png"):
+        logger.warning(
+            f"Skipping path overlay for non-png format: {image_path}"
+        )
+        return
+
+    img = Image.open(image_path)
+    draw = ImageDraw.Draw(img)
+    original_format = (
+        img.format or os.path.splitext(image_path)[1][1:].upper()
+    )
+    original_dpi = img.info.get("dpi", (72, 72))
+    img_width, img_height = img.size
+
+    font_size = max(12, int(min(img_width, img_height) * 0.02))
+    font = ImageFont.load_default(size=font_size)
+
+    padding = 10
+    text_position = (padding, img_height - padding - font_size)
+    draw.text(
+        text_position,
+        f"source: {source_text}",
+        fill=(0, 0, 0),
+        font=font,
+    )
+
+    img.save(image_path, format=original_format, dpi=original_dpi)
+    logger.info(f"Path overlay saved to {image_path}")

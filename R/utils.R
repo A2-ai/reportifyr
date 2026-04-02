@@ -249,6 +249,63 @@ find_project_root <- function(start_path = getwd()) {
   return(NULL)
 }
 
+#' Detect the source script path
+#'
+#' Checks for a Quarto render context first, then falls back
+#' to \code{this.path::this.path()}.
+#'
+#' @return Absolute path to the source script,
+#'   or \code{"SOURCE_PATH_NOT_DETECTED"} if detection fails.
+#'
+#' @keywords internal
+#' @noRd
+get_source_path <- function() {
+  tryCatch(
+    {
+      qmd_path <- detect_quarto_render()
+      if (!is.null(qmd_path)) {
+        log4r::info(
+          .le$logger,
+          paste0("Detected Quarto render; using .qmd file: ", qmd_path)
+        )
+        qmd_path
+      } else if (requireNamespace("this.path", quietly = TRUE)) {
+        sp <- this.path::this.path()
+        if (!is.null(sp) && nzchar(sp)) {
+          sp <- normalizePath(sp)
+          log4r::info(
+            .le$logger,
+            paste0("Source path detected via this.path: ", sp)
+          )
+          sp
+        } else {
+          log4r::warn(
+            .le$logger,
+            "this.path did not return a valid script path"
+          )
+          "SOURCE_PATH_NOT_DETECTED"
+        }
+      } else {
+        log4r::warn(
+          .le$logger,
+          paste0(
+            "Unable to detect source path via Quarto",
+            " or this.path(); setting placeholder"
+          )
+        )
+        "SOURCE_PATH_NOT_DETECTED"
+      }
+    },
+    error = function(e) {
+      log4r::warn(
+        .le$logger,
+        paste0("Error detecting source path: ", e$message)
+      )
+      "SOURCE_PATH_NOT_DETECTED"
+    }
+  )
+}
+
 #' Run a Python script via uv
 #'
 #' @param uv_path Path to the uv executable
