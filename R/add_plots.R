@@ -120,16 +120,20 @@ add_plots <- function(
     "Add plots script"
   )
 
-  add_plots_alt_text(
-    intermediate_figs_docx,
-    docx_out
-  )
+  if (isTRUE(config$add_alt_text)) {
+    add_plots_alt_text(
+      intermediate_figs_docx,
+      docx_out
+    )
+  } else {
+    file.copy(intermediate_figs_docx, docx_out)
+  }
 
   unlink(intermediate_docx)
   log4r::debug(.le$logger, "Deleting intermediate document")
 
   unlink(intermediate_figs_docx)
-  log4r::debug(.le$logger, "Deleting intermediate tabs document")
+  log4r::debug(.le$logger, "Deleting intermediate figs document")
 
   tictoc::toc()
 

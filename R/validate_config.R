@@ -121,6 +121,20 @@ validate_config <- function(path_to_config_yaml) {
     }
   }
 
+  log4r::debug(.le$logger, "Checking add_alt_text now")
+  if (!is.null(config$add_alt_text)) {
+    if (typeof(config$add_alt_text) != "logical") {
+      log4r::error(
+        .le$logger,
+        paste0(
+          "add_alt_text should be logical, not: ",
+          typeof(config$add_alt_text)
+        )
+      )
+      valid <- FALSE
+    }
+  }
+
   log4r::debug(.le$logger, "Checking save_table_rtf now")
   if (!is.null(config$save_table_rtf)) {
     if (typeof(config$save_table_rtf) != "logical") {

@@ -24,6 +24,7 @@ save_table_rtf: FALSE
 
 # Caption options
 keep_caption_next: TRUE
+add_alt_text: TRUE
 
 # Figure options
 fig_alignment: "center"
