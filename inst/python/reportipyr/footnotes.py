@@ -247,19 +247,8 @@ def create_footnote_paragraph(
     bookmark_start.set(qn("w:name"), f"fp_{name}")
     new_paragraph.append(bookmark_start)
 
-    # Pull Hash out before ordering — it's prepended separately
+    # Pull Hash out before ordering — it's appended separately at the end
     hash_value = meta_text_dict.pop("Hash", None)
-
-    # Prepend Hash before ordered fields if present
-    if hash_value:
-        formatted_line = format_metadata_line("Hash", hash_value, config)
-        runs = create_formatted_runs(formatted_line, config)
-        for run in runs:
-            new_paragraph.append(run)
-        run_break = OxmlElement("w:r")
-        br = OxmlElement("w:br")
-        run_break.append(br)
-        new_paragraph.append(run_break)
 
     # Add metadata lines - this assumes ordered dict which should be fine
     meta_text_dict = {
@@ -280,11 +269,18 @@ def create_footnote_paragraph(
             new_paragraph.append(run)
 
         # Add line break if needed
-        if line_idx != len(meta_text_dict) - 1:
+        if line_idx != len(meta_text_dict) - 1 or hash_value:
             run_break = OxmlElement("w:r")
             br = OxmlElement("w:br")
             run_break.append(br)
             new_paragraph.append(run_break)
+
+    # Append Hash after ordered fields if present
+    if hash_value:
+        formatted_line = format_metadata_line("Hash", hash_value, config)
+        runs = create_formatted_runs(formatted_line, config)
+        for run in runs:
+            new_paragraph.append(run)
 
     # Create the bookmark end
     bookmark_end = OxmlElement("w:bookmarkEnd")
