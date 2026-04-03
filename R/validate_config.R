@@ -163,7 +163,7 @@ validate_config <- function(path_to_config_yaml) {
       log4r::error(
         .le$logger,
         paste0(
-          "footnotes_font_size should be integer/double, not: ",
+          "default_fig_width should be integer/double, not: ",
           typeof(config$default_fig_width)
         )
       )
