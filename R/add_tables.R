@@ -54,13 +54,19 @@ add_tables <- function(
   validate_docx(docx_in, config_yaml)
   log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
 
+  config <- yaml::read_yaml(config_yaml)
+
   intermediate_docx <- gsub(".docx", "-int.docx", docx_out)
   log4r::info(
     .le$logger,
     paste0("Intermediate document path set: ", intermediate_docx)
   )
 
-  keep_caption_next(docx_in, intermediate_docx)
+  if (isTRUE(config$keep_caption_next)) {
+    keep_caption_next(docx_in, intermediate_docx)
+  } else {
+    file.copy(docx_in, intermediate_docx)
+  }
 
   # define magic string pattern
   start_pattern <- "\\{rpfy\\}:" # matches "{rpfy}:"

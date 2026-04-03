@@ -107,6 +107,20 @@ validate_config <- function(path_to_config_yaml) {
     }
   }
 
+  log4r::debug(.le$logger, "Checking keep_caption_next now")
+  if (!is.null(config$keep_caption_next)) {
+    if (typeof(config$keep_caption_next) != "logical") {
+      log4r::error(
+        .le$logger,
+        paste0(
+          "keep_caption_next should be logical, not: ",
+          typeof(config$keep_caption_next)
+        )
+      )
+      valid <- FALSE
+    }
+  }
+
   log4r::debug(.le$logger, "Checking save_table_rtf now")
   if (!is.null(config$save_table_rtf)) {
     if (typeof(config$save_table_rtf) != "logical") {

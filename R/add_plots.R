@@ -59,9 +59,16 @@ add_plots <- function(
     browser()
   }
 
+  if (is.null(config_yaml)) {
+    config_yaml <- system.file("extdata", "config.yaml", package = "reportifyr")
+    log4r::info(.le$logger, paste0("using built-in config.yaml: ", config_yaml))
+  }
+
   validate_input_args(docx_in, docx_out)
   validate_docx(docx_in, config_yaml)
   log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
+
+  config <- yaml::read_yaml(config_yaml)
 
   intermediate_docx <- gsub(".docx", "-int.docx", docx_out)
   log4r::info(
@@ -69,7 +76,11 @@ add_plots <- function(
     paste0("Intermediate document path set: ", intermediate_docx)
   )
 
-  keep_caption_next(docx_in, intermediate_docx)
+  if (isTRUE(config$keep_caption_next)) {
+    keep_caption_next(docx_in, intermediate_docx)
+  } else {
+    file.copy(docx_in, intermediate_docx)
+  }
 
   intermediate_figs_docx <- gsub(".docx", "-intfigs.docx", docx_out)
 
@@ -85,11 +96,6 @@ add_plots <- function(
     "-d",
     figures_path
   )
-
-  if (is.null(config_yaml)) {
-    config_yaml <- system.file("extdata", "config.yaml", package = "reportifyr")
-    log4r::info(.le$logger, paste0("using built-in config.yaml: ", config_yaml))
-  }
 
   args <- c(args, "-c", config_yaml)
   log4r::info(.le$logger, paste0("config yaml set: ", config_yaml))
