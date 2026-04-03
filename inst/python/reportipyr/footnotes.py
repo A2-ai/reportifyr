@@ -108,6 +108,11 @@ def create_meta_text_lines(
         abbrev_text += "N/A"
     meta_text_lines["Abbreviations"] = abbrev_text
 
+    if config.get("add_hash_to_footnotes", False):
+        obj_hash = metadata["object_meta"].get("hash", "")
+        if obj_hash:
+            meta_text_lines["Hash"] = obj_hash
+
     if config.get("use_object_path_as_source", False):
         meta_text_lines["Source"] = meta_text_lines["Object"]
         del meta_text_lines["Object"]
@@ -139,6 +144,8 @@ def format_metadata_line(meta_key, meta_value, config):
             return f"Notes: {meta_value}"
         case "Abbreviations":
             return f"Abbreviations: {meta_value}"
+        case "Hash":
+            return f"Hash: {meta_value}"
         case _:
             return f"{meta_key}: {meta_value}"
 
@@ -239,6 +246,20 @@ def create_footnote_paragraph(
     bookmark_start.set(qn("w:id"), str(paragraph_id))
     bookmark_start.set(qn("w:name"), f"fp_{name}")
     new_paragraph.append(bookmark_start)
+
+    # Pull Hash out before ordering — it's prepended separately
+    hash_value = meta_text_dict.pop("Hash", None)
+
+    # Prepend Hash before ordered fields if present
+    if hash_value:
+        formatted_line = format_metadata_line("Hash", hash_value, config)
+        runs = create_formatted_runs(formatted_line, config)
+        for run in runs:
+            new_paragraph.append(run)
+        run_break = OxmlElement("w:r")
+        br = OxmlElement("w:br")
+        run_break.append(br)
+        new_paragraph.append(run_break)
 
     # Add metadata lines - this assumes ordered dict which should be fine
     meta_text_dict = {

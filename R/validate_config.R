@@ -43,6 +43,20 @@ validate_config <- function(path_to_config_yaml) {
     }
   }
 
+  log4r::debug(.le$logger, "Checking add_hash_to_footnotes now")
+  if (!is.null(config$add_hash_to_footnotes)) {
+    if (typeof(config$add_hash_to_footnotes) != "logical") {
+      log4r::error(
+        .le$logger,
+        paste0(
+          "add_hash_to_footnotes should be logical, not: ",
+          typeof(config$add_hash_to_footnotes)
+        )
+      )
+      valid <- FALSE
+    }
+  }
+
   log4r::debug(.le$logger, "Checking use_object_path_as_source")
   if (!is.null(config$use_object_path_as_source)) {
     if (typeof(config$use_object_path_as_source) != "logical") {

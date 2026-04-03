@@ -11,6 +11,7 @@ strict: false
 footnotes_font: "Arial Narrow"
 footnotes_font_size: 10
 use_object_path_as_source: FALSE
+add_hash_to_footnotes: FALSE
 wrap_path_in_[]: TRUE
 combine_duplicate_footnotes: TRUE
 footnote_order:
