@@ -1,12 +1,12 @@
 from docx import Document
 from docx.oxml.ns import qn
 
-from .alt_text import is_table_content_unchanged
+from .alt_text import is_table_unchanged
 from .config import load_yaml
 from .logging import setup_logger
 
 
-def remove_tables(docx_in, docx_out, config_yaml=None):
+def remove_tables(docx_in, docx_out, config_yaml=None, table_dir=None):
     logger = setup_logger()
     doc = Document(docx_in)
 
@@ -26,8 +26,7 @@ def remove_tables(docx_in, docx_out, config_yaml=None):
             p_element = paragraph._element
             for next_elem in p_element.itersiblings():
                 if next_elem.tag.endswith("tbl"):
-                    # Check content hash if skip_unchanged enabled
-                    if skip_unchanged:
+                    if skip_unchanged and table_dir:
                         tbl_pr = next_elem.find(qn("w:tblPr"))
                         if tbl_pr is not None:
                             desc = tbl_pr.find(
@@ -37,8 +36,11 @@ def remove_tables(docx_in, docx_out, config_yaml=None):
                                 alt = desc.get(
                                     qn("w:val"), ""
                                 )
-                                if is_table_content_unchanged(
-                                    alt, next_elem
+                                if is_table_unchanged(
+                                    alt,
+                                    next_elem,
+                                    table_dir,
+                                    table_name,
                                 ):
                                     logger.info(
                                         f"Skipping removal of "
@@ -47,7 +49,6 @@ def remove_tables(docx_in, docx_out, config_yaml=None):
                                     )
                                     break
 
-                    # Remove table
                     next_elem.getparent().remove(next_elem)
                     break
                 elif next_elem.tag.endswith("p"):

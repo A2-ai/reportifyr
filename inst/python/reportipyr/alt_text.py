@@ -111,6 +111,27 @@ def is_table_content_unchanged(alt_text: str, tbl_element) -> bool:
     return embedded == current
 
 
+def is_table_unchanged(
+    alt_text: str,
+    tbl_element,
+    artifact_dir: str | None,
+    filename: str,
+) -> bool:
+    """Check if a table is fully unchanged (source + content).
+
+    Both checks must pass to skip removal:
+    1. Object hash: source file hasn't changed (alt text vs metadata)
+    2. Content hash: table values not edited in Word (alt text vs XML)
+
+    Returns True only if both are unchanged.
+    """
+    if not is_artifact_unchanged(alt_text, artifact_dir, filename):
+        return False
+    if not is_table_content_unchanged(alt_text, tbl_element):
+        return False
+    return True
+
+
 def add_figure_alt_text(docx_in: str, docx_out: str, artifact_dir: str | None = None):
     logger = setup_logger()
     logger.debug("Starting add_figure_alt_text function")
