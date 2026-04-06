@@ -2,6 +2,7 @@
 #'
 #' @param docx_in The file path to the input `.docx` file.
 #' @param docx_out The file path to the output `.docx` file to save to.
+#' @param figures_path The file path to the figures directory. Used to embed artifact hashes in alt text. Default is `NULL`.
 #' @param debug Debug.
 #'
 #' @export
@@ -12,6 +13,7 @@
 add_plots_alt_text <- function(
   docx_in,
   docx_out,
+  figures_path = NULL,
   debug = FALSE
 ) {
   log4r::debug(.le$logger, "Starting add_plots_alt_text function")
@@ -36,6 +38,10 @@ add_plots_alt_text <- function(
     "-o",
     docx_out
   )
+
+  if (!is.null(figures_path)) {
+    args <- c(args, "-d", figures_path)
+  }
 
   paths <- get_venv_uv_paths()
 

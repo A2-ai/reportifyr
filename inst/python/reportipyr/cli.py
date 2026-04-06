@@ -37,11 +37,13 @@ def main():
     )
     p.add_argument("-i", "--input", required=True)
     p.add_argument("-o", "--output", required=True)
+    p.add_argument("-d", "--dir", default=None)
 
     # add-table-alt-text
     p = subparsers.add_parser("add-table-alt-text", help="Insert alt text for tables")
     p.add_argument("-i", "--input", required=True)
     p.add_argument("-o", "--output", required=True)
+    p.add_argument("-d", "--dir", default=None)
 
     # add-figure-footnotes
     p = subparsers.add_parser("add-figure-footnotes", help="Insert figure footnotes")
@@ -67,17 +69,23 @@ def main():
     p = subparsers.add_parser("remove-footnotes", help="Remove footnotes")
     p.add_argument("-i", "--input", required=True)
     p.add_argument("-o", "--output", required=True)
+    p.add_argument("-c", "--config", default=None)
+    p.add_argument("--figures-dir", default=None)
+    p.add_argument("--tables-dir", default=None)
 
     # remove-tables
     p = subparsers.add_parser("remove-tables", help="Remove tables")
     p.add_argument("-i", "--input", required=True)
     p.add_argument("-o", "--output", required=True)
+    p.add_argument("-c", "--config", default=None)
+    p.add_argument("-d", "--dir", default=None)
 
     # remove-figures
     p = subparsers.add_parser("remove-figures", help="Remove figures")
     p.add_argument("-i", "--input", required=True)
     p.add_argument("-o", "--output", required=True)
     p.add_argument("-c", "--config", default=None)
+    p.add_argument("-d", "--dir", default=None)
 
     # remove-magic-strings
     p = subparsers.add_parser("remove-magic-strings", help="Remove magic strings")
@@ -128,9 +136,9 @@ def main():
             args.height,
         )
     elif args.command == "add-figure-alt-text":
-        add_figure_alt_text(args.input, args.output)
+        add_figure_alt_text(args.input, args.output, args.dir)
     elif args.command == "add-table-alt-text":
-        add_table_alt_text(args.input, args.output)
+        add_table_alt_text(args.input, args.output, args.dir)
     elif args.command == "add-figure-footnotes":
         add_figure_footnotes(
             args.input,
@@ -152,11 +160,14 @@ def main():
             args.fail_metadata,
         )
     elif args.command == "remove-footnotes":
-        remove_footnotes(args.input, args.output)
+        remove_footnotes(
+            args.input, args.output, args.config,
+            args.figures_dir, args.tables_dir,
+        )
     elif args.command == "remove-tables":
-        remove_tables(args.input, args.output)
+        remove_tables(args.input, args.output, args.config, args.dir)
     elif args.command == "remove-figures":
-        remove_figures(args.input, args.output, args.config)
+        remove_figures(args.input, args.output, args.config, args.dir)
     elif args.command == "remove-magic-strings":
         remove_magic_strings(args.input, args.output)
     elif args.command == "remove-bookmarks":

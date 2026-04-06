@@ -123,7 +123,8 @@ add_plots <- function(
   if (isTRUE(config$add_alt_text)) {
     add_plots_alt_text(
       intermediate_figs_docx,
-      docx_out
+      docx_out,
+      figures_path = figures_path
     )
   } else {
     file.copy(intermediate_figs_docx, docx_out)

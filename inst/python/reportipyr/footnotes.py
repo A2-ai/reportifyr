@@ -9,6 +9,7 @@ from docx.oxml.text import run, paragraph
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
+from .alt_text import extract_artifact_hashes, _load_artifact_hash
 from .config import load_yaml
 from .logging import setup_logger
 from .magic import get_magic_pattern, parse_magic_string
@@ -528,8 +529,53 @@ def add_table_footnotes(
     logger.debug("Exiting add_table_footnotes function")
 
 
-def remove_footnotes(docx_in, docx_out):
-    namespace = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+def _build_unchanged_set(
+    docx_in: str,
+    config: dict,
+    figures_dir: str | None,
+    tables_dir: str | None,
+) -> set[str]:
+    """Build set of unchanged artifact filenames by comparing
+    alt-text hashes in the docx with current metadata hashes."""
+    unchanged = set()
+    if not config.get("skip_unchanged", False):
+        return unchanged
+
+    embedded = extract_artifact_hashes(docx_in)
+    for filename, embedded_hash in embedded.items():
+        # Try figures dir first, then tables dir
+        for artifact_dir in [figures_dir, tables_dir]:
+            if artifact_dir is None:
+                continue
+            current = _load_artifact_hash(artifact_dir, filename)
+            if current is not None and current == embedded_hash:
+                unchanged.add(filename)
+                break
+    return unchanged
+
+
+def remove_footnotes(
+    docx_in,
+    docx_out,
+    config_yaml=None,
+    figures_dir=None,
+    tables_dir=None,
+):
+    logger = setup_logger()
+    namespace = (
+        "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+    )
+
+    if config_yaml is not None:
+        config = load_yaml(config_yaml)
+    else:
+        config = {}
+
+    unchanged = _build_unchanged_set(
+        docx_in, config, figures_dir, tables_dir
+    )
+    if unchanged:
+        logger.info(f"Unchanged artifacts: {unchanged}")
 
     doc = Document(docx_in)
 
@@ -537,6 +583,17 @@ def remove_footnotes(docx_in, docx_out):
     for bookmark in doc.element.xpath("//w:bookmarkStart"):
         name = bookmark.get(namespace + "name")
         if name.startswith("fp_"):
+            # Check if this footnote belongs to an unchanged artifact
+            if unchanged:
+                bookmark_artifact = name[3:]  # strip "fp_" prefix
+                if any(
+                    artifact in bookmark_artifact
+                    for artifact in unchanged
+                ):
+                    logger.info(
+                        f"Skipping removal of footnote: {name}"
+                    )
+                    continue
             bookmark_id = bookmark.get(namespace + "id")
             end_bookmark = doc.element.xpath(
                 f'//w:bookmarkEnd[@w:id="{bookmark_id}"]'

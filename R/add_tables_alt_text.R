@@ -2,6 +2,7 @@
 #'
 #' @param docx_in The file path to the input `.docx` file.
 #' @param docx_out The file path to the output `.docx` file to save to.
+#' @param tables_path The file path to the tables directory. Used to embed artifact hashes in alt text. Default is `NULL`.
 #' @param debug Debug.
 #'
 #' @export
@@ -12,6 +13,7 @@
 add_tables_alt_text <- function(
   docx_in,
   docx_out,
+  tables_path = NULL,
   debug = FALSE
 ) {
   log4r::debug(.le$logger, "Starting add_tables_alt_text function")
@@ -36,6 +38,10 @@ add_tables_alt_text <- function(
     "-o",
     docx_out
   )
+
+  if (!is.null(tables_path)) {
+    args <- c(args, "-d", tables_path)
+  }
 
   paths <- get_venv_uv_paths()
 

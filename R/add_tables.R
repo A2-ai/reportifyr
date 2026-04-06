@@ -137,7 +137,8 @@ add_tables <- function(
 
     add_tables_alt_text(
       intermediate_tabs_docx,
-      docx_out
+      docx_out,
+      tables_path = tables_path
     )
 
     unlink(intermediate_tabs_docx)

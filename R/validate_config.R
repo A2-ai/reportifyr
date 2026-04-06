@@ -149,6 +149,20 @@ validate_config <- function(path_to_config_yaml) {
     }
   }
 
+  log4r::debug(.le$logger, "Checking skip_unchanged now")
+  if (!is.null(config$skip_unchanged)) {
+    if (typeof(config$skip_unchanged) != "logical") {
+      log4r::error(
+        .le$logger,
+        paste0(
+          "skip_unchanged should be logical, not: ",
+          typeof(config$skip_unchanged)
+        )
+      )
+      valid <- FALSE
+    }
+  }
+
   log4r::debug(.le$logger, "Checking save_table_rtf now")
   if (!is.null(config$save_table_rtf)) {
     if (typeof(config$save_table_rtf) != "logical") {

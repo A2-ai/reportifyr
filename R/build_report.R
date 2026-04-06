@@ -72,7 +72,9 @@ build_report <- function(
   remove_tables_figures_footnotes(
     docx_in = docx_in,
     docx_out = doc_dirs$doc_clean,
-    config_yaml
+    config_yaml,
+    figures_path = figures_path,
+    tables_path = tables_path
   )
 
   add_tables(
