@@ -90,20 +90,20 @@ def create_meta_text_lines(
 
     # Add abbreviations metadata
     abbrev_text = ""
+    abbrev_delimiter = config.get("abbreviation_delimiter", ",")
     abbrev_list = metadata["object_meta"]["footnotes"]["abbreviations"]
     if len(abbrev_list) > 0:
         abbrev_section = footnotes.get("abbreviations", {})
+        abbrev_parts = []
         for abbrev in abbrev_list:
             if abbrev not in abbrev_section:
                 raise KeyError(
                     f"Abbreviation '{abbrev}' not found in "
                     f"abbreviations section of footnotes YAML"
                 )
-            full_form = abbrev_section[abbrev]
-            if full_form.endswith("."):
-                abbrev_text += f"{abbrev}: {full_form} "
-            else:
-                abbrev_text += f"{abbrev}: {full_form}. "
+            full_form = abbrev_section[abbrev].rstrip(".")
+            abbrev_parts.append(f"{abbrev}: {full_form}")
+        abbrev_text = f"{abbrev_delimiter} ".join(abbrev_parts) + "."
     else:
         abbrev_text += "N/A"
     meta_text_lines["Abbreviations"] = abbrev_text
