@@ -78,7 +78,6 @@ def main():
     p.add_argument("-i", "--input", required=True)
     p.add_argument("-o", "--output", required=True)
     p.add_argument("-c", "--config", default=None)
-    p.add_argument("-d", "--dir", default=None)
 
     # remove-figures
     p = subparsers.add_parser("remove-figures", help="Remove figures")
@@ -165,7 +164,7 @@ def main():
             args.figures_dir, args.tables_dir,
         )
     elif args.command == "remove-tables":
-        remove_tables(args.input, args.output, args.config, args.dir)
+        remove_tables(args.input, args.output, args.config)
     elif args.command == "remove-figures":
         remove_figures(args.input, args.output, args.config, args.dir)
     elif args.command == "remove-magic-strings":

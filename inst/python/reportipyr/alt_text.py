@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import re
@@ -32,8 +33,10 @@ def _embed_hash_in_alt_text(alt_text: str, hash_value: str | None) -> str:
 
 
 def _strip_hash_from_alt_text(alt_text: str) -> str:
-    """Remove [hash:...] suffix from alt text for comparison."""
-    return re.sub(r"\s*\[hash:[a-f0-9]+\]$", "", alt_text)
+    """Remove [hash:...] and [content_hash:...] from alt text for comparison."""
+    text = re.sub(r"\s*\[hash:[a-f0-9]+\]", "", alt_text)
+    text = re.sub(r"\s*\[content_hash:[a-f0-9]+\]", "", text)
+    return text
 
 
 _HASH_PATTERN = re.compile(r"\[hash:([a-f0-9]+)\]")
@@ -64,6 +67,48 @@ def is_artifact_unchanged(
         return False
     current_hash = _load_artifact_hash(artifact_dir, filename)
     return current_hash is not None and current_hash == embedded_hash
+
+
+def _compute_table_content_hash(tbl_element) -> str:
+    """Extract cell text from w:tbl XML, normalize, and SHA-256 hash.
+
+    Normalization: rows top-to-bottom, cells left-to-right,
+    each cell stripped, joined with \\t (cells) and \\n (rows).
+    """
+    rows = []
+    for tr in tbl_element.findall(qn("w:tr")):
+        cells = []
+        for tc in tr.findall(qn("w:tc")):
+            text = "".join(
+                t.text for t in tc.iter(qn("w:t")) if t.text
+            ).strip()
+            cells.append(text)
+        rows.append("\t".join(cells))
+    canonical = "\n".join(rows)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+_CONTENT_HASH_PATTERN = re.compile(r"\[content_hash:([a-f0-9]+)\]")
+
+
+def _extract_content_hash_from_alt_text(alt_text: str) -> str | None:
+    """Extract the content_hash value from alt text."""
+    match = _CONTENT_HASH_PATTERN.search(alt_text)
+    return match.group(1) if match else None
+
+
+def is_table_content_unchanged(alt_text: str, tbl_element) -> bool:
+    """Check if a table's content matches its embedded content hash.
+
+    Compares the content_hash stored in alt text (from insertion time)
+    against a fresh hash of the table's current cell text in the docx.
+    Returns True only if both exist and match.
+    """
+    embedded = _extract_content_hash_from_alt_text(alt_text)
+    if not embedded:
+        return False
+    current = _compute_table_content_hash(tbl_element)
+    return embedded == current
 
 
 def add_figure_alt_text(docx_in: str, docx_out: str, artifact_dir: str | None = None):
@@ -177,6 +222,13 @@ def add_table_alt_text(docx_in: str, docx_out: str, artifact_dir: str | None = N
                     logger.debug(f"Loaded hash for {table_name}: {hash_value}")
 
             alt_text = _embed_hash_in_alt_text(para_text, hash_value)
+
+            # Compute content hash from table cell text
+            content_hash = _compute_table_content_hash(el)
+            alt_text = f"{alt_text} [content_hash:{content_hash}]"
+            logger.debug(
+                f"Content hash for {table_name}: {content_hash}"
+            )
 
             table = tbl_map.get(el)
             if table:

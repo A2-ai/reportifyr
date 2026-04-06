@@ -1,14 +1,12 @@
 from docx import Document
 from docx.oxml.ns import qn
 
-from .alt_text import is_artifact_unchanged
+from .alt_text import is_table_content_unchanged
 from .config import load_yaml
 from .logging import setup_logger
 
 
-def remove_tables(
-    docx_in, docx_out, config_yaml=None, table_dir=None
-):
+def remove_tables(docx_in, docx_out, config_yaml=None):
     logger = setup_logger()
     doc = Document(docx_in)
 
@@ -25,11 +23,11 @@ def remove_tables(
                 "{rpfy}:", ""
             ).strip()
 
-            # Check hash in table alt text
-            if skip_unchanged and table_dir:
-                p_element = paragraph._element
-                for next_elem in p_element.itersiblings():
-                    if next_elem.tag.endswith("tbl"):
+            p_element = paragraph._element
+            for next_elem in p_element.itersiblings():
+                if next_elem.tag.endswith("tbl"):
+                    # Check content hash if skip_unchanged enabled
+                    if skip_unchanged:
                         tbl_pr = next_elem.find(qn("w:tblPr"))
                         if tbl_pr is not None:
                             desc = tbl_pr.find(
@@ -39,8 +37,8 @@ def remove_tables(
                                 alt = desc.get(
                                     qn("w:val"), ""
                                 )
-                                if is_artifact_unchanged(
-                                    alt, table_dir, table_name
+                                if is_table_content_unchanged(
+                                    alt, next_elem
                                 ):
                                     logger.info(
                                         f"Skipping removal of "
@@ -48,18 +46,11 @@ def remove_tables(
                                         f"{table_name}"
                                     )
                                     break
-                        # Table exists but no matching hash — remove
-                        next_elem.getparent().remove(next_elem)
-                        break
-                    elif next_elem.tag.endswith("p"):
-                        break
-            else:
-                p_element = paragraph._element
-                for next_elem in p_element.itersiblings():
-                    if next_elem.tag.endswith("tbl"):
-                        next_elem.getparent().remove(next_elem)
-                        break
-                    elif next_elem.tag.endswith("p"):
-                        break
+
+                    # Remove table
+                    next_elem.getparent().remove(next_elem)
+                    break
+                elif next_elem.tag.endswith("p"):
+                    break
 
     doc.save(docx_out)

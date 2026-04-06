@@ -89,9 +89,6 @@ remove_tables_figures_footnotes <- function(
     "-c",
     config_yaml
   )
-  if (!is.null(tables_path)) {
-    tab_args <- c(tab_args, "-d", tables_path)
-  }
 
   log4r::debug(.le$logger, "Running remove tables script")
   run_python_script(
