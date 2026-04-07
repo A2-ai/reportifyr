@@ -109,7 +109,9 @@ add_tables <- function(
           document <- process_table_file(
             table_file,
             document,
-            table_name
+            table_name,
+            doc_summary,
+            i
           )
           processed_files <- c(processed_files, table_file)
         } else {
@@ -156,7 +158,7 @@ add_tables <- function(
 }
 
 ### New function for processing #####
-process_table_file <- function(table_file, document, table_name) {
+process_table_file <- function(table_file, document, table_name, doc_summary, magic_idx) {
   log4r::info(
     .le$logger,
     paste0("Processing table file: ", table_file)
@@ -210,6 +212,16 @@ process_table_file <- function(table_file, document, table_name) {
     document,
     paste0("\\{rpfy\\}:", table_name)
   )
+
+  # Check if table already exists after the magic string (skip_unchanged kept it)
+  if (magic_idx < nrow(doc_summary) &&
+      doc_summary$content_type[magic_idx + 1] == "table cell") {
+    log4r::info(
+      .le$logger,
+      paste0("Table already present, skipping insertion for: ", table_name)
+    )
+    return(document)
+  }
 
   flextable::body_add_flextable(
     document,

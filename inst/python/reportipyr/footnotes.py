@@ -335,6 +335,17 @@ def add_figure_footnotes(
             # generalized extraction of the figure name
             figure_args = parse_magic_string(match)
 
+            # Check if footnote already exists for this artifact
+            bookmark_name = f"fp_{''.join(figure_args.keys())}"
+            existing = document.element.xpath(
+                f'//w:bookmarkStart[@w:name="{bookmark_name}"]'
+            )
+            if existing:
+                logger.info(
+                    f"Footnote already present for: {''.join(figure_args.keys())}, skipping"
+                )
+                continue
+
             # create empty dict for combining all metadata
             combined_footnotes: dict[str, list[str]] = {}
             # enumerating here so i can use f to get label for
@@ -478,6 +489,17 @@ def add_table_footnotes(
         for match in matches:
             # Generalized extraction of the table name
             table_name = match.replace("{rpfy}:", "").strip()
+
+            # Check if footnote already exists for this table
+            bookmark_name = f"fp_{table_name}"
+            existing = document.element.xpath(
+                f'//w:bookmarkStart[@w:name="{bookmark_name}"]'
+            )
+            if existing:
+                logger.info(
+                    f"Footnote already present for: {table_name}, skipping"
+                )
+                continue
 
             try:
                 table_path = safe_resolve(table_dir, table_name)

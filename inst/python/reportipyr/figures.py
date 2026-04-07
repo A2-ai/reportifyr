@@ -48,6 +48,17 @@ def add_figure(
 
         matches = magic_pattern.findall(par.text)
         if matches:
+            # Check if figures already exist after this magic string
+            if actual_index + 1 < len(document.paragraphs):
+                next_par = document.paragraphs[actual_index + 1]
+                if not next_par.text.strip() and next_par._element.xpath(
+                    ".//w:drawing"
+                ):
+                    logger.info(
+                        f"Figures already present after paragraph {actual_index+1}, skipping insertion"
+                    )
+                    continue
+
             check_duplicates(matches, f"figure names in paragraph {actual_index+1}", logger)
 
             for match in matches:
