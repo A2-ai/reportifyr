@@ -69,14 +69,93 @@ def is_artifact_unchanged(
     return current_hash is not None and current_hash == embedded_hash
 
 
+def _get_gridspan(tc) -> int:
+    """Return the gridSpan value for a table cell, defaulting to 1."""
+    tcPr = tc.find(qn("w:tcPr"))
+    if tcPr is not None:
+        gs = tcPr.find(qn("w:gridSpan"))
+        if gs is not None:
+            return int(gs.get(qn("w:val"), "1"))
+    return 1
+
+
+def _has_vmerge(tc) -> bool:
+    """Return True if the cell has a vMerge element."""
+    tcPr = tc.find(qn("w:tcPr"))
+    if tcPr is not None:
+        return tcPr.find(qn("w:vMerge")) is not None
+    return False
+
+
+def _logical_column_count(tbl_element) -> int:
+    """Return the maximum logical column count across all rows."""
+    max_cols = 0
+    for tr in tbl_element.findall(qn("w:tr")):
+        total = sum(_get_gridspan(tc) for tc in tr.findall(qn("w:tc")))
+        max_cols = max(max_cols, total)
+    return max_cols
+
+
+def _detect_header_rows(tbl_element) -> set[int]:
+    """Detect header row indices.
+
+    Primary: rows with w:tblHeader in w:trPr.
+    Fallback: if no rows have w:tblHeader, all rows before the first row
+    where every cell has gridSpan=1 and no vMerge.
+    """
+    trs = tbl_element.findall(qn("w:tr"))
+
+    # Primary: w:tblHeader
+    header_indices = set()
+    for i, tr in enumerate(trs):
+        trPr = tr.find(qn("w:trPr"))
+        if trPr is not None and trPr.find(qn("w:tblHeader")) is not None:
+            header_indices.add(i)
+
+    if header_indices:
+        return header_indices
+
+    # Fallback: rows before first fully normal row
+    for i, tr in enumerate(trs):
+        tcs = tr.findall(qn("w:tc"))
+        all_normal = all(
+            _get_gridspan(tc) == 1 and not _has_vmerge(tc) for tc in tcs
+        )
+        if all_normal:
+            return set(range(i))
+
+    # All rows have spans/merges — no headers detected
+    return set()
+
+
+def _is_full_width_row(tr, logical_cols: int) -> bool:
+    """Return True if the row is a single cell spanning all columns."""
+    tcs = tr.findall(qn("w:tc"))
+    if len(tcs) != 1:
+        return False
+    return _get_gridspan(tcs[0]) >= logical_cols
+
+
 def _compute_table_content_hash(tbl_element) -> str:
-    """Extract cell text from w:tbl XML, normalize, and SHA-256 hash.
+    """Extract cell text from body rows of a table, normalize, and SHA-256 hash.
+
+    Skips header rows (w:tblHeader or fallback detection) and full-width
+    rows (single cell spanning all columns — section labels, footers).
 
     Normalization: rows top-to-bottom, cells left-to-right,
     each cell stripped, joined with \\t (cells) and \\n (rows).
     """
+    trs = tbl_element.findall(qn("w:tr"))
+    logical_cols = _logical_column_count(tbl_element)
+    header_rows = _detect_header_rows(tbl_element)
+
     rows = []
-    for tr in tbl_element.findall(qn("w:tr")):
+    for i, tr in enumerate(trs):
+        if i in header_rows:
+            continue
+        if _is_full_width_row(tr, logical_cols):
+            continue
+
         cells = []
         for tc in tr.findall(qn("w:tc")):
             text = "".join(
@@ -84,6 +163,7 @@ def _compute_table_content_hash(tbl_element) -> str:
             ).strip()
             cells.append(text)
         rows.append("\t".join(cells))
+
     canonical = "\n".join(rows)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
