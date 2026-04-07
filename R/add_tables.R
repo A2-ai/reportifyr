@@ -109,9 +109,7 @@ add_tables <- function(
           document <- process_table_file(
             table_file,
             document,
-            table_name,
-            doc_summary,
-            i
+            table_name
           )
           processed_files <- c(processed_files, table_file)
         } else {
@@ -158,7 +156,7 @@ add_tables <- function(
 }
 
 ### New function for processing #####
-process_table_file <- function(table_file, document, table_name, doc_summary, magic_idx) {
+process_table_file <- function(table_file, document, table_name) {
   log4r::info(
     .le$logger,
     paste0("Processing table file: ", table_file)
@@ -214,24 +212,34 @@ process_table_file <- function(table_file, document, table_name, doc_summary, ma
   )
 
   # Check if table already exists after the magic string (skip_unchanged kept it)
-  if (magic_idx < nrow(doc_summary)) {
-    next_type <- doc_summary$content_type[magic_idx + 1]
-    log4r::debug(
-      .le$logger,
-      paste0(
-        "Next element after magic string '", table_name,
-        "' (idx=", magic_idx, "): content_type='", next_type, "'"
-      )
-    )
-    if (next_type == "table cell") {
-      log4r::info(
-        .le$logger,
-        paste0(
-          "Table already present, skipping insertion for: ",
-          table_name
-        )
-      )
-      return(document)
+  # Access the XML body directly via officer's internal structure
+  body_node <- xml2::xml_find_first(
+    document$doc_obj$get(),
+    "//w:body",
+    ns = c(w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main")
+  )
+  body_children <- xml2::xml_children(body_node)
+  for (ci in seq_along(body_children)) {
+    child <- body_children[[ci]]
+    if (xml2::xml_name(child) == "p") {
+      child_text <- xml2::xml_text(child)
+      if (grepl(table_name, child_text, fixed = TRUE)) {
+        # Check if next sibling is a table
+        if (ci < length(body_children)) {
+          next_child <- body_children[[ci + 1]]
+          if (xml2::xml_name(next_child) == "tbl") {
+            log4r::info(
+              .le$logger,
+              paste0(
+                "Table already present, skipping insertion for: ",
+                table_name
+              )
+            )
+            return(document)
+          }
+        }
+        break
+      }
     }
   }
 
