@@ -248,43 +248,36 @@ def create_footnote_paragraph(
     bookmark_start.set(qn("w:name"), f"fp_{name}")
     new_paragraph.append(bookmark_start)
 
-    # Pull Hash out before ordering — it's appended separately at the end
-    hash_value = meta_text_dict.pop("Hash", None)
-
-    # Add metadata lines - this assumes ordered dict which should be fine
+    # Order metadata lines per config
     meta_text_dict = {
         key: meta_text_dict[key]
         for key in config.get(
-            "footnote_order", ["Source", "Object", "Notes", "Abbreviations"]
+            "footnote_order",
+            ["Source", "Object", "Notes", "Abbreviations", "Hash"],
         )
         if key in meta_text_dict.keys()
     }
 
     for line_idx, (meta, value) in enumerate(meta_text_dict.items()):
         # Format the line based on metadata type
-        formatted_line = format_metadata_line(meta, "".join(value), config)
+        if isinstance(value, list):
+            formatted_line = format_metadata_line(
+                meta, "".join(value), config
+            )
+        else:
+            formatted_line = format_metadata_line(meta, value, config)
 
         # Create run with formatted text
         runs = create_formatted_runs(formatted_line, config)
         for run in runs:
             new_paragraph.append(run)
 
-        # Add line break if needed
-        if line_idx != len(meta_text_dict) - 1 or hash_value:
+        # Add line break between entries
+        if line_idx != len(meta_text_dict) - 1:
             run_break = OxmlElement("w:r")
             br = OxmlElement("w:br")
             run_break.append(br)
             new_paragraph.append(run_break)
-
-    # Append Hash after ordered fields if present
-    if hash_value:
-        # hash_value may be a list from combined_footnotes wrapping
-        if isinstance(hash_value, list):
-            hash_value = hash_value[0]
-        formatted_line = format_metadata_line("Hash", hash_value, config)
-        runs = create_formatted_runs(formatted_line, config)
-        for run in runs:
-            new_paragraph.append(run)
 
     # Create the bookmark end
     bookmark_end = OxmlElement("w:bookmarkEnd")

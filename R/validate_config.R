@@ -101,7 +101,7 @@ validate_config <- function(path_to_config_yaml) {
 
   log4r::debug(.le$logger, "Checking footnote_order now")
   if (!is.null(config$footnote_order)) {
-    footnotes <- c("Object", "Source", "Notes", "Abbreviations")
+    footnotes <- c("Object", "Source", "Notes", "Abbreviations", "Hash")
     if (
       !identical(
         intersect(config$footnote_order, footnotes),

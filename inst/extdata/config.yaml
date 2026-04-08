@@ -20,6 +20,7 @@ footnote_order:
   - Object
   - Notes
   - Abbreviations
+  - Hash
 
 # Table options
 save_table_rtf: FALSE
