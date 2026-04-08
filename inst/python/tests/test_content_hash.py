@@ -20,10 +20,15 @@ from docx.oxml.ns import qn
 
 from reportipyr.alt_text import (
     _compute_table_content_hash,
+    _decode_body_grid,
     _detect_header_rows,
+    _encode_body_grid,
+    _extract_body_grid,
+    _grid_to_canonical,
     _is_full_width_row,
     _logical_column_count,
 )
+from reportipyr.tables import _update_cell_text, reconcile_table_cells
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────
@@ -1039,3 +1044,248 @@ def test_clear_cell_to_empty():
     wt.text = ""
 
     assert _compute_table_content_hash(tbl2) != base
+
+
+# ── Cell Reconciliation Tests ─────────────────────────────────────────────
+
+
+class _FakeLogger:
+    """Minimal logger for testing reconcile_table_cells."""
+
+    def __init__(self):
+        self.messages = []
+
+    def debug(self, msg):
+        self.messages.append(("DEBUG", msg))
+
+    def info(self, msg):
+        self.messages.append(("INFO", msg))
+
+
+def test_extract_body_grid_matches_hash():
+    """_extract_body_grid returns data consistent with _compute_table_content_hash."""
+    _, tbl = _make_param_table(with_tbl_header=True)
+    grid = _extract_body_grid(tbl)
+    canonical = _grid_to_canonical(grid)
+
+    import hashlib
+
+    expected_hash = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    actual_hash = _compute_table_content_hash(tbl)
+    assert expected_hash == actual_hash
+
+
+def test_encode_decode_roundtrip():
+    """Grid survives gzip+base64 encode/decode round-trip."""
+    grid = [
+        ["CL/F", "\u03b81", "170", "105, 235"],
+        ["Vc/F", "\u03b82", "40", "34, 46"],
+    ]
+    encoded = _encode_body_grid(grid)
+    decoded = _decode_body_grid(encoded)
+    assert decoded == grid
+
+
+def test_encode_decode_empty_cells():
+    """Encode/decode handles empty cell values."""
+    grid = [["A", "", "C"], ["", "B", ""]]
+    encoded = _encode_body_grid(grid)
+    decoded = _decode_body_grid(encoded)
+    assert decoded == grid
+
+
+def test_reconcile_same_grid_no_changes():
+    """Reconciliation with identical grid updates zero cells."""
+    _, tbl = _make_baseline_table()
+    grid = _extract_body_grid(tbl)
+    logger = _FakeLogger()
+
+    result = reconcile_table_cells(tbl, grid, logger)
+    assert result is True
+    assert any("Reconciled 0 cell(s)" in msg for _, msg in logger.messages)
+
+
+def test_reconcile_updates_changed_cells():
+    """Reconciliation updates only cells that differ."""
+    _, tbl = _make_baseline_table()
+    original_grid = _extract_body_grid(tbl)
+
+    # Mutate one cell in the table
+    tc = _get_cell(tbl, 2, 2)  # "100"
+    wt = _get_wt_elements(tc)[0]
+    wt.text = "999"
+
+    logger = _FakeLogger()
+    # Reconcile back to original
+    result = reconcile_table_cells(tbl, original_grid, logger)
+    assert result is True
+
+    # Verify the cell was restored
+    restored_text = "".join(
+        t.text for t in tc.iter(qn("w:t")) if t.text
+    ).strip()
+    assert restored_text == "100"
+    assert any("Reconciled 1 cell(s)" in msg for _, msg in logger.messages)
+
+
+def test_reconcile_preserves_formatting():
+    """Reconciliation preserves w:rPr, w:tcPr, w:pPr on updated cells."""
+    _, tbl = _make_baseline_table()
+    original_grid = _extract_body_grid(tbl)
+
+    # Add bold formatting to a cell
+    tc = _get_cell(tbl, 2, 0)  # "Revenue"
+    runs = _get_run_elements(tc)
+    rPr = OxmlElement("w:rPr")
+    rPr.append(OxmlElement("w:b"))
+    runs[0].insert(0, rPr)
+
+    # Add cell shading
+    tcPr = tc.find(qn("w:tcPr"))
+    if tcPr is None:
+        tcPr = OxmlElement("w:tcPr")
+        tc.insert(0, tcPr)
+    shd = OxmlElement("w:shd")
+    shd.set(qn("w:val"), "clear")
+    shd.set(qn("w:fill"), "FFFF00")
+    tcPr.append(shd)
+
+    # Mutate text
+    wt = _get_wt_elements(tc)[0]
+    wt.text = "WRONG"
+
+    # Reconcile
+    logger = _FakeLogger()
+    result = reconcile_table_cells(tbl, original_grid, logger)
+    assert result is True
+
+    # Text restored
+    restored_text = "".join(
+        t.text for t in tc.iter(qn("w:t")) if t.text
+    ).strip()
+    assert restored_text == "Revenue"
+
+    # Bold still present
+    restored_runs = _get_run_elements(tc)
+    assert restored_runs[0].find(qn("w:rPr")) is not None
+    assert restored_runs[0].find(qn("w:rPr")).find(qn("w:b")) is not None
+
+    # Cell shading still present
+    restored_tcPr = tc.find(qn("w:tcPr"))
+    assert restored_tcPr is not None
+    assert restored_tcPr.find(qn("w:shd")) is not None
+
+
+def test_reconcile_fails_row_count_mismatch():
+    """Reconciliation fails when row counts differ (pathway 1c)."""
+    _, tbl = _make_baseline_table()
+    short_grid = [["Revenue", "Q1", "100"]]
+
+    logger = _FakeLogger()
+    result = reconcile_table_cells(tbl, short_grid, logger)
+    assert result is False
+
+
+def test_reconcile_fails_column_count_mismatch():
+    """Reconciliation fails when column counts differ (pathway 1c)."""
+    _, tbl = _make_baseline_table()
+    grid = _extract_body_grid(tbl)
+    narrow_grid = [[row[0], row[1]] for row in grid]
+
+    logger = _FakeLogger()
+    result = reconcile_table_cells(tbl, narrow_grid, logger)
+    assert result is False
+
+
+def test_reconcile_hash_refreshed():
+    """After reconciliation, content hash matches the source grid."""
+    _, tbl = _make_baseline_table()
+    original_grid = _extract_body_grid(tbl)
+    original_hash = _compute_table_content_hash(tbl)
+
+    # Mutate a cell
+    tc = _get_cell(tbl, 2, 2)
+    wt = _get_wt_elements(tc)[0]
+    wt.text = "999"
+    assert _compute_table_content_hash(tbl) != original_hash
+
+    # Reconcile
+    logger = _FakeLogger()
+    reconcile_table_cells(tbl, original_grid, logger)
+
+    # Hash should match original again
+    assert _compute_table_content_hash(tbl) == original_hash
+
+
+def test_update_cell_text_preserves_rpr():
+    """_update_cell_text preserves run formatting properties."""
+    _, tbl = _make_baseline_table()
+    tc = _get_cell(tbl, 2, 0)  # "Revenue"
+
+    # Add italic to the run
+    runs = _get_run_elements(tc)
+    rPr = OxmlElement("w:rPr")
+    rPr.append(OxmlElement("w:i"))
+    runs[0].insert(0, rPr)
+
+    # Update text
+    _update_cell_text(tc, "NewValue")
+
+    # Text changed
+    text = "".join(t.text for t in tc.iter(qn("w:t")) if t.text).strip()
+    assert text == "NewValue"
+
+    # Italic preserved
+    new_runs = _get_run_elements(tc)
+    assert len(new_runs) == 1
+    assert new_runs[0].find(qn("w:rPr")) is not None
+    assert new_runs[0].find(qn("w:rPr")).find(qn("w:i")) is not None
+
+
+def test_update_cell_text_consolidates_split_runs():
+    """_update_cell_text consolidates multiple runs into one."""
+    _, tbl = _make_baseline_table()
+    tc = _get_cell(tbl, 2, 0)
+    p = _get_paragraph_elements(tc)[0]
+
+    # Split into two runs
+    for r in list(p.findall(qn("w:r"))):
+        p.remove(r)
+    for text in ["Rev", "enue"]:
+        run = OxmlElement("w:r")
+        t = OxmlElement("w:t")
+        t.text = text
+        run.append(t)
+        p.append(run)
+
+    assert len(p.findall(qn("w:r"))) == 2
+
+    _update_cell_text(tc, "Revenue")
+
+    # Should be consolidated to one run
+    assert len(p.findall(qn("w:r"))) == 1
+    text = "".join(t.text for t in tc.iter(qn("w:t")) if t.text).strip()
+    assert text == "Revenue"
+
+
+def test_reconcile_on_param_table():
+    """Reconciliation works on a param-style table with headers and section labels."""
+    _, tbl = _make_param_table(with_tbl_header=True)
+    original_grid = _extract_body_grid(tbl)
+
+    # Mutate a body cell (row 2 = first body row, col 3 = "170")
+    trs = tbl.findall(qn("w:tr"))
+    body_tr = trs[2]  # first body row
+    body_tcs = body_tr.findall(qn("w:tc"))
+    wt = list(body_tcs[3].iter(qn("w:t")))[0]
+    wt.text = "171"
+
+    logger = _FakeLogger()
+    result = reconcile_table_cells(tbl, original_grid, logger)
+    assert result is True
+
+    # Verify cell was restored to "170"
+    restored_text = "".join(
+        t.text for t in body_tcs[3].iter(qn("w:t")) if t.text
+    ).strip()
+    assert restored_text == "170"
