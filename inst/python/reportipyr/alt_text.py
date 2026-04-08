@@ -35,10 +35,10 @@ def _embed_hash_in_alt_text(alt_text: str, hash_value: str | None) -> str:
 
 
 def _strip_hash_from_alt_text(alt_text: str) -> str:
-    """Remove [hash:...], [content_hash:...], and [content_body:...] from alt text for comparison."""
+    """Remove [hash:...], [content_hash:...], and [grid:...] from alt text for comparison."""
     text = re.sub(r"\s*\[hash:[a-f0-9]+\]", "", alt_text)
     text = re.sub(r"\s*\[content_hash:[a-f0-9]+\]", "", text)
-    text = re.sub(r"\s*\[content_body:[A-Za-z0-9+/=]+\]", "", text)
+    text = re.sub(r"\s*\[grid:[A-Za-z0-9+/=]+\]", "", text)
     return text
 
 
@@ -198,7 +198,7 @@ def _compute_table_content_hash(tbl_element) -> str:
 
 
 _CONTENT_HASH_PATTERN = re.compile(r"\[content_hash:([a-f0-9]+)\]")
-_CONTENT_BODY_PATTERN = re.compile(r"\[content_body:([A-Za-z0-9+/=]+)\]")
+_CONTENT_BODY_PATTERN = re.compile(r"\[grid:([A-Za-z0-9+/=]+)\]")
 
 
 def _extract_content_hash_from_alt_text(alt_text: str) -> str | None:
@@ -387,8 +387,8 @@ def add_table_alt_text(docx_in: str, docx_out: str, artifact_dir: str | None = N
             ).hexdigest()
             encoded_body = _encode_body_grid(body_grid)
             alt_text = (
-                f"{alt_text} [content_hash:{content_hash}]"
-                f" [content_body:{encoded_body}]"
+                f"{alt_text}\n[content_hash:{content_hash}]"
+                f"\n[grid:{encoded_body}]"
             )
             logger.debug(
                 f"Content hash for {table_name}: {content_hash}"

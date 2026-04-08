@@ -18,7 +18,7 @@ from .logging import setup_logger
 
 
 def _update_alt_text_after_reconcile(tbl_element, old_alt_text: str):
-    """Rewrite content_hash and content_body in alt text after reconciliation."""
+    """Rewrite content_hash and grid in alt text after reconciliation."""
     import re
 
     # Recompute from the now-updated table
@@ -33,10 +33,10 @@ def _update_alt_text_after_reconcile(tbl_element, old_alt_text: str):
         f"[content_hash:{new_hash}]",
         old_alt_text,
     )
-    # Replace content_body
+    # Replace grid
     new_alt = re.sub(
-        r"\[content_body:[A-Za-z0-9+/=]+\]",
-        f"[content_body:{new_body}]",
+        r"\[grid:[A-Za-z0-9+/=]+\]",
+        f"[grid:{new_body}]",
         new_alt,
     )
 
