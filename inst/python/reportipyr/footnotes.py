@@ -278,6 +278,9 @@ def create_footnote_paragraph(
 
     # Append Hash after ordered fields if present
     if hash_value:
+        # hash_value may be a list from combined_footnotes wrapping
+        if isinstance(hash_value, list):
+            hash_value = hash_value[0]
         formatted_line = format_metadata_line("Hash", hash_value, config)
         runs = create_formatted_runs(formatted_line, config)
         for run in runs:
