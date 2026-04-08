@@ -39,7 +39,7 @@ def _strip_hash_from_alt_text(alt_text: str) -> str:
     text = re.sub(r"\s*\[hash:[a-f0-9]+\]", "", alt_text)
     text = re.sub(r"\s*\[content_hash:[a-f0-9]+\]", "", text)
     text = re.sub(r"\s*\[grid:[A-Za-z0-9+/=]+\]", "", text)
-    return text
+    return text.strip()
 
 
 _HASH_PATTERN = re.compile(r"\[hash:([a-f0-9]+)\]")
