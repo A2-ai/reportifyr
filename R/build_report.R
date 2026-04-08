@@ -68,13 +68,68 @@ build_report <- function(
     )
   }
 
-  # Save over input docx without tfls
-  remove_tables_figures_footnotes(
-    docx_in = docx_in,
-    docx_out = doc_dirs$doc_clean,
-    config_yaml,
-    figures_path = figures_path,
-    tables_path = tables_path
+  # Remove existing artifacts selectively
+  validate_input_args(docx_in, doc_dirs$doc_clean)
+  validate_alt_text_magic_strings(docx_in)
+
+  if (is.null(config_yaml)) {
+    config_yaml_resolved <- system.file(
+      "extdata", "config.yaml", package = "reportifyr"
+    )
+  } else {
+    config_yaml_resolved <- config_yaml
+  }
+
+  paths <- get_venv_uv_paths()
+
+  # Remove footnotes only if add_footnotes is TRUE
+  if (add_footnotes) {
+    notes_args <- c(
+      "run", "-m", "reportipyr.cli", "remove-footnotes",
+      "-i", docx_in, "-o", doc_dirs$doc_clean,
+      "-c", config_yaml_resolved
+    )
+    if (!is.null(figures_path)) {
+      notes_args <- c(notes_args, "--figures-dir", figures_path)
+    }
+    if (!is.null(tables_path)) {
+      notes_args <- c(notes_args, "--tables-dir", tables_path)
+    }
+    log4r::debug(.le$logger, "Running remove footnotes script")
+    run_python_script(
+      paths$uv, notes_args, paths$venv, "Remove footnotes script"
+    )
+  } else {
+    log4r::debug(.le$logger, "Skipping footnote removal (add_footnotes = FALSE)")
+    file.copy(docx_in, doc_dirs$doc_clean, overwrite = TRUE)
+  }
+
+  # Remove tables
+  tab_args <- c(
+    "run", "-m", "reportipyr.cli", "remove-tables",
+    "-i", doc_dirs$doc_clean, "-o", doc_dirs$doc_clean,
+    "-c", config_yaml_resolved
+  )
+  if (!is.null(tables_path)) {
+    tab_args <- c(tab_args, "-d", tables_path)
+  }
+  log4r::debug(.le$logger, "Running remove tables script")
+  run_python_script(
+    paths$uv, tab_args, paths$venv, "Remove tables script"
+  )
+
+  # Remove figures
+  fig_args <- c(
+    "run", "-m", "reportipyr.cli", "remove-figures",
+    "-i", doc_dirs$doc_clean, "-o", doc_dirs$doc_clean,
+    "-c", config_yaml_resolved
+  )
+  if (!is.null(figures_path)) {
+    fig_args <- c(fig_args, "-d", figures_path)
+  }
+  log4r::debug(.le$logger, "Running remove figures script")
+  run_python_script(
+    paths$uv, fig_args, paths$venv, "Remove figures script"
   )
 
   add_tables(
