@@ -48,18 +48,41 @@ def add_figure(
 
         matches = magic_pattern.findall(par.text)
         if matches:
-            # Check if figures already exist after this magic string
-            if actual_index + 1 < len(document.paragraphs):
-                next_par = document.paragraphs[actual_index + 1]
-                if not next_par.text.strip() and next_par._element.xpath(
-                    ".//w:drawing"
-                ):
-                    logger.info(
-                        f"Figures already present after paragraph {actual_index+1}, skipping insertion"
-                    )
-                    continue
-
             check_duplicates(matches, f"figure names in paragraph {actual_index+1}", logger)
+
+            # Check if figures already exist (skip_unchanged kept them)
+            # Count consecutive drawing paragraphs after the magic string
+            # in the live XML tree and compare to expected PNG count.
+            parent = par._element.getparent()
+            body_children = list(parent)
+            magic_idx = body_children.index(par._element)
+            existing_drawings = 0
+            for offset in range(1, len(body_children) - magic_idx):
+                sibling = body_children[magic_idx + offset]
+                if (
+                    sibling.tag.endswith("}p")
+                    and not "".join(
+                        t.text for t in sibling.xpath(".//w:t") if t.text
+                    ).strip()
+                    and sibling.xpath(".//w:drawing")
+                ):
+                    existing_drawings += 1
+                else:
+                    break
+
+            all_figure_args = parse_magic_string(matches[0])
+            png_count = sum(
+                1 for f in all_figure_args
+                if os.path.splitext(f)[1].lower() == ".png"
+            )
+            if existing_drawings >= png_count > 0:
+                logger.info(
+                    f"Figures already present for: "
+                    f"{list(all_figure_args.keys())}, skipping"
+                )
+                for figure in all_figure_args:
+                    found_magic_strings.append(figure)
+                continue
 
             for match in matches:
                 logger.debug(f"Processing magic string: {match}")
