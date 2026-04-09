@@ -279,8 +279,12 @@ def create_footnote_paragraph(
     for line_idx, (meta, value) in enumerate(meta_text_dict.items()):
         # Format the line based on metadata type
         if isinstance(value, list):
+            if meta in ("Source", "Object", "Hash"):
+                joined = "; ".join(v.strip() for v in value)
+            else:
+                joined = "".join(value)
             formatted_line = format_metadata_line(
-                meta, "".join(value), config
+                meta, joined, config
             )
         else:
             formatted_line = format_metadata_line(meta, value, config)
