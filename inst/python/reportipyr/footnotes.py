@@ -282,7 +282,7 @@ def create_footnote_paragraph(
             if meta in ("Source", "Object", "Hash"):
                 joined = "; ".join(v.strip() for v in value)
             else:
-                joined = "".join(value)
+                joined = " ".join(v.strip() for v in value)
             formatted_line = format_metadata_line(
                 meta, joined, config
             )
