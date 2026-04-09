@@ -1094,6 +1094,15 @@ def test_encode_decode_empty_cells():
     assert decoded == grid
 
 
+
+def test_encode_decode_single_empty_cell_row():
+    """A single-cell row with empty string survives roundtrip (C2 regression)."""
+    grid = [[""], ["a"]]
+    encoded = encode_body_grid(grid)
+    decoded = _decode_body_grid(encoded)
+    assert decoded == grid
+
+
 def test_reconcile_same_grid_no_changes():
     """Reconciliation with identical grid updates zero cells."""
     _, tbl = _make_baseline_table()
