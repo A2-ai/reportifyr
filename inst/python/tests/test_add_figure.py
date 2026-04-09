@@ -74,7 +74,7 @@ def test_add_figure_respects_embedded_size():
     doc.add_paragraph("{rpfy}:figure.png<width: 4, height: 5>")
     doc.save(docx_in)
 
-    config_yaml = _write_yaml("use_embedded_size: true\n")
+    config_yaml = _write_yaml("use_embedded_dimensions: true\n")
 
     docx_out = tempfile.NamedTemporaryFile(suffix=".docx", delete=False).name
     add_figure(

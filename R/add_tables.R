@@ -65,7 +65,7 @@ add_tables <- function(
   if (isTRUE(config$keep_caption_next)) {
     keep_caption_next(docx_in, intermediate_docx)
   } else {
-    file.copy(docx_in, intermediate_docx)
+    file.copy(docx_in, intermediate_docx, overwrite = TRUE)
   }
 
   # define magic string pattern
@@ -137,7 +137,8 @@ add_tables <- function(
 
     add_tables_alt_text(
       intermediate_tabs_docx,
-      docx_out
+      docx_out,
+      tables_path = tables_path
     )
 
     unlink(intermediate_tabs_docx)
@@ -209,6 +210,38 @@ process_table_file <- function(table_file, document, table_name) {
     document,
     paste0("\\{rpfy\\}:", table_name)
   )
+
+  # Check if table already exists after the magic string (skip_unchanged kept it)
+  # Access the XML body directly via officer's internal structure
+  body_node <- xml2::xml_find_first(
+    document$doc_obj$get(),
+    "//w:body",
+    ns = c(w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main")
+  )
+  body_children <- xml2::xml_children(body_node)
+  for (ci in seq_along(body_children)) {
+    child <- body_children[[ci]]
+    if (xml2::xml_name(child) == "p") {
+      child_text <- xml2::xml_text(child)
+      if (grepl(table_name, child_text, fixed = TRUE)) {
+        # Check if next sibling is a table
+        if (ci < length(body_children)) {
+          next_child <- body_children[[ci + 1]]
+          if (xml2::xml_name(next_child) == "tbl") {
+            log4r::info(
+              .le$logger,
+              paste0(
+                "Table already present, skipping insertion for: ",
+                table_name
+              )
+            )
+            return(document)
+          }
+        }
+        break
+      }
+    }
+  }
 
   flextable::body_add_flextable(
     document,

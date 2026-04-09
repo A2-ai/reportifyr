@@ -8,6 +8,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 
 from PIL import Image, ImageDraw, ImageFont
 
+from .alt_text import is_artifact_unchanged
 from .config import load_yaml
 from .magic import get_magic_pattern, parse_magic_string
 from .logging import setup_logger
@@ -48,6 +49,40 @@ def add_figure(
         matches = magic_pattern.findall(par.text)
         if matches:
             check_duplicates(matches, f"figure names in paragraph {actual_index+1}", logger)
+
+            # Check if figures already exist (skip_unchanged kept them)
+            # Count consecutive drawing paragraphs after the magic string
+            # in the live XML tree and compare to expected PNG count.
+            parent = par._element.getparent()
+            body_children = list(parent)
+            magic_idx = body_children.index(par._element)
+            existing_drawings = 0
+            for offset in range(1, len(body_children) - magic_idx):
+                sibling = body_children[magic_idx + offset]
+                if (
+                    sibling.tag.endswith("}p")
+                    and not "".join(
+                        t.text for t in sibling.xpath(".//w:t") if t.text
+                    ).strip()
+                    and sibling.xpath(".//w:drawing")
+                ):
+                    existing_drawings += 1
+                else:
+                    break
+
+            all_figure_args = parse_magic_string(matches[0])
+            png_count = sum(
+                1 for f in all_figure_args
+                if os.path.splitext(f)[1].lower() == ".png"
+            )
+            if existing_drawings >= png_count > 0:
+                logger.info(
+                    f"Figures already present for: "
+                    f"{list(all_figure_args.keys())}, skipping"
+                )
+                for figure in all_figure_args:
+                    found_magic_strings.append(figure)
+                continue
 
             for match in matches:
                 logger.debug(f"Processing magic string: {match}")
@@ -102,7 +137,7 @@ def add_figure(
                         parent.insert(target_index + 1, new_par._element)
 
                         # Configure image size
-                        if config.get("use_embedded_size", True) and set(
+                        if config.get("use_embedded_dimensions", True) and set(
                             figure_args[figure].keys()
                         ).intersection(["width", "height"]):
                             embedded_width = figure_args[figure].get("width")
@@ -124,7 +159,7 @@ def add_figure(
                                 ),
                             )
 
-                        elif config.get("use_artifact_size", False):
+                        elif config.get("use_artifact_size", True):
                             logger.debug(
                                 "Using artifact size (original image dimensions)"
                             )
@@ -263,7 +298,9 @@ def remove_figures(
     docx_in: str,
     docx_out: str,
     config_yaml: Optional[str],
+    figure_dir: str | None = None,
 ):
+    logger = setup_logger()
     doc = Document(docx_in)
     paragraphs = doc.paragraphs
 
@@ -273,10 +310,48 @@ def remove_figures(
     else:
         config = {}
 
+    skip_unchanged = config.get("skip_unchanged", False)
+
     for i, paragraph in enumerate(paragraphs):
         text = paragraph.text.strip()
         if text.startswith("{rpfy}:"):
             figure_args = parse_magic_string(text)
+
+            # Check alt text hashes for skip_unchanged
+            if skip_unchanged and figure_dir:
+                # Check next paragraphs for drawings with alt text
+                all_unchanged = True
+                for j, fig_name in enumerate(figure_args.keys()):
+                    if i + j + 1 < len(paragraphs):
+                        next_par = paragraphs[i + j + 1]
+                        drawings = next_par._element.xpath(
+                            ".//w:drawing"
+                        )
+                        if drawings:
+                            for d in drawings:
+                                for inline in d.xpath(
+                                    ".//wp:inline"
+                                ):
+                                    for dp in inline.xpath(
+                                        ".//wp:docPr"
+                                    ):
+                                        alt = dp.get("descr", "")
+                                        if not is_artifact_unchanged(
+                                            alt, figure_dir, fig_name
+                                        ):
+                                            all_unchanged = False
+                        else:
+                            all_unchanged = False
+                    else:
+                        all_unchanged = False
+
+                if all_unchanged:
+                    logger.info(
+                        f"Skipping removal of unchanged figures: "
+                        f"{list(figure_args.keys())}"
+                    )
+                    continue
+
             update_magic_string = False
 
             paragraphs_to_remove = []

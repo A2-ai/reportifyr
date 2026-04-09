@@ -1,3 +1,4 @@
+import hashlib
 import os
 import re
 import json
@@ -8,6 +9,24 @@ from docx import Document
 from docx.oxml.text import run, paragraph
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
+
+from .alt_text import extract_artifact_hashes, load_artifact_hash
+
+_BOOKMARK_MAX = 40
+
+
+def _make_bookmark_name(name: str) -> str:
+    """Create a bookmark name that fits Word's 40-char limit.
+
+    Short names get fp_ prefix directly. Long names use a deterministic
+    md5 hash to stay under 40 characters.
+    """
+    full = f"fp_{name}"
+    if len(full) <= _BOOKMARK_MAX:
+        return full
+    h = hashlib.md5(name.encode("utf-8")).hexdigest()
+    return f"fp_{h}"  # fp_ + 32 hex chars = 35 chars
+
 
 from .config import load_yaml
 from .logging import setup_logger
@@ -244,43 +263,43 @@ def create_footnote_paragraph(
     # Create the bookmark start
     bookmark_start = OxmlElement("w:bookmarkStart")
     bookmark_start.set(qn("w:id"), str(paragraph_id))
-    bookmark_start.set(qn("w:name"), f"fp_{name}")
+    bookmark_start.set(qn("w:name"), _make_bookmark_name(name))
     new_paragraph.append(bookmark_start)
 
-    # Pull Hash out before ordering — it's appended separately at the end
-    hash_value = meta_text_dict.pop("Hash", None)
-
-    # Add metadata lines - this assumes ordered dict which should be fine
+    # Order metadata lines per config
     meta_text_dict = {
         key: meta_text_dict[key]
         for key in config.get(
-            "footnote_order", ["Source", "Object", "Notes", "Abbreviations"]
+            "footnote_order",
+            ["Source", "Object", "Notes", "Abbreviations", "Hash"],
         )
         if key in meta_text_dict.keys()
     }
 
     for line_idx, (meta, value) in enumerate(meta_text_dict.items()):
         # Format the line based on metadata type
-        formatted_line = format_metadata_line(meta, "".join(value), config)
+        if isinstance(value, list):
+            if meta in ("Source", "Object", "Hash"):
+                joined = "; ".join(v.strip() for v in value)
+            else:
+                joined = " ".join(v.strip() for v in value)
+            formatted_line = format_metadata_line(
+                meta, joined, config
+            )
+        else:
+            formatted_line = format_metadata_line(meta, value, config)
 
         # Create run with formatted text
         runs = create_formatted_runs(formatted_line, config)
         for run in runs:
             new_paragraph.append(run)
 
-        # Add line break if needed
-        if line_idx != len(meta_text_dict) - 1 or hash_value:
+        # Add line break between entries
+        if line_idx != len(meta_text_dict) - 1:
             run_break = OxmlElement("w:r")
             br = OxmlElement("w:br")
             run_break.append(br)
             new_paragraph.append(run_break)
-
-    # Append Hash after ordered fields if present
-    if hash_value:
-        formatted_line = format_metadata_line("Hash", hash_value, config)
-        runs = create_formatted_runs(formatted_line, config)
-        for run in runs:
-            new_paragraph.append(run)
 
     # Create the bookmark end
     bookmark_end = OxmlElement("w:bookmarkEnd")
@@ -333,6 +352,17 @@ def add_figure_footnotes(
             logger.debug(f"Processing magic string: {match}")
             # generalized extraction of the figure name
             figure_args = parse_magic_string(match)
+
+            # Check if footnote already exists for this artifact
+            bookmark_name = _make_bookmark_name("".join(figure_args.keys()))
+            existing = document.element.xpath(
+                f'//w:bookmarkStart[@w:name="{bookmark_name}"]'
+            )
+            if existing:
+                logger.info(
+                    f"Footnote already present for: {''.join(figure_args.keys())}, skipping"
+                )
+                continue
 
             # create empty dict for combining all metadata
             combined_footnotes: dict[str, list[str]] = {}
@@ -478,6 +508,17 @@ def add_table_footnotes(
             # Generalized extraction of the table name
             table_name = match.replace("{rpfy}:", "").strip()
 
+            # Check if footnote already exists for this table
+            bookmark_name = _make_bookmark_name(table_name)
+            existing = document.element.xpath(
+                f'//w:bookmarkStart[@w:name="{bookmark_name}"]'
+            )
+            if existing:
+                logger.info(
+                    f"Footnote already present for: {table_name}, skipping"
+                )
+                continue
+
             try:
                 table_path = safe_resolve(table_dir, table_name)
             except ValueError:
@@ -528,15 +569,87 @@ def add_table_footnotes(
     logger.debug("Exiting add_table_footnotes function")
 
 
-def remove_footnotes(docx_in, docx_out):
-    namespace = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+def _build_unchanged_set(
+    docx_in: str,
+    config: dict,
+    figures_dir: str | None,
+    tables_dir: str | None,
+) -> set[str]:
+    """Build set of unchanged artifact filenames by comparing
+    alt-text hashes in the docx with current metadata hashes."""
+    unchanged = set()
+    if not config.get("skip_unchanged", False):
+        return unchanged
+
+    embedded = extract_artifact_hashes(docx_in)
+    for filename, embedded_hash in embedded.items():
+        # Try figures dir first, then tables dir
+        for artifact_dir in [figures_dir, tables_dir]:
+            if artifact_dir is None:
+                continue
+            current = load_artifact_hash(artifact_dir, filename)
+            if current is not None and current == embedded_hash:
+                unchanged.add(filename)
+                break
+    return unchanged
+
+
+def remove_footnotes(
+    docx_in,
+    docx_out,
+    config_yaml=None,
+    figures_dir=None,
+    tables_dir=None,
+):
+    logger = setup_logger()
+    namespace = (
+        "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+    )
+
+    if config_yaml is not None:
+        config = load_yaml(config_yaml)
+    else:
+        config = {}
+
+    unchanged = _build_unchanged_set(
+        docx_in, config, figures_dir, tables_dir
+    )
+    if unchanged:
+        logger.info(f"Unchanged artifacts: {unchanged}")
 
     doc = Document(docx_in)
+
+    # Build set of bookmark names for unchanged artifacts
+    unchanged_bookmarks = set()
+    if unchanged:
+        magic_pattern = get_magic_pattern()
+        for par in doc.paragraphs:
+            if not magic_pattern.search(par.text):
+                continue
+            figure_args = parse_magic_string(par.text)
+            # Check if all figures in this magic string are unchanged
+            all_unchanged = all(
+                f in unchanged for f in figure_args.keys()
+            )
+            if all_unchanged:
+                combined = "".join(figure_args.keys())
+                unchanged_bookmarks.add(_make_bookmark_name(combined))
+            # Also add individual filenames
+            for f in figure_args.keys():
+                if f in unchanged:
+                    unchanged_bookmarks.add(_make_bookmark_name(f))
 
     # Remove footnotes with 'fp_' in the bookmark name
     for bookmark in doc.element.xpath("//w:bookmarkStart"):
         name = bookmark.get(namespace + "name")
         if name.startswith("fp_"):
+            # Check if this footnote belongs to an unchanged artifact
+            if unchanged_bookmarks:
+                if name in unchanged_bookmarks:
+                    logger.info(
+                        f"Skipping removal of footnote: {name}"
+                    )
+                    continue
             bookmark_id = bookmark.get(namespace + "id")
             end_bookmark = doc.element.xpath(
                 f'//w:bookmarkEnd[@w:id="{bookmark_id}"]'
