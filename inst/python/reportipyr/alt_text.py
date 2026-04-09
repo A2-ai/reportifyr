@@ -13,7 +13,7 @@ from .logging import setup_logger
 from .magic import get_magic_pattern, parse_magic_entries
 
 
-def _load_artifact_hash(artifact_dir: str, filename: str) -> str | None:
+def load_artifact_hash(artifact_dir: str, filename: str) -> str | None:
     """Load the hash from a _metadata.json file for a given artifact."""
     object_name, extension = os.path.splitext(filename)
     metadata_file = os.path.join(
@@ -68,7 +68,7 @@ def is_artifact_unchanged(
     embedded_hash = _extract_hash_from_alt_text(alt_text)
     if not embedded_hash:
         return False
-    current_hash = _load_artifact_hash(artifact_dir, filename)
+    current_hash = load_artifact_hash(artifact_dir, filename)
     return current_hash is not None and current_hash == embedded_hash
 
 
@@ -139,7 +139,7 @@ def _is_full_width_row(tr, logical_cols: int) -> bool:
     return _get_gridspan(tcs[0]) >= logical_cols
 
 
-def _get_body_row_indices(tbl_element) -> list[int]:
+def get_body_row_indices(tbl_element) -> list[int]:
     """Return indices of body rows (not headers, not full-width spans)."""
     trs = tbl_element.findall(qn("w:tr"))
     logical_cols = _logical_column_count(tbl_element)
@@ -155,15 +155,15 @@ def _get_body_row_indices(tbl_element) -> list[int]:
     return indices
 
 
-def _extract_body_grid(tbl_element) -> list[list[str]]:
+def extract_body_grid(tbl_element) -> list[list[str]]:
     """Extract cell text from body rows as a 2D grid.
 
-    Same row filtering as _compute_table_content_hash:
+    Same row filtering as compute_table_content_hash:
     skips headers, full-width rows.
     Returns list of rows, each row is a list of stripped cell text strings.
     """
     trs = tbl_element.findall(qn("w:tr"))
-    body_indices = _get_body_row_indices(tbl_element)
+    body_indices = get_body_row_indices(tbl_element)
 
     grid = []
     for i in body_indices:
@@ -178,12 +178,12 @@ def _extract_body_grid(tbl_element) -> list[list[str]]:
     return grid
 
 
-def _grid_to_canonical(grid: list[list[str]]) -> str:
+def grid_to_canonical(grid: list[list[str]]) -> str:
     """Convert a body grid to the canonical tab/newline string."""
     return "\n".join("\t".join(row) for row in grid)
 
 
-def _compute_table_content_hash(tbl_element) -> str:
+def compute_table_content_hash(tbl_element) -> str:
     """Extract cell text from body rows of a table, normalize, and SHA-256 hash.
 
     Skips header rows (w:tblHeader or fallback detection) and full-width
@@ -192,8 +192,8 @@ def _compute_table_content_hash(tbl_element) -> str:
     Normalization: rows top-to-bottom, cells left-to-right,
     each cell stripped, joined with \\t (cells) and \\n (rows).
     """
-    grid = _extract_body_grid(tbl_element)
-    canonical = _grid_to_canonical(grid)
+    grid = extract_body_grid(tbl_element)
+    canonical = grid_to_canonical(grid)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
@@ -207,9 +207,9 @@ def _extract_content_hash_from_alt_text(alt_text: str) -> str | None:
     return match.group(1) if match else None
 
 
-def _encode_body_grid(grid: list[list[str]]) -> str:
+def encode_body_grid(grid: list[list[str]]) -> str:
     """Gzip + base64 encode a body grid for embedding in alt text."""
-    canonical = _grid_to_canonical(grid)
+    canonical = grid_to_canonical(grid)
     compressed = gzip.compress(canonical.encode("utf-8"))
     return base64.b64encode(compressed).decode("ascii")
 
@@ -219,12 +219,12 @@ def _decode_body_grid(encoded: str) -> list[list[str]] | None:
     try:
         compressed = base64.b64decode(encoded)
         canonical = gzip.decompress(compressed).decode("utf-8")
-        return [row.split("\t") for row in canonical.split("\n") if row]
+        return [row.split("\t") for row in canonical.split("\n")]
     except Exception:
         return None
 
 
-def _extract_body_grid_from_alt_text(alt_text: str) -> list[list[str]] | None:
+def extract_body_grid_from_alt_text(alt_text: str) -> list[list[str]] | None:
     """Extract and decode the body grid from alt text."""
     match = _CONTENT_BODY_PATTERN.search(alt_text)
     if not match:
@@ -242,7 +242,7 @@ def is_table_content_unchanged(alt_text: str, tbl_element) -> bool:
     embedded = _extract_content_hash_from_alt_text(alt_text)
     if not embedded:
         return False
-    current = _compute_table_content_hash(tbl_element)
+    current = compute_table_content_hash(tbl_element)
     return embedded == current
 
 
@@ -308,7 +308,7 @@ def add_figure_alt_text(docx_in: str, docx_out: str, artifact_dir: str | None = 
             # Load hash from metadata if artifact_dir provided
             hash_value = None
             if artifact_dir:
-                hash_value = _load_artifact_hash(artifact_dir, filename)
+                hash_value = load_artifact_hash(artifact_dir, filename)
                 if hash_value:
                     logger.debug(f"Loaded hash for {filename}: {hash_value}")
 
@@ -344,9 +344,13 @@ def set_table_alt_text(table, alt_text):
     """
     tblPr = table._tbl.tblPr
 
-    desc = OxmlElement("w:tblDescription")
-    desc.set(qn("w:val"), alt_text)
-    tblPr.append(desc)
+    existing = tblPr.find(qn("w:tblDescription"))
+    if existing is not None:
+        existing.set(qn("w:val"), alt_text)
+    else:
+        desc = OxmlElement("w:tblDescription")
+        desc.set(qn("w:val"), alt_text)
+        tblPr.append(desc)
 
 
 def add_table_alt_text(docx_in: str, docx_out: str, artifact_dir: str | None = None):
@@ -385,19 +389,19 @@ def add_table_alt_text(docx_in: str, docx_out: str, artifact_dir: str | None = N
             # Load hash from metadata if artifact_dir provided
             hash_value = None
             if artifact_dir:
-                hash_value = _load_artifact_hash(artifact_dir, table_name)
+                hash_value = load_artifact_hash(artifact_dir, table_name)
                 if hash_value:
                     logger.debug(f"Loaded hash for {table_name}: {hash_value}")
 
             alt_text = _embed_hash_in_alt_text(para_text, hash_value)
 
             # Compute content hash and body grid from table cell text
-            body_grid = _extract_body_grid(el)
-            canonical = _grid_to_canonical(body_grid)
+            body_grid = extract_body_grid(el)
+            canonical = grid_to_canonical(body_grid)
             content_hash = hashlib.sha256(
                 canonical.encode("utf-8")
             ).hexdigest()
-            encoded_body = _encode_body_grid(body_grid)
+            encoded_body = encode_body_grid(body_grid)
             alt_text = (
                 f"{alt_text}\n[content_hash:{content_hash}]"
                 f"\n[grid:{encoded_body}]"

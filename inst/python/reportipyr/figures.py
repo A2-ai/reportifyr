@@ -137,7 +137,7 @@ def add_figure(
                         parent.insert(target_index + 1, new_par._element)
 
                         # Configure image size
-                        if config.get("use_embedded_size", True) and set(
+                        if config.get("use_embedded_dimensions", True) and set(
                             figure_args[figure].keys()
                         ).intersection(["width", "height"]):
                             embedded_width = figure_args[figure].get("width")
@@ -159,7 +159,7 @@ def add_figure(
                                 ),
                             )
 
-                        elif config.get("use_artifact_size", False):
+                        elif config.get("use_artifact_size", True):
                             logger.debug(
                                 "Using artifact size (original image dimensions)"
                             )

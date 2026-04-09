@@ -2,14 +2,15 @@ from docx import Document
 from docx.oxml.ns import qn
 
 import hashlib
+import re
 
 from .alt_text import (
-    _compute_table_content_hash,
-    _encode_body_grid,
-    _extract_body_grid,
-    _extract_body_grid_from_alt_text,
-    _get_body_row_indices,
-    _grid_to_canonical,
+    compute_table_content_hash,
+    encode_body_grid,
+    extract_body_grid,
+    extract_body_grid_from_alt_text,
+    get_body_row_indices,
+    grid_to_canonical,
     is_artifact_unchanged,
     is_table_unchanged,
 )
@@ -19,13 +20,12 @@ from .logging import setup_logger
 
 def _update_alt_text_after_reconcile(tbl_element, old_alt_text: str):
     """Rewrite content_hash and grid in alt text after reconciliation."""
-    import re
 
     # Recompute from the now-updated table
-    body_grid = _extract_body_grid(tbl_element)
-    canonical = _grid_to_canonical(body_grid)
+    body_grid = extract_body_grid(tbl_element)
+    canonical = grid_to_canonical(body_grid)
     new_hash = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
-    new_body = _encode_body_grid(body_grid)
+    new_body = encode_body_grid(body_grid)
 
     # Replace content_hash
     new_alt = re.sub(
@@ -114,7 +114,7 @@ def reconcile_table_cells(
 
     Returns True if reconciliation succeeded, False if grids don't align.
     """
-    current_grid = _extract_body_grid(tbl_element)
+    current_grid = extract_body_grid(tbl_element)
 
     # Grid shape check — if dimensions differ, can't reconcile (pathway 1c)
     if len(current_grid) != len(source_grid):
@@ -136,7 +136,7 @@ def reconcile_table_cells(
 
     # Cell-by-cell comparison and update
     trs = tbl_element.findall(qn("w:tr"))
-    body_indices = _get_body_row_indices(tbl_element)
+    body_indices = get_body_row_indices(tbl_element)
     cells_updated = 0
 
     for row_offset, row_idx in enumerate(body_indices):
@@ -209,7 +209,7 @@ def remove_tables(docx_in, docx_out, config_yaml=None, table_dir=None):
                                     table_name,
                                 ):
                                     source_grid = (
-                                        _extract_body_grid_from_alt_text(
+                                        extract_body_grid_from_alt_text(
                                             alt
                                         )
                                     )

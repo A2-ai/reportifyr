@@ -79,7 +79,7 @@ add_plots <- function(
   if (isTRUE(config$keep_caption_next)) {
     keep_caption_next(docx_in, intermediate_docx)
   } else {
-    file.copy(docx_in, intermediate_docx)
+    file.copy(docx_in, intermediate_docx, overwrite = TRUE)
   }
 
   intermediate_figs_docx <- gsub(".docx", "-intfigs.docx", docx_out)
@@ -127,7 +127,7 @@ add_plots <- function(
       figures_path = figures_path
     )
   } else {
-    file.copy(intermediate_figs_docx, docx_out)
+    file.copy(intermediate_figs_docx, docx_out, overwrite = TRUE)
   }
 
   unlink(intermediate_docx)

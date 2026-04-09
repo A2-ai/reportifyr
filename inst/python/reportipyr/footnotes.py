@@ -10,7 +10,7 @@ from docx.oxml.text import run, paragraph
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
-from .alt_text import extract_artifact_hashes, _load_artifact_hash
+from .alt_text import extract_artifact_hashes, load_artifact_hash
 
 _BOOKMARK_MAX = 40
 
@@ -26,6 +26,8 @@ def _make_bookmark_name(name: str) -> str:
         return full
     h = hashlib.md5(name.encode("utf-8")).hexdigest()
     return f"fp_{h}"  # fp_ + 32 hex chars = 35 chars
+
+
 from .config import load_yaml
 from .logging import setup_logger
 from .magic import get_magic_pattern, parse_magic_string
@@ -581,7 +583,7 @@ def _build_unchanged_set(
         for artifact_dir in [figures_dir, tables_dir]:
             if artifact_dir is None:
                 continue
-            current = _load_artifact_hash(artifact_dir, filename)
+            current = load_artifact_hash(artifact_dir, filename)
             if current is not None and current == embedded_hash:
                 unchanged.add(filename)
                 break

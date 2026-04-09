@@ -72,14 +72,6 @@ build_report <- function(
   validate_input_args(docx_in, doc_dirs$doc_clean)
   validate_alt_text_magic_strings(docx_in)
 
-  if (is.null(config_yaml)) {
-    config_yaml_resolved <- system.file(
-      "extdata", "config.yaml", package = "reportifyr"
-    )
-  } else {
-    config_yaml_resolved <- config_yaml
-  }
-
   paths <- get_venv_uv_paths()
 
   # Remove footnotes only if add_footnotes is TRUE
@@ -87,7 +79,7 @@ build_report <- function(
     notes_args <- c(
       "run", "-m", "reportipyr.cli", "remove-footnotes",
       "-i", docx_in, "-o", doc_dirs$doc_clean,
-      "-c", config_yaml_resolved
+      "-c", config_yaml
     )
     if (!is.null(figures_path)) {
       notes_args <- c(notes_args, "--figures-dir", figures_path)
@@ -108,7 +100,7 @@ build_report <- function(
   tab_args <- c(
     "run", "-m", "reportipyr.cli", "remove-tables",
     "-i", doc_dirs$doc_clean, "-o", doc_dirs$doc_clean,
-    "-c", config_yaml_resolved
+    "-c", config_yaml
   )
   if (!is.null(tables_path)) {
     tab_args <- c(tab_args, "-d", tables_path)
@@ -122,7 +114,7 @@ build_report <- function(
   fig_args <- c(
     "run", "-m", "reportipyr.cli", "remove-figures",
     "-i", doc_dirs$doc_clean, "-o", doc_dirs$doc_clean,
-    "-c", config_yaml_resolved
+    "-c", config_yaml
   )
   if (!is.null(figures_path)) {
     fig_args <- c(fig_args, "-d", figures_path)

@@ -65,7 +65,7 @@ add_tables <- function(
   if (isTRUE(config$keep_caption_next)) {
     keep_caption_next(docx_in, intermediate_docx)
   } else {
-    file.copy(docx_in, intermediate_docx)
+    file.copy(docx_in, intermediate_docx, overwrite = TRUE)
   }
 
   # define magic string pattern

@@ -99,6 +99,20 @@ validate_config <- function(path_to_config_yaml) {
     }
   }
 
+  log4r::debug(.le$logger, "Checking abbreviation_delimiter now")
+  if (!is.null(config$abbreviation_delimiter)) {
+    if (typeof(config$abbreviation_delimiter) != "character") {
+      log4r::error(
+        .le$logger,
+        paste0(
+          "abbreviation_delimiter should be character, not: ",
+          typeof(config$abbreviation_delimiter)
+        )
+      )
+      valid <- FALSE
+    }
+  }
+
   log4r::debug(.le$logger, "Checking footnote_order now")
   if (!is.null(config$footnote_order)) {
     footnotes <- c("Object", "Source", "Notes", "Abbreviations", "Hash")

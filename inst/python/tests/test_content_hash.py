@@ -3,7 +3,7 @@ Programmatic test suite for content hash validation.
 
 Replicates the empirical test cases documented in hash_ordering_results.md.
 Each test constructs before/after table XML via python-docx + lxml,
-then asserts hash equality/inequality using _compute_table_content_hash().
+then asserts hash equality/inequality using compute_table_content_hash().
 
 Baseline table:
     C1       C2       C3
@@ -19,12 +19,12 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
 from reportipyr.alt_text import (
-    _compute_table_content_hash,
+    compute_table_content_hash,
     _decode_body_grid,
     _detect_header_rows,
-    _encode_body_grid,
-    _extract_body_grid,
-    _grid_to_canonical,
+    encode_body_grid,
+    extract_body_grid,
+    grid_to_canonical,
     _is_full_width_row,
     _logical_column_count,
 )
@@ -55,7 +55,7 @@ def _make_baseline_table():
 def _baseline_hash():
     """Return the hash of an unmodified baseline table."""
     _, tbl = _make_baseline_table()
-    return _compute_table_content_hash(tbl)
+    return compute_table_content_hash(tbl)
 
 
 def _get_cell(tbl, row, col):
@@ -85,7 +85,7 @@ def _get_paragraph_elements(tc):
 def test_e01_split_run():
     """E01: Split run should not change value-based hash."""
     _, tbl = _make_baseline_table()
-    base = _compute_table_content_hash(tbl)
+    base = compute_table_content_hash(tbl)
 
     # Mutate: split Revenue run into two runs "Rev" + "enue"
     _, tbl2 = _make_baseline_table()
@@ -104,13 +104,13 @@ def test_e01_split_run():
         run.append(t)
         p.append(run)
 
-    assert _compute_table_content_hash(tbl2) == base
+    assert compute_table_content_hash(tbl2) == base
 
 
 def test_e01_followup_split_run_no_bold():
     """E01 follow-up: Split run without bold should not change hash."""
     _, tbl = _make_baseline_table()
-    base = _compute_table_content_hash(tbl)
+    base = compute_table_content_hash(tbl)
 
     _, tbl2 = _make_baseline_table()
     tc = _get_cell(tbl2, 2, 0)
@@ -132,20 +132,20 @@ def test_e01_followup_split_run_no_bold():
         run.append(t)
         p.append(run)
 
-    assert _compute_table_content_hash(tbl2) == base
+    assert compute_table_content_hash(tbl2) == base
 
 
 def test_e02_merge_runs():
     """E02: Identical single-run cell in both — identity check."""
     _, tbl1 = _make_baseline_table()
     _, tbl2 = _make_baseline_table()
-    assert _compute_table_content_hash(tbl1) == _compute_table_content_hash(tbl2)
+    assert compute_table_content_hash(tbl1) == compute_table_content_hash(tbl2)
 
 
 def test_e03_two_paragraphs_in_cell():
     """E03: Two paragraphs in a cell (same visible text) should not change hash."""
     _, tbl = _make_baseline_table()
-    base = _compute_table_content_hash(tbl)
+    base = compute_table_content_hash(tbl)
 
     _, tbl2 = _make_baseline_table()
     tc = _get_cell(tbl2, 2, 0)
@@ -164,7 +164,7 @@ def test_e03_two_paragraphs_in_cell():
         p.append(run)
         tc.append(p)
 
-    assert _compute_table_content_hash(tbl2) == base
+    assert compute_table_content_hash(tbl2) == base
 
 
 def test_e05_header_semantics():
@@ -175,7 +175,7 @@ def test_e05_header_semantics():
     only body data rows.
     """
     _, tbl = _make_baseline_table()
-    base = _compute_table_content_hash(tbl)
+    base = compute_table_content_hash(tbl)
 
     _, tbl2 = _make_baseline_table()
     # Add w:tblHeader to row 1
@@ -187,13 +187,13 @@ def test_e05_header_semantics():
     header = OxmlElement("w:tblHeader")
     trPr.append(header)
 
-    assert _compute_table_content_hash(tbl2) != base
+    assert compute_table_content_hash(tbl2) != base
 
 
 def test_e06_style_only():
     """E06: Style-only changes (bold/italic/underline) should not change hash."""
     _, tbl = _make_baseline_table()
-    base = _compute_table_content_hash(tbl)
+    base = compute_table_content_hash(tbl)
 
     _, tbl2 = _make_baseline_table()
 
@@ -223,20 +223,20 @@ def test_e06_style_only():
         rPr3.append(u)
         runs3[0].insert(0, rPr3)
 
-    assert _compute_table_content_hash(tbl2) == base
+    assert compute_table_content_hash(tbl2) == base
 
 
 def test_e06_5_identical_baseline():
     """E6.5: Two identical baseline tables should have equal hashes."""
     _, tbl1 = _make_baseline_table()
     _, tbl2 = _make_baseline_table()
-    assert _compute_table_content_hash(tbl1) == _compute_table_content_hash(tbl2)
+    assert compute_table_content_hash(tbl1) == compute_table_content_hash(tbl2)
 
 
 def test_e13_trailing_space():
     """E13: Trailing space should not change hash (cell-level strip)."""
     _, tbl = _make_baseline_table()
-    base = _compute_table_content_hash(tbl)
+    base = compute_table_content_hash(tbl)
 
     _, tbl2 = _make_baseline_table()
     tc = _get_cell(tbl2, 2, 2)  # row 3, col 3 = "100"
@@ -244,13 +244,13 @@ def test_e13_trailing_space():
     wt.text = "100 "
     wt.set(qn("xml:space"), "preserve")
 
-    assert _compute_table_content_hash(tbl2) == base
+    assert compute_table_content_hash(tbl2) == base
 
 
 def test_e16_5_tab_element():
     """E16.5: w:tab insertion should not change hash."""
     _, tbl = _make_baseline_table()
-    base = _compute_table_content_hash(tbl)
+    base = compute_table_content_hash(tbl)
 
     _, tbl2 = _make_baseline_table()
     tc = _get_cell(tbl2, 2, 0)  # row 3, col 1
@@ -260,26 +260,26 @@ def test_e16_5_tab_element():
         tab = OxmlElement("w:tab")
         runs[0].insert(0, tab)
 
-    assert _compute_table_content_hash(tbl2) == base
+    assert compute_table_content_hash(tbl2) == base
 
 
 def test_e20_trailing_nbsp():
     """E20: Trailing non-breaking space should not change hash (.strip() removes it)."""
     _, tbl = _make_baseline_table()
-    base = _compute_table_content_hash(tbl)
+    base = compute_table_content_hash(tbl)
 
     _, tbl2 = _make_baseline_table()
     tc = _get_cell(tbl2, 2, 2)  # row 3, col 3 = "100"
     wt = _get_wt_elements(tc)[0]
     wt.text = "100\u00a0"
 
-    assert _compute_table_content_hash(tbl2) == base
+    assert compute_table_content_hash(tbl2) == base
 
 
 def test_e23_line_break():
     """E23: w:br insertion should not change hash."""
     _, tbl = _make_baseline_table()
-    base = _compute_table_content_hash(tbl)
+    base = compute_table_content_hash(tbl)
 
     _, tbl2 = _make_baseline_table()
     tc = _get_cell(tbl2, 2, 0)  # row 3, col 1
@@ -288,7 +288,7 @@ def test_e23_line_break():
         br = OxmlElement("w:br")
         runs[0].append(br)
 
-    assert _compute_table_content_hash(tbl2) == base
+    assert compute_table_content_hash(tbl2) == base
 
 
 # ── Hash SHOULD change ────────────────────────────────────────────────────
@@ -297,14 +297,14 @@ def test_e23_line_break():
 def test_e04_value_change():
     """E04: Actual value change ('Revenue' -> 'Rev enue') should change hash."""
     _, tbl = _make_baseline_table()
-    base = _compute_table_content_hash(tbl)
+    base = compute_table_content_hash(tbl)
 
     _, tbl2 = _make_baseline_table()
     tc = _get_cell(tbl2, 2, 0)
     wt = _get_wt_elements(tc)[0]
     wt.text = "Rev enue"
 
-    assert _compute_table_content_hash(tbl2) != base
+    assert compute_table_content_hash(tbl2) != base
 
 
 def test_e07_horizontal_merge():
@@ -313,7 +313,7 @@ def test_e07_horizontal_merge():
     Documents known behavior: merging C1+C2 produces 'C1C2' in one cell.
     """
     _, tbl = _make_baseline_table()
-    base = _compute_table_content_hash(tbl)
+    base = compute_table_content_hash(tbl)
 
     _, tbl2 = _make_baseline_table()
     tr = tbl2.findall(qn("w:tr"))[0]  # row 1
@@ -342,13 +342,13 @@ def test_e07_horizontal_merge():
     # Remove cell 1
     tr.remove(tc1)
 
-    assert _compute_table_content_hash(tbl2) != base
+    assert compute_table_content_hash(tbl2) != base
 
 
 def test_e08_spanner_label():
     """E08: Merged spanner with new label text should change hash."""
     _, tbl = _make_baseline_table()
-    base = _compute_table_content_hash(tbl)
+    base = compute_table_content_hash(tbl)
 
     _, tbl2 = _make_baseline_table()
     tr = tbl2.findall(qn("w:tr"))[0]
@@ -373,13 +373,13 @@ def test_e08_spanner_label():
     # Remove cell 1
     tr.remove(tc1)
 
-    assert _compute_table_content_hash(tbl2) != base
+    assert compute_table_content_hash(tbl2) != base
 
 
 def test_e09_row_swap():
     """E09: Swapping data row order should change hash."""
     _, tbl = _make_baseline_table()
-    base = _compute_table_content_hash(tbl)
+    base = compute_table_content_hash(tbl)
 
     _, tbl2 = _make_baseline_table()
     trs = tbl2.findall(qn("w:tr"))
@@ -390,13 +390,13 @@ def test_e09_row_swap():
     tbl2.remove(row4)
     tbl2.insert(list(tbl2).index(row3), row4)
 
-    assert _compute_table_content_hash(tbl2) != base
+    assert compute_table_content_hash(tbl2) != base
 
 
 def test_e10_column_swap():
     """E10: Swapping column order should change hash."""
     _, tbl = _make_baseline_table()
-    base = _compute_table_content_hash(tbl)
+    base = compute_table_content_hash(tbl)
 
     _, tbl2 = _make_baseline_table()
     # Swap columns 0 and 1 in every row
@@ -407,33 +407,33 @@ def test_e10_column_swap():
         tr.remove(tc1)
         tr.insert(list(tr).index(tc0), tc1)
 
-    assert _compute_table_content_hash(tbl2) != base
+    assert compute_table_content_hash(tbl2) != base
 
 
 def test_e11_numeric_change():
     """E11: Numeric text change ('100' -> '100.0') should change hash."""
     _, tbl = _make_baseline_table()
-    base = _compute_table_content_hash(tbl)
+    base = compute_table_content_hash(tbl)
 
     _, tbl2 = _make_baseline_table()
     tc = _get_cell(tbl2, 2, 2)  # row 3, col 3
     wt = _get_wt_elements(tc)[0]
     wt.text = "100.0"
 
-    assert _compute_table_content_hash(tbl2) != base
+    assert compute_table_content_hash(tbl2) != base
 
 
 def test_e12_numeric_format():
     """E12: Numeric formatting variant ('100' -> '1,00') should change hash."""
     _, tbl = _make_baseline_table()
-    base = _compute_table_content_hash(tbl)
+    base = compute_table_content_hash(tbl)
 
     _, tbl2 = _make_baseline_table()
     tc = _get_cell(tbl2, 2, 2)
     wt = _get_wt_elements(tc)[0]
     wt.text = "1,00"
 
-    assert _compute_table_content_hash(tbl2) != base
+    assert compute_table_content_hash(tbl2) != base
 
 
 def test_e15_empty_to_na():
@@ -450,7 +450,7 @@ def test_e15_empty_to_na():
     for r, row_data in enumerate(data_with_empty):
         for c, val in enumerate(row_data):
             table1.cell(r, c).paragraphs[0].text = val
-    hash_empty = _compute_table_content_hash(table1._tbl)
+    hash_empty = compute_table_content_hash(table1._tbl)
 
     # After: C3 header is "NA"
     doc2 = Document()
@@ -464,7 +464,7 @@ def test_e15_empty_to_na():
     for r, row_data in enumerate(data_with_na):
         for c, val in enumerate(row_data):
             table2.cell(r, c).paragraphs[0].text = val
-    hash_na = _compute_table_content_hash(table2._tbl)
+    hash_na = compute_table_content_hash(table2._tbl)
 
     assert hash_empty != hash_na
 
@@ -472,7 +472,7 @@ def test_e15_empty_to_na():
 def test_e16_add_empty_row():
     """E16: Adding an empty row should change hash."""
     _, tbl = _make_baseline_table()
-    base = _compute_table_content_hash(tbl)
+    base = compute_table_content_hash(tbl)
 
     _, tbl2 = _make_baseline_table()
     # Prepend an empty 3-cell row
@@ -487,7 +487,7 @@ def test_e16_add_empty_row():
     first_tr = tbl2.findall(qn("w:tr"))[0]
     tbl2.insert(list(tbl2).index(first_tr), new_tr)
 
-    assert _compute_table_content_hash(tbl2) != base
+    assert compute_table_content_hash(tbl2) != base
 
 
 def test_e19_vertical_merge():
@@ -496,7 +496,7 @@ def test_e19_vertical_merge():
     After merge: row 3 col 1 = 'Revenue' (restart), row 4 col 1 = '' (continue).
     """
     _, tbl = _make_baseline_table()
-    base = _compute_table_content_hash(tbl)
+    base = compute_table_content_hash(tbl)
 
     _, tbl2 = _make_baseline_table()
 
@@ -523,7 +523,7 @@ def test_e19_vertical_merge():
     for wt in _get_wt_elements(tc_cont):
         wt.text = ""
 
-    assert _compute_table_content_hash(tbl2) != base
+    assert compute_table_content_hash(tbl2) != base
 
 
 def test_e21_em_to_en_dash():
@@ -536,7 +536,7 @@ def test_e21_em_to_en_dash():
     for r, row_data in enumerate(data_em):
         for c, val in enumerate(row_data):
             table1.cell(r, c).paragraphs[0].text = val
-    hash_em = _compute_table_content_hash(table1._tbl)
+    hash_em = compute_table_content_hash(table1._tbl)
 
     # After: Q–1 (en dash U+2013)
     doc2 = Document()
@@ -546,7 +546,7 @@ def test_e21_em_to_en_dash():
     for r, row_data in enumerate(data_en):
         for c, val in enumerate(row_data):
             table2.cell(r, c).paragraphs[0].text = val
-    hash_en = _compute_table_content_hash(table2._tbl)
+    hash_en = compute_table_content_hash(table2._tbl)
 
     assert hash_em != hash_en
 
@@ -561,7 +561,7 @@ def test_e22_smart_quotes():
     for r, row_data in enumerate(data_smart):
         for c, val in enumerate(row_data):
             table1.cell(r, c).paragraphs[0].text = val
-    hash_smart = _compute_table_content_hash(table1._tbl)
+    hash_smart = compute_table_content_hash(table1._tbl)
 
     # After: straight quotes
     doc2 = Document()
@@ -571,7 +571,7 @@ def test_e22_smart_quotes():
     for r, row_data in enumerate(data_straight):
         for c, val in enumerate(row_data):
             table2.cell(r, c).paragraphs[0].text = val
-    hash_straight = _compute_table_content_hash(table2._tbl)
+    hash_straight = compute_table_content_hash(table2._tbl)
 
     assert hash_smart != hash_straight
 
@@ -579,14 +579,14 @@ def test_e22_smart_quotes():
 def test_e24_zwsp():
     """E24: Zero-width space insertion should change hash."""
     _, tbl = _make_baseline_table()
-    base = _compute_table_content_hash(tbl)
+    base = compute_table_content_hash(tbl)
 
     _, tbl2 = _make_baseline_table()
     tc = _get_cell(tbl2, 2, 1)  # row 3, col 2 = "Q1"
     wt = _get_wt_elements(tc)[0]
     wt.text = "Q1\u200b"
 
-    assert _compute_table_content_hash(tbl2) != base
+    assert compute_table_content_hash(tbl2) != base
 
 
 # ── Header / Footer Skip Tests ────────────────────────────────────────────
@@ -669,7 +669,7 @@ def _make_param_table(with_tbl_header=False):
 def test_header_skip_with_tbl_header():
     """Header rows with w:tblHeader are excluded from hash."""
     _, tbl1 = _make_param_table(with_tbl_header=True)
-    hash1 = _compute_table_content_hash(tbl1)
+    hash1 = compute_table_content_hash(tbl1)
 
     # Change header text — hash should NOT change
     _, tbl2 = _make_param_table(with_tbl_header=True)
@@ -678,14 +678,14 @@ def test_header_skip_with_tbl_header():
     wt = list(tcs[1].iter(qn("w:t")))[0]
     wt.text = "Point Estimate"
 
-    hash2 = _compute_table_content_hash(tbl2)
+    hash2 = compute_table_content_hash(tbl2)
     assert hash1 == hash2
 
 
 def test_header_skip_fallback():
     """Fallback header detection: rows before first normal row are excluded."""
     _, tbl1 = _make_param_table(with_tbl_header=False)
-    hash1 = _compute_table_content_hash(tbl1)
+    hash1 = compute_table_content_hash(tbl1)
 
     # Change header text — hash should NOT change
     _, tbl2 = _make_param_table(with_tbl_header=False)
@@ -694,14 +694,14 @@ def test_header_skip_fallback():
     wt = list(tcs[1].iter(qn("w:t")))[0]
     wt.text = "Point Estimate"
 
-    hash2 = _compute_table_content_hash(tbl2)
+    hash2 = compute_table_content_hash(tbl2)
     assert hash1 == hash2
 
 
 def test_full_width_section_label_excluded():
     """Full-width body span (section label) is excluded from hash."""
     _, tbl1 = _make_param_table(with_tbl_header=True)
-    hash1 = _compute_table_content_hash(tbl1)
+    hash1 = compute_table_content_hash(tbl1)
 
     # Change section label — hash should NOT change
     _, tbl2 = _make_param_table(with_tbl_header=True)
@@ -710,14 +710,14 @@ def test_full_width_section_label_excluded():
     wt = list(tcs[0].iter(qn("w:t")))[0]
     wt.text = "Fixed Effect Parameters"
 
-    hash2 = _compute_table_content_hash(tbl2)
+    hash2 = compute_table_content_hash(tbl2)
     assert hash1 == hash2
 
 
 def test_full_width_footer_excluded():
     """Full-width footer (abbreviations) is excluded from hash."""
     _, tbl1 = _make_param_table(with_tbl_header=True)
-    hash1 = _compute_table_content_hash(tbl1)
+    hash1 = compute_table_content_hash(tbl1)
 
     # Change footer text — hash should NOT change
     _, tbl2 = _make_param_table(with_tbl_header=True)
@@ -726,14 +726,14 @@ def test_full_width_footer_excluded():
     wt = list(tcs[0].iter(qn("w:t")))[0]
     wt.text = "Abbreviations: CI = confidence intervals; CV = coefficient of variation"
 
-    hash2 = _compute_table_content_hash(tbl2)
+    hash2 = compute_table_content_hash(tbl2)
     assert hash1 == hash2
 
 
 def test_body_data_change_still_detected():
     """Body data changes are still detected despite header/footer skipping."""
     _, tbl1 = _make_param_table(with_tbl_header=True)
-    hash1 = _compute_table_content_hash(tbl1)
+    hash1 = compute_table_content_hash(tbl1)
 
     # Change a body value — hash SHOULD change
     _, tbl2 = _make_param_table(with_tbl_header=True)
@@ -742,7 +742,7 @@ def test_body_data_change_still_detected():
     wt = list(tcs[3].iter(qn("w:t")))[0]  # "170"
     wt.text = "107"
 
-    hash2 = _compute_table_content_hash(tbl2)
+    hash2 = compute_table_content_hash(tbl2)
     assert hash1 != hash2
 
 
@@ -802,8 +802,8 @@ def test_mixed_table_only_body_hashed():
         for c, val in enumerate(texts):
             body_only.cell(r, c).paragraphs[0].text = val
 
-    hash_full = _compute_table_content_hash(tbl)
-    hash_body = _compute_table_content_hash(body_only._tbl)
+    hash_full = compute_table_content_hash(tbl)
+    hash_body = compute_table_content_hash(body_only._tbl)
 
     assert hash_full == hash_body
 
@@ -862,7 +862,7 @@ def test_vmerge_header_detection():
 def test_cell_shading_does_not_change_hash():
     """Cell background color / shading should not change hash."""
     _, tbl = _make_baseline_table()
-    base = _compute_table_content_hash(tbl)
+    base = compute_table_content_hash(tbl)
 
     _, tbl2 = _make_baseline_table()
     tc = _get_cell(tbl2, 2, 0)
@@ -876,7 +876,7 @@ def test_cell_shading_does_not_change_hash():
     shd.set(qn("w:fill"), "FFFF00")
     tcPr.append(shd)
 
-    assert _compute_table_content_hash(tbl2) == base
+    assert compute_table_content_hash(tbl2) == base
 
 
 def test_multiple_section_labels_excluded():
@@ -958,7 +958,7 @@ def test_multiple_section_labels_excluded():
     _add_data_row(tbl, ["Prop", "0.15", "0.12, 0.18", "10.6"])
     _add_spanned_row(tbl, "Abbreviations: CI = confidence intervals", 4)
 
-    hash1 = _compute_table_content_hash(tbl)
+    hash1 = compute_table_content_hash(tbl)
 
     # Change all three section labels — hash should NOT change
     trs = tbl.findall(qn("w:tr"))
@@ -972,7 +972,7 @@ def test_multiple_section_labels_excluded():
     wt_footer = list(footer_tc.iter(qn("w:t")))[0]
     wt_footer.text = "CHANGED FOOTER"
 
-    hash2 = _compute_table_content_hash(tbl)
+    hash2 = compute_table_content_hash(tbl)
     assert hash1 == hash2
 
 
@@ -1015,13 +1015,13 @@ def test_simple_table_with_footer_only():
     tr_footer.append(tc_footer)
     tbl.append(tr_footer)
 
-    hash1 = _compute_table_content_hash(tbl)
+    hash1 = compute_table_content_hash(tbl)
 
     # Change footer — hash should NOT change
     wt = list(tc_footer.iter(qn("w:t")))[0]
     wt.text = "Abbreviations: TOTALLY DIFFERENT"
 
-    hash2 = _compute_table_content_hash(tbl)
+    hash2 = compute_table_content_hash(tbl)
     assert hash1 == hash2
 
     # Change body data — hash SHOULD change
@@ -1029,21 +1029,21 @@ def test_simple_table_with_footer_only():
     wt_body = list(body_tc.iter(qn("w:t")))[0]
     wt_body.text = "99"
 
-    hash3 = _compute_table_content_hash(tbl)
+    hash3 = compute_table_content_hash(tbl)
     assert hash3 != hash2
 
 
 def test_clear_cell_to_empty():
     """Clearing a populated cell to empty should change hash."""
     _, tbl = _make_baseline_table()
-    base = _compute_table_content_hash(tbl)
+    base = compute_table_content_hash(tbl)
 
     _, tbl2 = _make_baseline_table()
     tc = _get_cell(tbl2, 3, 2)  # row 4, col 3 = "120"
     wt = _get_wt_elements(tc)[0]
     wt.text = ""
 
-    assert _compute_table_content_hash(tbl2) != base
+    assert compute_table_content_hash(tbl2) != base
 
 
 # ── Cell Reconciliation Tests ─────────────────────────────────────────────
@@ -1062,16 +1062,16 @@ class _FakeLogger:
         self.messages.append(("INFO", msg))
 
 
-def test_extract_body_grid_matches_hash():
-    """_extract_body_grid returns data consistent with _compute_table_content_hash."""
+def testextract_body_grid_matches_hash():
+    """extract_body_grid returns data consistent with compute_table_content_hash."""
     _, tbl = _make_param_table(with_tbl_header=True)
-    grid = _extract_body_grid(tbl)
-    canonical = _grid_to_canonical(grid)
+    grid = extract_body_grid(tbl)
+    canonical = grid_to_canonical(grid)
 
     import hashlib
 
     expected_hash = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
-    actual_hash = _compute_table_content_hash(tbl)
+    actual_hash = compute_table_content_hash(tbl)
     assert expected_hash == actual_hash
 
 
@@ -1081,7 +1081,7 @@ def test_encode_decode_roundtrip():
         ["CL/F", "\u03b81", "170", "105, 235"],
         ["Vc/F", "\u03b82", "40", "34, 46"],
     ]
-    encoded = _encode_body_grid(grid)
+    encoded = encode_body_grid(grid)
     decoded = _decode_body_grid(encoded)
     assert decoded == grid
 
@@ -1089,7 +1089,7 @@ def test_encode_decode_roundtrip():
 def test_encode_decode_empty_cells():
     """Encode/decode handles empty cell values."""
     grid = [["A", "", "C"], ["", "B", ""]]
-    encoded = _encode_body_grid(grid)
+    encoded = encode_body_grid(grid)
     decoded = _decode_body_grid(encoded)
     assert decoded == grid
 
@@ -1097,7 +1097,7 @@ def test_encode_decode_empty_cells():
 def test_reconcile_same_grid_no_changes():
     """Reconciliation with identical grid updates zero cells."""
     _, tbl = _make_baseline_table()
-    grid = _extract_body_grid(tbl)
+    grid = extract_body_grid(tbl)
     logger = _FakeLogger()
 
     result = reconcile_table_cells(tbl, grid, logger)
@@ -1108,7 +1108,7 @@ def test_reconcile_same_grid_no_changes():
 def test_reconcile_updates_changed_cells():
     """Reconciliation updates only cells that differ."""
     _, tbl = _make_baseline_table()
-    original_grid = _extract_body_grid(tbl)
+    original_grid = extract_body_grid(tbl)
 
     # Mutate one cell in the table
     tc = _get_cell(tbl, 2, 2)  # "100"
@@ -1131,7 +1131,7 @@ def test_reconcile_updates_changed_cells():
 def test_reconcile_preserves_formatting():
     """Reconciliation preserves w:rPr, w:tcPr, w:pPr on updated cells."""
     _, tbl = _make_baseline_table()
-    original_grid = _extract_body_grid(tbl)
+    original_grid = extract_body_grid(tbl)
 
     # Add bold formatting to a cell
     tc = _get_cell(tbl, 2, 0)  # "Revenue"
@@ -1189,7 +1189,7 @@ def test_reconcile_fails_row_count_mismatch():
 def test_reconcile_fails_column_count_mismatch():
     """Reconciliation fails when column counts differ (pathway 1c)."""
     _, tbl = _make_baseline_table()
-    grid = _extract_body_grid(tbl)
+    grid = extract_body_grid(tbl)
     narrow_grid = [[row[0], row[1]] for row in grid]
 
     logger = _FakeLogger()
@@ -1200,21 +1200,21 @@ def test_reconcile_fails_column_count_mismatch():
 def test_reconcile_hash_refreshed():
     """After reconciliation, content hash matches the source grid."""
     _, tbl = _make_baseline_table()
-    original_grid = _extract_body_grid(tbl)
-    original_hash = _compute_table_content_hash(tbl)
+    original_grid = extract_body_grid(tbl)
+    original_hash = compute_table_content_hash(tbl)
 
     # Mutate a cell
     tc = _get_cell(tbl, 2, 2)
     wt = _get_wt_elements(tc)[0]
     wt.text = "999"
-    assert _compute_table_content_hash(tbl) != original_hash
+    assert compute_table_content_hash(tbl) != original_hash
 
     # Reconcile
     logger = _FakeLogger()
     reconcile_table_cells(tbl, original_grid, logger)
 
     # Hash should match original again
-    assert _compute_table_content_hash(tbl) == original_hash
+    assert compute_table_content_hash(tbl) == original_hash
 
 
 def test_update_cell_text_preserves_rpr():
@@ -1271,7 +1271,7 @@ def test_update_cell_text_consolidates_split_runs():
 def test_reconcile_on_param_table():
     """Reconciliation works on a param-style table with headers and section labels."""
     _, tbl = _make_param_table(with_tbl_header=True)
-    original_grid = _extract_body_grid(tbl)
+    original_grid = extract_body_grid(tbl)
 
     # Mutate a body cell (row 2 = first body row, col 3 = "170")
     trs = tbl.findall(qn("w:tr"))

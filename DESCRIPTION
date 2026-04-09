@@ -41,6 +41,7 @@ Imports:
     rlang,
     this.path,
     tictoc,
+    xml2,
     yaml
 Suggests: 
     knitr,
