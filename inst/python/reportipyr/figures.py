@@ -48,17 +48,6 @@ def add_figure(
 
         matches = magic_pattern.findall(par.text)
         if matches:
-            # Check if figures already exist after this magic string
-            if actual_index + 1 < len(document.paragraphs):
-                next_par = document.paragraphs[actual_index + 1]
-                if not next_par.text.strip() and next_par._element.xpath(
-                    ".//w:drawing"
-                ):
-                    logger.info(
-                        f"Figures already present after paragraph {actual_index+1}, skipping insertion"
-                    )
-                    continue
-
             check_duplicates(matches, f"figure names in paragraph {actual_index+1}", logger)
 
             for match in matches:
@@ -103,14 +92,29 @@ def add_figure(
                         else:
                             labeled_image = image_path
 
+                        # Check if figure already exists (skip_unchanged kept it)
+                        parent = par._element.getparent()
+                        target_index = list(parent).index(par._element)
+                        if target_index + 1 < len(list(parent)):
+                            next_el = list(parent)[target_index + 1]
+                            if (
+                                next_el.tag.endswith("}p")
+                                and not "".join(
+                                    t.text for t in next_el.xpath(".//w:t") if t.text
+                                ).strip()
+                                and next_el.xpath(".//w:drawing")
+                            ):
+                                logger.info(
+                                    f"Figure already present for: {figure}, skipping"
+                                )
+                                continue
+
                         # Insert new paragraph after the current paragraph
                         new_par = document.add_paragraph()
                         run = new_par.add_run()
 
-                        # Move paragraph to correct position (after current paragraph)
-                        parent = par._element.getparent()
+                        # Move paragraph to correct position
                         new_par._element.getparent().remove(new_par._element)
-                        target_index = list(parent).index(par._element)
                         parent.insert(target_index + 1, new_par._element)
 
                         # Configure image size
