@@ -512,22 +512,27 @@ def extract_artifact_hashes(docx_in: str) -> dict[str, str]:
             text_elements = el.xpath(".//w:t")
             para_text = "".join([t.text for t in text_elements if t.text])
             match = magic_pattern.search(para_text)
-            if match and idx + 1 < len(siblings):
-                next_el = siblings[idx + 1]
-                # Check drawings in next paragraph
-                if next_el.tag.endswith("}p"):
-                    for drawing in next_el.xpath(".//w:drawing"):
+            if match:
+                entries = parse_magic_entries(match.group())
+                drawing_offset = 0
+                for filename, _ in entries:
+                    draw_idx = idx + 1 + drawing_offset
+                    if draw_idx >= len(siblings):
+                        break
+                    draw_el = siblings[draw_idx]
+                    if not draw_el.tag.endswith("}p"):
+                        break
+                    for drawing in draw_el.xpath(".//w:drawing"):
                         for inline in drawing.xpath(".//wp:inline"):
                             for doc_pr in inline.xpath(".//wp:docPr"):
                                 descr = doc_pr.get("descr", "")
                                 hash_match = hash_pattern.search(descr)
                                 if hash_match:
-                                    entries = parse_magic_entries(match.group())
-                                    for filename, _ in entries:
-                                        hashes[filename] = hash_match.group(1)
-                                        logger.debug(
-                                            f"Extracted hash for figure {filename}: {hash_match.group(1)}"
-                                        )
+                                    hashes[filename] = hash_match.group(1)
+                                    logger.debug(
+                                        f"Extracted hash for figure {filename}: {hash_match.group(1)}"
+                                    )
+                    drawing_offset += 1
 
         # Check tables: magic paragraph before table element
         if el.tag.endswith("}tbl") and idx > 0:
