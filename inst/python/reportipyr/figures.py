@@ -63,6 +63,42 @@ def add_figure(
                 else:
                     figures = list(figure_args.keys())
 
+                # Check if figures already exist after this magic string
+                # (skip_unchanged kept them). Count existing drawings
+                # immediately following the magic string paragraph.
+                parent = par._element.getparent()
+                body_children = list(parent)
+                magic_idx = body_children.index(par._element)
+                existing_drawings = 0
+                for offset in range(1, len(body_children) - magic_idx):
+                    sibling = body_children[magic_idx + offset]
+                    if (
+                        sibling.tag.endswith("}p")
+                        and not "".join(
+                            t.text
+                            for t in sibling.xpath(".//w:t")
+                            if t.text
+                        ).strip()
+                        and sibling.xpath(".//w:drawing")
+                    ):
+                        existing_drawings += 1
+                    else:
+                        break
+
+                png_count = sum(
+                    1
+                    for f in figures
+                    if os.path.splitext(f)[1].lower() == ".png"
+                )
+                if existing_drawings >= png_count:
+                    logger.info(
+                        f"Figures already present for: {figures}, "
+                        f"skipping insertion"
+                    )
+                    for figure in figures:
+                        found_magic_strings.append(figure)
+                    continue
+
                 for fig_idx, figure in enumerate(figures):
                     extension = os.path.splitext(figure)[1].lower()
                     if extension != ".png":
@@ -92,28 +128,12 @@ def add_figure(
                         else:
                             labeled_image = image_path
 
-                        # Check if figure already exists (skip_unchanged kept it)
-                        parent = par._element.getparent()
-                        target_index = list(parent).index(par._element)
-                        if target_index + 1 < len(list(parent)):
-                            next_el = list(parent)[target_index + 1]
-                            if (
-                                next_el.tag.endswith("}p")
-                                and not "".join(
-                                    t.text for t in next_el.xpath(".//w:t") if t.text
-                                ).strip()
-                                and next_el.xpath(".//w:drawing")
-                            ):
-                                logger.info(
-                                    f"Figure already present for: {figure}, skipping"
-                                )
-                                continue
-
                         # Insert new paragraph after the current paragraph
                         new_par = document.add_paragraph()
                         run = new_par.add_run()
 
                         # Move paragraph to correct position
+                        target_index = list(parent).index(par._element)
                         new_par._element.getparent().remove(new_par._element)
                         parent.insert(target_index + 1, new_par._element)
 
