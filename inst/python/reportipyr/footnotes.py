@@ -1,3 +1,4 @@
+import hashlib
 import os
 import re
 import json
@@ -10,6 +11,21 @@ from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
 from .alt_text import extract_artifact_hashes, _load_artifact_hash
+
+_BOOKMARK_MAX = 40
+
+
+def _make_bookmark_name(name: str) -> str:
+    """Create a bookmark name that fits Word's 40-char limit.
+
+    Short names get fp_ prefix directly. Long names use a deterministic
+    md5 hash to stay under 40 characters.
+    """
+    full = f"fp_{name}"
+    if len(full) <= _BOOKMARK_MAX:
+        return full
+    h = hashlib.md5(name.encode("utf-8")).hexdigest()
+    return f"fp_{h}"  # fp_ + 32 hex chars = 35 chars
 from .config import load_yaml
 from .logging import setup_logger
 from .magic import get_magic_pattern, parse_magic_string
@@ -245,7 +261,7 @@ def create_footnote_paragraph(
     # Create the bookmark start
     bookmark_start = OxmlElement("w:bookmarkStart")
     bookmark_start.set(qn("w:id"), str(paragraph_id))
-    bookmark_start.set(qn("w:name"), f"fp_{name}")
+    bookmark_start.set(qn("w:name"), _make_bookmark_name(name))
     new_paragraph.append(bookmark_start)
 
     # Order metadata lines per config
@@ -332,7 +348,7 @@ def add_figure_footnotes(
             figure_args = parse_magic_string(match)
 
             # Check if footnote already exists for this artifact
-            bookmark_name = f"fp_{''.join(figure_args.keys())}"
+            bookmark_name = _make_bookmark_name("".join(figure_args.keys()))
             existing = document.element.xpath(
                 f'//w:bookmarkStart[@w:name="{bookmark_name}"]'
             )
@@ -487,7 +503,7 @@ def add_table_footnotes(
             table_name = match.replace("{rpfy}:", "").strip()
 
             # Check if footnote already exists for this table
-            bookmark_name = f"fp_{table_name}"
+            bookmark_name = _make_bookmark_name(table_name)
             existing = document.element.xpath(
                 f'//w:bookmarkStart[@w:name="{bookmark_name}"]'
             )
@@ -597,17 +613,33 @@ def remove_footnotes(
 
     doc = Document(docx_in)
 
+    # Build set of bookmark names for unchanged artifacts
+    unchanged_bookmarks = set()
+    if unchanged:
+        magic_pattern = get_magic_pattern()
+        for par in doc.paragraphs:
+            if not magic_pattern.search(par.text):
+                continue
+            figure_args = parse_magic_string(par.text)
+            # Check if all figures in this magic string are unchanged
+            all_unchanged = all(
+                f in unchanged for f in figure_args.keys()
+            )
+            if all_unchanged:
+                combined = "".join(figure_args.keys())
+                unchanged_bookmarks.add(_make_bookmark_name(combined))
+            # Also add individual filenames
+            for f in figure_args.keys():
+                if f in unchanged:
+                    unchanged_bookmarks.add(_make_bookmark_name(f))
+
     # Remove footnotes with 'fp_' in the bookmark name
     for bookmark in doc.element.xpath("//w:bookmarkStart"):
         name = bookmark.get(namespace + "name")
         if name.startswith("fp_"):
             # Check if this footnote belongs to an unchanged artifact
-            if unchanged:
-                bookmark_artifact = name[3:]  # strip "fp_" prefix
-                if any(
-                    artifact in bookmark_artifact
-                    for artifact in unchanged
-                ):
+            if unchanged_bookmarks:
+                if name in unchanged_bookmarks:
                     logger.info(
                         f"Skipping removal of footnote: {name}"
                     )
