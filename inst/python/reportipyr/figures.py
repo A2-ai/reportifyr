@@ -48,6 +48,17 @@ def add_figure(
 
         matches = magic_pattern.findall(par.text)
         if matches:
+            # Check if figures already exist after this magic string
+            if actual_index + 1 < len(document.paragraphs):
+                next_par = document.paragraphs[actual_index + 1]
+                if not next_par.text.strip() and next_par._element.xpath(
+                    ".//w:drawing"
+                ):
+                    logger.info(
+                        f"Figures already present after paragraph {actual_index+1}, skipping insertion"
+                    )
+                    continue
+
             check_duplicates(matches, f"figure names in paragraph {actual_index+1}", logger)
 
             for match in matches:
@@ -62,42 +73,6 @@ def add_figure(
                     figures = list(reversed(figure_args.keys()))
                 else:
                     figures = list(figure_args.keys())
-
-                # Check if figures already exist after this magic string
-                # (skip_unchanged kept them). Count existing drawings
-                # immediately following the magic string paragraph.
-                parent = par._element.getparent()
-                body_children = list(parent)
-                magic_idx = body_children.index(par._element)
-                existing_drawings = 0
-                for offset in range(1, len(body_children) - magic_idx):
-                    sibling = body_children[magic_idx + offset]
-                    if (
-                        sibling.tag.endswith("}p")
-                        and not "".join(
-                            t.text
-                            for t in sibling.xpath(".//w:t")
-                            if t.text
-                        ).strip()
-                        and sibling.xpath(".//w:drawing")
-                    ):
-                        existing_drawings += 1
-                    else:
-                        break
-
-                png_count = sum(
-                    1
-                    for f in figures
-                    if os.path.splitext(f)[1].lower() == ".png"
-                )
-                if existing_drawings >= png_count:
-                    logger.info(
-                        f"Figures already present for: {figures}, "
-                        f"skipping insertion"
-                    )
-                    for figure in figures:
-                        found_magic_strings.append(figure)
-                    continue
 
                 for fig_idx, figure in enumerate(figures):
                     extension = os.path.splitext(figure)[1].lower()
@@ -132,9 +107,10 @@ def add_figure(
                         new_par = document.add_paragraph()
                         run = new_par.add_run()
 
-                        # Move paragraph to correct position
-                        target_index = list(parent).index(par._element)
+                        # Move paragraph to correct position (after current paragraph)
+                        parent = par._element.getparent()
                         new_par._element.getparent().remove(new_par._element)
+                        target_index = list(parent).index(par._element)
                         parent.insert(target_index + 1, new_par._element)
 
                         # Configure image size

@@ -279,7 +279,7 @@ def add_figure_alt_text(docx_in: str, docx_out: str, artifact_dir: str | None = 
     body = doc._element.body
     paragraphs = list(body)
 
-    # Find magic paragraphs and process the next paragraph for images
+    # Find magic paragraphs and process subsequent drawing paragraphs
     for idx, para in enumerate(paragraphs):
         if not para.tag.endswith("}p"):
             continue
@@ -288,12 +288,16 @@ def add_figure_alt_text(docx_in: str, docx_out: str, artifact_dir: str | None = 
         para_text = "".join([t.text for t in text_elements if t.text])
 
         match = magic_pattern.search(para_text)
-        if match and idx + 1 < len(paragraphs):
-            # Extract filename and check extension
-            entries = parse_magic_entries(match.group())
-            if not entries:
-                continue
-            filename, _args = entries[0]
+        if not match:
+            continue
+
+        entries = parse_magic_entries(match.group())
+        if not entries:
+            continue
+
+        # Each entry corresponds to a drawing paragraph after the magic string
+        drawing_offset = 0
+        for filename, _args in entries:
             extension = os.path.splitext(filename)[1].lower()
             if extension != ".png":
                 logger.debug(f"Skipping non-png magic string: {filename}")
@@ -310,16 +314,24 @@ def add_figure_alt_text(docx_in: str, docx_out: str, artifact_dir: str | None = 
 
             alt_text = _embed_hash_in_alt_text(para_text, hash_value)
 
-            next_para = paragraphs[idx + 1]
+            # Find the corresponding drawing paragraph
+            draw_idx = idx + 1 + drawing_offset
+            if draw_idx >= len(paragraphs):
+                break
 
-            drawings = next_para.xpath(".//w:drawing")
-            for drawing in drawings:
-                inlines = drawing.xpath(".//wp:inline")
-                for inline in inlines:
-                    doc_pr = inline.xpath(".//wp:docPr")
-                    if doc_pr:
-                        doc_pr[0].set("descr", alt_text)
-                        logger.info(f"Inserted alt text for figure: {filename}")
+            draw_para = paragraphs[draw_idx]
+            drawings = draw_para.xpath(".//w:drawing")
+            if drawings:
+                for drawing in drawings:
+                    inlines = drawing.xpath(".//wp:inline")
+                    for inline in inlines:
+                        doc_pr = inline.xpath(".//wp:docPr")
+                        if doc_pr:
+                            doc_pr[0].set("descr", alt_text)
+                            logger.info(
+                                f"Inserted alt text for figure: {filename}"
+                            )
+                drawing_offset += 1
 
     doc.save(docx_out)
     logger.info(f"Alt text saved to '{docx_out}'")
