@@ -45,8 +45,8 @@ def load_metadata(artifact_dir: str, artifact_file: str) -> dict | None:
     try:
         with open(metadata_file, "r") as m:
             return json.load(m)
-    except FileNotFoundError:
-        logging.getLogger("rpfy").warning(f"Metadata file not found: {metadata_file}")
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        logging.getLogger("rpfy").warning(f"Could not load metadata: {metadata_file}: {e}")
         return None
 
 
