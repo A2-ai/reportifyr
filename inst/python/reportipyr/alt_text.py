@@ -9,6 +9,7 @@ from docx import Document
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
+from .docx_utils import iter_cell_paragraphs
 from .logging import setup_logger
 from .magic import get_magic_pattern, parse_magic_entries
 
@@ -333,6 +334,61 @@ def add_figure_alt_text(docx_in: str, docx_out: str, artifact_dir: str | None = 
                             )
                 drawing_offset += 1
 
+    # Process figures inside table cells
+    for cell_par, cell, _tbl_el in iter_cell_paragraphs(doc):
+        text_elements = cell_par._element.xpath(".//w:t")
+        para_text = "".join([t.text for t in text_elements if t.text])
+
+        match = magic_pattern.search(para_text)
+        if not match:
+            continue
+
+        entries = parse_magic_entries(match.group())
+        if not entries:
+            continue
+
+        drawing_offset = 0
+        for filename, _args in entries:
+            extension = os.path.splitext(filename)[1].lower()
+            if extension != ".png":
+                logger.debug(f"Skipping non-png magic string in cell: {filename}")
+                continue
+
+            logger.info(f"Processing cell alt text for figure: {filename}")
+
+            # Load hash from metadata if artifact_dir provided
+            hash_value = None
+            if artifact_dir:
+                hash_value = load_artifact_hash(artifact_dir, filename)
+                if hash_value:
+                    logger.debug(f"Loaded hash for {filename}: {hash_value}")
+
+            alt_text = _embed_hash_in_alt_text(para_text, hash_value)
+
+            # Find the corresponding drawing paragraph in the same cell
+            cell_paras = cell.paragraphs
+            cell_par_idx = None
+            for ci, cp in enumerate(cell_paras):
+                if cp._element is cell_par._element:
+                    cell_par_idx = ci
+                    break
+
+            if cell_par_idx is not None:
+                draw_idx = cell_par_idx + 1 + drawing_offset
+                if draw_idx < len(cell_paras):
+                    next_para = cell_paras[draw_idx]._element
+                    drawings = next_para.xpath(".//w:drawing")
+                    for drawing in drawings:
+                        inlines = drawing.xpath(".//wp:inline")
+                        for inline in inlines:
+                            doc_pr = inline.xpath(".//wp:docPr")
+                            if doc_pr:
+                                doc_pr[0].set("descr", alt_text)
+                                logger.info(
+                                    f"Inserted cell alt text for figure: {filename}"
+                                )
+                    drawing_offset += 1
+
     doc.save(docx_out)
     logger.info(f"Alt text saved to '{docx_out}'")
     logger.debug("Exiting add_figure_alt_text function")
@@ -452,6 +508,24 @@ def check_alt_text_magic_string(docx_in: str):
             check_drawing_alt_text(logger, paragraphs[idx + 1], para_text)
             check_table_alt_text(logger, tbl_map.get(paragraphs[idx + 1]), para_text)
 
+    # Check alt text for figures inside table cells
+    for cell_par, cell, _tbl_el in iter_cell_paragraphs(doc):
+        text_elements = cell_par._element.xpath(".//w:t")
+        para_text = "".join([t.text for t in text_elements if t.text])
+
+        if not magic_pattern.search(para_text):
+            continue
+
+        cell_paras = cell.paragraphs
+        cell_par_idx = None
+        for ci, cp in enumerate(cell_paras):
+            if cp._element is cell_par._element:
+                cell_par_idx = ci
+                break
+
+        if cell_par_idx is not None and cell_par_idx + 1 < len(cell_paras):
+            check_drawing_alt_text(logger, cell_paras[cell_par_idx + 1]._element, para_text)
+
     logger.debug("Exiting check_alt_text_magic_string function")
 
 
@@ -563,6 +637,38 @@ def extract_artifact_hashes(docx_in: str) -> dict[str, str]:
                                 logger.debug(
                                     f"Extracted hash for table {table_name}: {hash_match.group(1)}"
                                 )
+
+    # Check figures inside table cells
+    for cell_par, cell, _tbl_el in iter_cell_paragraphs(doc):
+        text_elements = cell_par._element.xpath(".//w:t")
+        para_text = "".join([t.text for t in text_elements if t.text])
+        match = magic_pattern.search(para_text)
+        if not match:
+            continue
+        entries = parse_magic_entries(match.group())
+        cell_paras = cell.paragraphs
+        cell_par_idx = None
+        for ci, cp in enumerate(cell_paras):
+            if cp._element is cell_par._element:
+                cell_par_idx = ci
+                break
+        if cell_par_idx is None:
+            continue
+        for offset, (filename, _) in enumerate(entries):
+            draw_idx = cell_par_idx + 1 + offset
+            if draw_idx >= len(cell_paras):
+                break
+            draw_el = cell_paras[draw_idx]._element
+            for drawing in draw_el.xpath(".//w:drawing"):
+                for inline in drawing.xpath(".//wp:inline"):
+                    for doc_pr in inline.xpath(".//wp:docPr"):
+                        descr = doc_pr.get("descr", "")
+                        hash_match = hash_pattern.search(descr)
+                        if hash_match:
+                            hashes[filename] = hash_match.group(1)
+                            logger.debug(
+                                f"Extracted hash for cell figure {filename}: {hash_match.group(1)}"
+                            )
 
     logger.debug(f"Extracted {len(hashes)} artifact hashes")
     logger.debug("Exiting extract_artifact_hashes function")

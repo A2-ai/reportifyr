@@ -11,6 +11,7 @@ from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
 from .alt_text import extract_artifact_hashes, load_artifact_hash
+from .docx_utils import iter_cell_paragraphs
 
 _BOOKMARK_MAX = 40
 
@@ -455,6 +456,118 @@ def add_figure_footnotes(
                         footnote_inserted = True
                         logger.info(f"Inserted footnote for: {figure_name}")
 
+    # Process figures inside table cells — one combined footnote per table.
+    # Values within each field are deduplicated.
+    table_footnotes: dict[int, dict[str, list[str]]] = {}
+    table_elements: dict[int, object] = {}
+    table_fig_names: dict[int, list[str]] = {}
+
+    for cell_par, cell, tbl_el in iter_cell_paragraphs(document):
+        matches = magic_pattern.findall(cell_par.text)
+        if not matches:
+            continue
+
+        tbl_id = id(tbl_el)
+        table_elements[tbl_id] = tbl_el
+
+        for match in matches:
+            figure_args = parse_magic_string(match)
+
+            for f, figure_name in enumerate(figure_args.keys()):
+                extension = os.path.splitext(figure_name)[1].lower()
+                if extension != ".png":
+                    continue
+
+                try:
+                    figure_path = safe_resolve(figure_dir, figure_name)
+                except ValueError:
+                    logger.warning(f"Path traversal blocked for: {figure_name}")
+                    continue
+                if not os.path.exists(figure_path):
+                    logger.debug(
+                        f"Skipping {figure_name} - not found in figure directory"
+                    )
+                    continue
+
+                logger.info(f"Processing cell footnote for figure: {figure_name}")
+                metadata = load_metadata(
+                    os.path.dirname(figure_path), os.path.basename(figure_path)
+                )
+
+                if metadata is None:
+                    logger.warning(f"Metadata file not found for: {figure_name}")
+                    missing_metadata = True
+                    continue
+
+                meta_text_dict = create_meta_text_lines(
+                    footnotes, metadata, include_object_path, "figure", config
+                )
+
+                if tbl_id not in table_footnotes:
+                    table_footnotes[tbl_id] = {}
+                    table_fig_names[tbl_id] = []
+
+                table_fig_names[tbl_id].append(figure_name)
+
+                combined = table_footnotes[tbl_id]
+                for key, value in meta_text_dict.items():
+                    if key not in combined:
+                        combined[key] = []
+                    # Deduplicate identical values
+                    if value not in combined[key]:
+                        combined[key].append(value)
+
+    # Build and insert one combined footnote paragraph per table
+    abbrev_delimiter = config.get("abbreviation_delimiter", ",")
+    cell_paragraph_id = len(paragraphs)
+    for tbl_id, combined in table_footnotes.items():
+        merged: dict[str, list[str]] = {}
+        for key, values in combined.items():
+            # Remove N/A if there are real values
+            if len(values) > 1 and "N/A" in values:
+                values = [v for v in values if v != "N/A"]
+
+            if key == "Abbreviations":
+                # Split on configured delimiter, dedupe, alphabetize, rejoin
+                all_abbrevs = []
+                for v in values:
+                    parts = v.rstrip(".").split(f"{abbrev_delimiter} ")
+                    for part in parts:
+                        part = part.strip()
+                        if part and part not in all_abbrevs:
+                            all_abbrevs.append(part)
+                all_abbrevs.sort(key=lambda a: a.lower())
+                merged[key] = [
+                    f"{abbrev_delimiter} ".join(all_abbrevs) + "."
+                    if all_abbrevs
+                    else "N/A"
+                ]
+            else:
+                # Source, Notes, Object, Hash — pass as list for
+                # create_footnote_paragraph to join appropriately
+                merged[key] = values
+
+        tbl_el = table_elements[tbl_id]
+        fig_names = table_fig_names[tbl_id]
+
+        # Check if footnote already exists for this set of cell figures
+        bookmark_name = _make_bookmark_name("".join(fig_names))
+        existing = document.element.xpath(
+            f'//w:bookmarkStart[@w:name="{bookmark_name}"]'
+        )
+        if existing:
+            logger.info(
+                f"Cell footnote already present for: {fig_names}, skipping"
+            )
+            continue
+
+        new_paragraph = create_footnote_paragraph(
+            merged, "".join(fig_names), cell_paragraph_id, config
+        )
+        cell_paragraph_id += 1
+        tbl_el.addnext(new_paragraph)
+        logger.info(f"Inserted cell footnote for table figures: {fig_names}")
+
     # save the processed document
     if missing_metadata and fail_on_missing_metadata:
         logger.error("Output not created due to missing metadata.")
@@ -638,6 +751,25 @@ def remove_footnotes(
             for f in figure_args.keys():
                 if f in unchanged:
                     unchanged_bookmarks.add(_make_bookmark_name(f))
+
+        # Also check cell-level magic strings for unchanged bookmarks
+        table_cell_figs: dict[int, list[str]] = {}
+        for cell_par, _cell, tbl_el in iter_cell_paragraphs(doc):
+            if not magic_pattern.search(cell_par.text):
+                continue
+            tbl_id = id(tbl_el)
+            figure_args = parse_magic_string(cell_par.text)
+            if tbl_id not in table_cell_figs:
+                table_cell_figs[tbl_id] = []
+            table_cell_figs[tbl_id].extend(figure_args.keys())
+            for f in figure_args.keys():
+                if f in unchanged:
+                    unchanged_bookmarks.add(_make_bookmark_name(f))
+        # Check combined cell figure bookmark names per table
+        for _tbl_id, fig_names in table_cell_figs.items():
+            if all(f in unchanged for f in fig_names):
+                combined = "".join(fig_names)
+                unchanged_bookmarks.add(_make_bookmark_name(combined))
 
     # Remove footnotes with 'fp_' in the bookmark name
     for bookmark in doc.element.xpath("//w:bookmarkStart"):
