@@ -458,8 +458,9 @@ def add_figure_footnotes(
 
     # Process figures inside table cells — one combined footnote per table.
     # Values within each field are deduplicated.
+    # Use list of (tbl_el, data) tuples to avoid id() instability with lxml proxies.
+    table_order: list[object] = []  # ordered unique table elements
     table_footnotes: dict[int, dict[str, list[str]]] = {}
-    table_elements: dict[int, object] = {}
     table_fig_names: dict[int, list[str]] = {}
 
     for cell_par, cell, tbl_el in iter_cell_paragraphs(document):
@@ -467,8 +468,15 @@ def add_figure_footnotes(
         if not matches:
             continue
 
-        tbl_id = id(tbl_el)
-        table_elements[tbl_id] = tbl_el
+        # Use stable key: find or register this table element by identity
+        tbl_idx = None
+        for idx, seen_tbl in enumerate(table_order):
+            if seen_tbl is tbl_el:
+                tbl_idx = idx
+                break
+        if tbl_idx is None:
+            tbl_idx = len(table_order)
+            table_order.append(tbl_el)
 
         for match in matches:
             figure_args = parse_magic_string(match)
@@ -503,13 +511,13 @@ def add_figure_footnotes(
                     footnotes, metadata, include_object_path, "figure", config
                 )
 
-                if tbl_id not in table_footnotes:
-                    table_footnotes[tbl_id] = {}
-                    table_fig_names[tbl_id] = []
+                if tbl_idx not in table_footnotes:
+                    table_footnotes[tbl_idx] = {}
+                    table_fig_names[tbl_idx] = []
 
-                table_fig_names[tbl_id].append(figure_name)
+                table_fig_names[tbl_idx].append(figure_name)
 
-                combined = table_footnotes[tbl_id]
+                combined = table_footnotes[tbl_idx]
                 for key, value in meta_text_dict.items():
                     if key not in combined:
                         combined[key] = []
@@ -520,7 +528,7 @@ def add_figure_footnotes(
     # Build and insert one combined footnote paragraph per table
     abbrev_delimiter = config.get("abbreviation_delimiter", ",")
     cell_paragraph_id = len(paragraphs)
-    for tbl_id, combined in table_footnotes.items():
+    for tbl_idx, combined in table_footnotes.items():
         merged: dict[str, list[str]] = {}
         for key, values in combined.items():
             # Remove N/A if there are real values
@@ -547,8 +555,8 @@ def add_figure_footnotes(
                 # create_footnote_paragraph to join appropriately
                 merged[key] = values
 
-        tbl_el = table_elements[tbl_id]
-        fig_names = table_fig_names[tbl_id]
+        tbl_el = table_order[tbl_idx]
+        fig_names = table_fig_names[tbl_idx]
 
         # Check if footnote already exists for this set of cell figures
         bookmark_name = _make_bookmark_name("".join(fig_names))
@@ -753,20 +761,29 @@ def remove_footnotes(
                     unchanged_bookmarks.add(_make_bookmark_name(f))
 
         # Also check cell-level magic strings for unchanged bookmarks
-        table_cell_figs: dict[int, list[str]] = {}
+        # Use list of (tbl_el, fig_names) to avoid id() instability
+        cell_tbl_order: list[object] = []
+        cell_tbl_figs: dict[int, list[str]] = {}
         for cell_par, _cell, tbl_el in iter_cell_paragraphs(doc):
             if not magic_pattern.search(cell_par.text):
                 continue
-            tbl_id = id(tbl_el)
+            tbl_idx = None
+            for idx, seen_tbl in enumerate(cell_tbl_order):
+                if seen_tbl is tbl_el:
+                    tbl_idx = idx
+                    break
+            if tbl_idx is None:
+                tbl_idx = len(cell_tbl_order)
+                cell_tbl_order.append(tbl_el)
             figure_args = parse_magic_string(cell_par.text)
-            if tbl_id not in table_cell_figs:
-                table_cell_figs[tbl_id] = []
-            table_cell_figs[tbl_id].extend(figure_args.keys())
+            if tbl_idx not in cell_tbl_figs:
+                cell_tbl_figs[tbl_idx] = []
+            cell_tbl_figs[tbl_idx].extend(figure_args.keys())
             for f in figure_args.keys():
                 if f in unchanged:
                     unchanged_bookmarks.add(_make_bookmark_name(f))
         # Check combined cell figure bookmark names per table
-        for _tbl_id, fig_names in table_cell_figs.items():
+        for _tbl_idx, fig_names in cell_tbl_figs.items():
             if all(f in unchanged for f in fig_names):
                 combined = "".join(fig_names)
                 unchanged_bookmarks.add(_make_bookmark_name(combined))
