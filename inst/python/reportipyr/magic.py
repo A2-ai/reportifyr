@@ -117,6 +117,29 @@ def remove_magic_strings(docx_in, docx_out):
                 keep_next = OxmlElement("w:keepNext")
                 pPr.append(keep_next)
 
+    # Process magic strings inside table cells
+    from .docx_utils import iter_cell_paragraphs
+
+    for para, cell, _tbl_el in iter_cell_paragraphs(doc):
+        if sentinel not in para.text:
+            continue
+        contains_pic = any(
+            run.element.xpath(".//pic:pic") for run in para.runs
+        )
+        if contains_pic:
+            for run in para.runs:
+                if not run.element.xpath(".//pic:pic"):
+                    run.text = ""
+        else:
+            # A cell must keep at least one paragraph
+            p = para._element
+            tc = p.getparent()
+            if len(tc.xpath(".//w:p")) > 1:
+                tc.remove(p)
+            else:
+                for run in para.runs:
+                    run.text = ""
+
     doc.save(docx_out)
 
 

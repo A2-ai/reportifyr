@@ -1,6 +1,7 @@
 import json
 from docx import Document
 
+from .docx_utils import iter_cell_paragraphs
 from .magic import parse_magic_entries
 
 SUPPORTED_EXTENSIONS = {"csv", "rds", "png"}
@@ -37,6 +38,11 @@ def validate_docx(docx_in: str, strict: bool = True) -> dict:
     for para in doc.paragraphs:
         if sentinel in para.text:
             magic_strings.append(para.text)
+
+    # Also extract magic strings from table cells
+    for cell_par, _cell, _tbl_el in iter_cell_paragraphs(doc):
+        if sentinel in cell_par.text:
+            magic_strings.append(cell_par.text)
 
     if len(magic_strings) == 0:
         result["success"] = False
