@@ -559,7 +559,9 @@ def add_figure_footnotes(
         fig_names = table_fig_names[tbl_idx]
 
         # Check if footnote already exists for this set of cell figures
-        bookmark_name = _make_bookmark_name("".join(fig_names))
+        # Prefix with "cell_" to avoid collision with body-level bookmark names
+        cell_bookmark_key = "cell_" + "".join(fig_names)
+        bookmark_name = _make_bookmark_name(cell_bookmark_key)
         existing = document.element.xpath(
             f'//w:bookmarkStart[@w:name="{bookmark_name}"]'
         )
@@ -570,7 +572,7 @@ def add_figure_footnotes(
             continue
 
         new_paragraph = create_footnote_paragraph(
-            merged, "".join(fig_names), cell_paragraph_id, config
+            merged, cell_bookmark_key, cell_paragraph_id, config
         )
         cell_paragraph_id += 1
         tbl_el.addnext(new_paragraph)
@@ -785,8 +787,8 @@ def remove_footnotes(
         # Check combined cell figure bookmark names per table
         for _tbl_idx, fig_names in cell_tbl_figs.items():
             if all(f in unchanged for f in fig_names):
-                combined = "".join(fig_names)
-                unchanged_bookmarks.add(_make_bookmark_name(combined))
+                cell_combined = "cell_" + "".join(fig_names)
+                unchanged_bookmarks.add(_make_bookmark_name(cell_combined))
 
     # Remove footnotes with 'fp_' in the bookmark name
     for bookmark in doc.element.xpath("//w:bookmarkStart"):
