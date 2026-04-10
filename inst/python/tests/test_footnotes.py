@@ -89,16 +89,19 @@ def test_load_metadata_missing_file_returns_none(tmp_path, caplog):
         result = load_metadata(str(tmp_path), "missing.png")
 
     assert result is None
-    assert "Metadata file not found" in caplog.text
+    assert "Could not load metadata" in caplog.text
 
 
-def test_load_metadata_malformed_json_raises(tmp_path):
-    """Legacy bug N5: JSONDecodeError is not caught, so malformed JSON propagates."""
+def test_load_metadata_malformed_json_returns_none(tmp_path, caplog):
+    """Bug N5 fix: JSONDecodeError is now caught and returns None."""
     meta_file = tmp_path / "bad_png_metadata.json"
     meta_file.write_text("{not valid json")
 
-    with pytest.raises(json.JSONDecodeError):
-        load_metadata(str(tmp_path), "bad.png")
+    with caplog.at_level(logging.WARNING, logger="rpfy"):
+        result = load_metadata(str(tmp_path), "bad.png")
+
+    assert result is None
+    assert "Could not load metadata" in caplog.text
 
 
 # ---------------------------------------------------------------------------
