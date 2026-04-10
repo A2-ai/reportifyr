@@ -54,13 +54,19 @@ add_tables <- function(
   validate_docx(docx_in, config_yaml)
   log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
 
+  config <- yaml::read_yaml(config_yaml)
+
   intermediate_docx <- gsub(".docx", "-int.docx", docx_out)
   log4r::info(
     .le$logger,
     paste0("Intermediate document path set: ", intermediate_docx)
   )
 
-  keep_caption_next(docx_in, intermediate_docx)
+  if (isTRUE(config$keep_caption_next)) {
+    keep_caption_next(docx_in, intermediate_docx)
+  } else {
+    file.copy(docx_in, intermediate_docx, overwrite = TRUE)
+  }
 
   # define magic string pattern
   start_pattern <- "\\{rpfy\\}:" # matches "{rpfy}:"
@@ -124,20 +130,25 @@ add_tables <- function(
     )
   }
 
-  intermediate_tabs_docx <- gsub(".docx", "-inttabs.docx", docx_out)
+  if (isTRUE(config$add_alt_text)) {
+    intermediate_tabs_docx <- gsub(".docx", "-inttabs.docx", docx_out)
 
-  print(document, target = intermediate_tabs_docx)
+    print(document, target = intermediate_tabs_docx)
 
-  add_tables_alt_text(
-    intermediate_tabs_docx,
-    docx_out
-  )
+    add_tables_alt_text(
+      intermediate_tabs_docx,
+      docx_out,
+      tables_path = tables_path
+    )
+
+    unlink(intermediate_tabs_docx)
+    log4r::debug(.le$logger, "Deleting intermediate tabs document")
+  } else {
+    print(document, target = docx_out)
+  }
 
   unlink(intermediate_docx)
   log4r::debug(.le$logger, "Deleting intermediate document")
-
-  unlink(intermediate_tabs_docx)
-  log4r::debug(.le$logger, "Deleting intermediate tabs document")
 
   log4r::info(.le$logger, paste0("Final document saved to: ", docx_out))
 
@@ -199,6 +210,38 @@ process_table_file <- function(table_file, document, table_name) {
     document,
     paste0("\\{rpfy\\}:", table_name)
   )
+
+  # Check if table already exists after the magic string (skip_unchanged kept it)
+  # Access the XML body directly via officer's internal structure
+  body_node <- xml2::xml_find_first(
+    document$doc_obj$get(),
+    "//w:body",
+    ns = c(w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main")
+  )
+  body_children <- xml2::xml_children(body_node)
+  for (ci in seq_along(body_children)) {
+    child <- body_children[[ci]]
+    if (xml2::xml_name(child) == "p") {
+      child_text <- xml2::xml_text(child)
+      if (grepl(table_name, child_text, fixed = TRUE)) {
+        # Check if next sibling is a table
+        if (ci < length(body_children)) {
+          next_child <- body_children[[ci + 1]]
+          if (xml2::xml_name(next_child) == "tbl") {
+            log4r::info(
+              .le$logger,
+              paste0(
+                "Table already present, skipping insertion for: ",
+                table_name
+              )
+            )
+            return(document)
+          }
+        }
+        break
+      }
+    }
+  }
 
   flextable::body_add_flextable(
     document,

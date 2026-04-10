@@ -4,12 +4,14 @@
 \alias{add_plots_alt_text}
 \title{Inserts alt text for figures within a Microsoft Word file.}
 \usage{
-add_plots_alt_text(docx_in, docx_out, debug = FALSE)
+add_plots_alt_text(docx_in, docx_out, figures_path = NULL, debug = FALSE)
 }
 \arguments{
 \item{docx_in}{The file path to the input \code{.docx} file.}
 
 \item{docx_out}{The file path to the output \code{.docx} file to save to.}
+
+\item{figures_path}{The file path to the figures directory. Used to embed artifact hashes in alt text. Default is \code{NULL}.}
 
 \item{debug}{Debug.}
 }

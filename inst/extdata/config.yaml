@@ -11,16 +11,24 @@ strict: false
 footnotes_font: "Arial Narrow"
 footnotes_font_size: 10
 use_object_path_as_source: FALSE
+add_hash_to_footnotes: FALSE
 wrap_path_in_[]: TRUE
 combine_duplicate_footnotes: TRUE
+abbreviation_delimiter: ","
 footnote_order:
   - Source
   - Object
   - Notes
   - Abbreviations
+  - Hash
 
 # Table options
 save_table_rtf: FALSE
+
+# Caption options
+keep_caption_next: TRUE
+add_alt_text: TRUE
+skip_unchanged: TRUE
 
 # Figure options
 fig_alignment: "center"

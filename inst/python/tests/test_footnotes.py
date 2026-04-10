@@ -6,6 +6,7 @@ import pytest
 from docx.oxml.ns import qn
 
 from reportipyr.footnotes import (
+    _make_bookmark_name,
     load_metadata,
     create_meta_text_lines,
     format_metadata_line,
@@ -88,16 +89,19 @@ def test_load_metadata_missing_file_returns_none(tmp_path, caplog):
         result = load_metadata(str(tmp_path), "missing.png")
 
     assert result is None
-    assert "Metadata file not found" in caplog.text
+    assert "Could not load metadata" in caplog.text
 
 
-def test_load_metadata_malformed_json_raises(tmp_path):
-    """Legacy bug N5: JSONDecodeError is not caught, so malformed JSON propagates."""
+def test_load_metadata_malformed_json_returns_none(tmp_path, caplog):
+    """Bug N5 fix: JSONDecodeError is now caught and returns None."""
     meta_file = tmp_path / "bad_png_metadata.json"
     meta_file.write_text("{not valid json")
 
-    with pytest.raises(json.JSONDecodeError):
-        load_metadata(str(tmp_path), "bad.png")
+    with caplog.at_level(logging.WARNING, logger="rpfy"):
+        result = load_metadata(str(tmp_path), "bad.png")
+
+    assert result is None
+    assert "Could not load metadata" in caplog.text
 
 
 # ---------------------------------------------------------------------------
@@ -428,3 +432,47 @@ def test_create_footnote_paragraph_skips_missing_keys():
     # No line breaks when only one entry
     breaks = p.findall(f".//{qn('w:br')}")
     assert len(breaks) == 0
+
+
+# ---------------------------------------------------------------------------
+# _make_bookmark_name
+# ---------------------------------------------------------------------------
+
+def test_make_bookmark_name_short():
+    """Short names get fp_ prefix directly."""
+    result = _make_bookmark_name("figure1")
+    assert result == "fp_figure1"
+    assert len(result) <= 40
+
+
+def test_make_bookmark_name_at_limit():
+    """Name exactly at 40 chars (with fp_ prefix) is kept as-is."""
+    name = "a" * 37  # fp_ + 37 = 40
+    result = _make_bookmark_name(name)
+    assert result == f"fp_{name}"
+    assert len(result) == 40
+
+
+def test_make_bookmark_name_over_limit():
+    """Name exceeding 40 chars (with fp_ prefix) gets md5-hashed."""
+    name = "a" * 38  # fp_ + 38 = 41, over limit
+    result = _make_bookmark_name(name)
+    assert result.startswith("fp_")
+    assert len(result) <= 40
+    assert result != f"fp_{name}"
+
+
+def test_make_bookmark_name_long_deterministic():
+    """Long names produce deterministic hashes."""
+    name = "pk/theoph-pk-concentration-over-time.png"
+    result1 = _make_bookmark_name(name)
+    result2 = _make_bookmark_name(name)
+    assert result1 == result2
+    assert len(result1) <= 40
+
+
+def test_make_bookmark_name_long_no_collision():
+    """Different long names produce different hashes."""
+    name1 = "pk/theoph-pk-concentration-over-time.png"
+    name2 = "pk/theoph-pk-exposure-over-time-long.png"
+    assert _make_bookmark_name(name1) != _make_bookmark_name(name2)

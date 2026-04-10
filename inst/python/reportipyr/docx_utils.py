@@ -7,6 +7,26 @@ from .magic import get_magic_pattern
 CAPTION_STYLE = "Caption"
 
 
+def iter_cell_paragraphs(doc):
+    """Yield (paragraph, cell, table_element) for paragraphs inside table cells.
+
+    Deduplicates merged cells using cell._tc identity. Stores references
+    to _tc elements (not just id()) to prevent lxml proxy garbage collection
+    from causing id reuse across iterations.
+    """
+    for table in doc.tables:
+        seen_tcs = {}  # id -> _tc reference (prevents GC/id reuse)
+        for row in table.rows:
+            for cell in row.cells:
+                tc = cell._tc
+                tc_id = id(tc)
+                if tc_id in seen_tcs:
+                    continue
+                seen_tcs[tc_id] = tc
+                for para in cell.paragraphs:
+                    yield para, cell, table._element
+
+
 def keep_caption_next(docx_in, docx_out):
     doc = Document(docx_in)
     paras = doc.paragraphs

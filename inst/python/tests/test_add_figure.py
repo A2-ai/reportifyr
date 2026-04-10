@@ -33,6 +33,10 @@ def test_add_figure_respects_cli_dimensions():
     img_path = figure_dir / "figure.png"
     _make_png(img_path)
 
+    # use_artifact_size defaults to True, so we must disable it
+    # to reach the CLI dimension branch
+    config_yaml = _write_yaml("use_artifact_size: false")
+
     docx_in = tempfile.NamedTemporaryFile(suffix=".docx", delete=False).name
     doc = Document()
     doc.add_paragraph("{rpfy}:figure.png")
@@ -43,7 +47,7 @@ def test_add_figure_respects_cli_dimensions():
         docx_in=docx_in,
         docx_out=docx_out,
         figure_dir=str(figure_dir),
-        config_yaml=None,
+        config_yaml=config_yaml,
         fig_width=4.0,
         fig_height=5.0,
     )
@@ -74,7 +78,7 @@ def test_add_figure_respects_embedded_size():
     doc.add_paragraph("{rpfy}:figure.png<width: 4, height: 5>")
     doc.save(docx_in)
 
-    config_yaml = _write_yaml("use_embedded_size: true\n")
+    config_yaml = _write_yaml("use_embedded_dimensions: true\n")
 
     docx_out = tempfile.NamedTemporaryFile(suffix=".docx", delete=False).name
     add_figure(

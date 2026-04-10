@@ -1,3 +1,4 @@
+import hashlib
 import os
 import re
 import json
@@ -8,6 +9,25 @@ from docx import Document
 from docx.oxml.text import run, paragraph
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
+
+from .alt_text import extract_artifact_hashes, load_artifact_hash
+from .docx_utils import iter_cell_paragraphs
+
+_BOOKMARK_MAX = 40
+
+
+def _make_bookmark_name(name: str) -> str:
+    """Create a bookmark name that fits Word's 40-char limit.
+
+    Short names get fp_ prefix directly. Long names use a deterministic
+    md5 hash to stay under 40 characters.
+    """
+    full = f"fp_{name}"
+    if len(full) <= _BOOKMARK_MAX:
+        return full
+    h = hashlib.md5(name.encode("utf-8")).hexdigest()
+    return f"fp_{h}"  # fp_ + 32 hex chars = 35 chars
+
 
 from .config import load_yaml
 from .logging import setup_logger
@@ -25,8 +45,8 @@ def load_metadata(artifact_dir: str, artifact_file: str) -> dict | None:
     try:
         with open(metadata_file, "r") as m:
             return json.load(m)
-    except FileNotFoundError:
-        logging.getLogger("rpfy").warning(f"Metadata file not found: {metadata_file}")
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        logging.getLogger("rpfy").warning(f"Could not load metadata: {metadata_file}: {e}")
         return None
 
 
@@ -90,23 +110,28 @@ def create_meta_text_lines(
 
     # Add abbreviations metadata
     abbrev_text = ""
+    abbrev_delimiter = config.get("abbreviation_delimiter", ",")
     abbrev_list = metadata["object_meta"]["footnotes"]["abbreviations"]
     if len(abbrev_list) > 0:
         abbrev_section = footnotes.get("abbreviations", {})
+        abbrev_parts = []
         for abbrev in abbrev_list:
             if abbrev not in abbrev_section:
                 raise KeyError(
                     f"Abbreviation '{abbrev}' not found in "
                     f"abbreviations section of footnotes YAML"
                 )
-            full_form = abbrev_section[abbrev]
-            if full_form.endswith("."):
-                abbrev_text += f"{abbrev}: {full_form} "
-            else:
-                abbrev_text += f"{abbrev}: {full_form}. "
+            full_form = abbrev_section[abbrev].rstrip(".")
+            abbrev_parts.append(f"{abbrev}: {full_form}")
+        abbrev_text = f"{abbrev_delimiter} ".join(abbrev_parts) + "."
     else:
         abbrev_text += "N/A"
     meta_text_lines["Abbreviations"] = abbrev_text
+
+    if config.get("add_hash_to_footnotes", False):
+        obj_hash = metadata["object_meta"].get("hash", "")
+        if obj_hash:
+            meta_text_lines["Hash"] = obj_hash
 
     if config.get("use_object_path_as_source", False):
         meta_text_lines["Source"] = meta_text_lines["Object"]
@@ -139,6 +164,8 @@ def format_metadata_line(meta_key, meta_value, config):
             return f"Notes: {meta_value}"
         case "Abbreviations":
             return f"Abbreviations: {meta_value}"
+        case "Hash":
+            return f"Hash: {meta_value}"
         case _:
             return f"{meta_key}: {meta_value}"
 
@@ -156,7 +183,10 @@ def create_formatted_run(
     # Set formatting properties
     rPr = OxmlElement("w:rPr")
     rFonts = OxmlElement("w:rFonts")
-    rFonts.set(qn("w:ascii"), config.get("footnotes_font", "Arial Narrow"))
+    font = config.get("footnotes_font", "Arial Narrow")
+    rFonts.set(qn("w:ascii"), font)
+    rFonts.set(qn("w:hAnsi"), font)
+    rFonts.set(qn("w:cs"), font)
     sz = OxmlElement("w:sz")
     font_size = int(config.get("footnotes_font_size", 10))
     sz.set(qn("w:val"), str(2 * font_size))
@@ -234,28 +264,38 @@ def create_footnote_paragraph(
     # Create the bookmark start
     bookmark_start = OxmlElement("w:bookmarkStart")
     bookmark_start.set(qn("w:id"), str(paragraph_id))
-    bookmark_start.set(qn("w:name"), f"fp_{name}")
+    bookmark_start.set(qn("w:name"), _make_bookmark_name(name))
     new_paragraph.append(bookmark_start)
 
-    # Add metadata lines - this assumes ordered dict which should be fine
+    # Order metadata lines per config
     meta_text_dict = {
         key: meta_text_dict[key]
         for key in config.get(
-            "footnote_order", ["Source", "Object", "Notes", "Abbreviations"]
+            "footnote_order",
+            ["Source", "Object", "Notes", "Abbreviations", "Hash"],
         )
         if key in meta_text_dict.keys()
     }
 
     for line_idx, (meta, value) in enumerate(meta_text_dict.items()):
         # Format the line based on metadata type
-        formatted_line = format_metadata_line(meta, "".join(value), config)
+        if isinstance(value, list):
+            if meta in ("Source", "Object", "Hash"):
+                joined = "; ".join(v.strip() for v in value)
+            else:
+                joined = " ".join(v.strip() for v in value)
+            formatted_line = format_metadata_line(
+                meta, joined, config
+            )
+        else:
+            formatted_line = format_metadata_line(meta, value, config)
 
         # Create run with formatted text
         runs = create_formatted_runs(formatted_line, config)
         for run in runs:
             new_paragraph.append(run)
 
-        # Add line break if needed
+        # Add line break between entries
         if line_idx != len(meta_text_dict) - 1:
             run_break = OxmlElement("w:r")
             br = OxmlElement("w:br")
@@ -313,6 +353,17 @@ def add_figure_footnotes(
             logger.debug(f"Processing magic string: {match}")
             # generalized extraction of the figure name
             figure_args = parse_magic_string(match)
+
+            # Check if footnote already exists for this artifact
+            bookmark_name = _make_bookmark_name("".join(figure_args.keys()))
+            existing = document.element.xpath(
+                f'//w:bookmarkStart[@w:name="{bookmark_name}"]'
+            )
+            if existing:
+                logger.info(
+                    f"Footnote already present for: {''.join(figure_args.keys())}, skipping"
+                )
+                continue
 
             # create empty dict for combining all metadata
             combined_footnotes: dict[str, list[str]] = {}
@@ -405,6 +456,128 @@ def add_figure_footnotes(
                         footnote_inserted = True
                         logger.info(f"Inserted footnote for: {figure_name}")
 
+    # Process figures inside table cells — one combined footnote per table.
+    # Values within each field are deduplicated.
+    # Use list of (tbl_el, data) tuples to avoid id() instability with lxml proxies.
+    table_order: list[object] = []  # ordered unique table elements
+    table_footnotes: dict[int, dict[str, list[str]]] = {}
+    table_fig_names: dict[int, list[str]] = {}
+
+    for cell_par, cell, tbl_el in iter_cell_paragraphs(document):
+        matches = magic_pattern.findall(cell_par.text)
+        if not matches:
+            continue
+
+        # Use stable key: find or register this table element by identity
+        tbl_idx = None
+        for idx, seen_tbl in enumerate(table_order):
+            if seen_tbl is tbl_el:
+                tbl_idx = idx
+                break
+        if tbl_idx is None:
+            tbl_idx = len(table_order)
+            table_order.append(tbl_el)
+
+        for match in matches:
+            figure_args = parse_magic_string(match)
+
+            for f, figure_name in enumerate(figure_args.keys()):
+                extension = os.path.splitext(figure_name)[1].lower()
+                if extension != ".png":
+                    continue
+
+                try:
+                    figure_path = safe_resolve(figure_dir, figure_name)
+                except ValueError:
+                    logger.warning(f"Path traversal blocked for: {figure_name}")
+                    continue
+                if not os.path.exists(figure_path):
+                    logger.debug(
+                        f"Skipping {figure_name} - not found in figure directory"
+                    )
+                    continue
+
+                logger.info(f"Processing cell footnote for figure: {figure_name}")
+                metadata = load_metadata(
+                    os.path.dirname(figure_path), os.path.basename(figure_path)
+                )
+
+                if metadata is None:
+                    logger.warning(f"Metadata file not found for: {figure_name}")
+                    missing_metadata = True
+                    continue
+
+                meta_text_dict = create_meta_text_lines(
+                    footnotes, metadata, include_object_path, "figure", config
+                )
+
+                if tbl_idx not in table_footnotes:
+                    table_footnotes[tbl_idx] = {}
+                    table_fig_names[tbl_idx] = []
+
+                table_fig_names[tbl_idx].append(figure_name)
+
+                combined = table_footnotes[tbl_idx]
+                for key, value in meta_text_dict.items():
+                    if key not in combined:
+                        combined[key] = []
+                    # Deduplicate identical values
+                    if value not in combined[key]:
+                        combined[key].append(value)
+
+    # Build and insert one combined footnote paragraph per table
+    abbrev_delimiter = config.get("abbreviation_delimiter", ",")
+    cell_paragraph_id = len(paragraphs)
+    for tbl_idx, combined in table_footnotes.items():
+        merged: dict[str, list[str]] = {}
+        for key, values in combined.items():
+            # Remove N/A if there are real values
+            if len(values) > 1 and "N/A" in values:
+                values = [v for v in values if v != "N/A"]
+
+            if key == "Abbreviations":
+                # Split on configured delimiter, dedupe, alphabetize, rejoin
+                all_abbrevs = []
+                for v in values:
+                    parts = v.rstrip(".").split(f"{abbrev_delimiter} ")
+                    for part in parts:
+                        part = part.strip()
+                        if part and part not in all_abbrevs:
+                            all_abbrevs.append(part)
+                all_abbrevs.sort(key=lambda a: a.lower())
+                merged[key] = [
+                    f"{abbrev_delimiter} ".join(all_abbrevs) + "."
+                    if all_abbrevs
+                    else "N/A"
+                ]
+            else:
+                # Source, Notes, Object, Hash — pass as list for
+                # create_footnote_paragraph to join appropriately
+                merged[key] = values
+
+        tbl_el = table_order[tbl_idx]
+        fig_names = table_fig_names[tbl_idx]
+
+        # Check if footnote already exists for this set of cell figures
+        # Prefix with "cell_" to avoid collision with body-level bookmark names
+        cell_bookmark_key = "cell_" + "".join(fig_names)
+        bookmark_name = _make_bookmark_name(cell_bookmark_key)
+        existing = document.element.xpath(
+            f'//w:bookmarkStart[@w:name="{bookmark_name}"]'
+        )
+        if existing:
+            logger.info(
+                f"Cell footnote already present for: {fig_names}, skipping"
+            )
+            continue
+
+        new_paragraph = create_footnote_paragraph(
+            merged, cell_bookmark_key, cell_paragraph_id, config
+        )
+        cell_paragraph_id += 1
+        tbl_el.addnext(new_paragraph)
+        logger.info(f"Inserted cell footnote for table figures: {fig_names}")
+
     # save the processed document
     if missing_metadata and fail_on_missing_metadata:
         logger.error("Output not created due to missing metadata.")
@@ -458,6 +631,17 @@ def add_table_footnotes(
             # Generalized extraction of the table name
             table_name = match.replace("{rpfy}:", "").strip()
 
+            # Check if footnote already exists for this table
+            bookmark_name = _make_bookmark_name(table_name)
+            existing = document.element.xpath(
+                f'//w:bookmarkStart[@w:name="{bookmark_name}"]'
+            )
+            if existing:
+                logger.info(
+                    f"Footnote already present for: {table_name}, skipping"
+                )
+                continue
+
             try:
                 table_path = safe_resolve(table_dir, table_name)
             except ValueError:
@@ -508,15 +692,115 @@ def add_table_footnotes(
     logger.debug("Exiting add_table_footnotes function")
 
 
-def remove_footnotes(docx_in, docx_out):
-    namespace = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+def _build_unchanged_set(
+    docx_in: str,
+    config: dict,
+    figures_dir: str | None,
+    tables_dir: str | None,
+) -> set[str]:
+    """Build set of unchanged artifact filenames by comparing
+    alt-text hashes in the docx with current metadata hashes."""
+    unchanged = set()
+    if not config.get("skip_unchanged", False):
+        return unchanged
+
+    embedded = extract_artifact_hashes(docx_in)
+    for filename, embedded_hash in embedded.items():
+        # Try figures dir first, then tables dir
+        for artifact_dir in [figures_dir, tables_dir]:
+            if artifact_dir is None:
+                continue
+            current = load_artifact_hash(artifact_dir, filename)
+            if current is not None and current == embedded_hash:
+                unchanged.add(filename)
+                break
+    return unchanged
+
+
+def remove_footnotes(
+    docx_in,
+    docx_out,
+    config_yaml=None,
+    figures_dir=None,
+    tables_dir=None,
+):
+    logger = setup_logger()
+    namespace = (
+        "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+    )
+
+    if config_yaml is not None:
+        config = load_yaml(config_yaml)
+    else:
+        config = {}
+
+    unchanged = _build_unchanged_set(
+        docx_in, config, figures_dir, tables_dir
+    )
+    if unchanged:
+        logger.info(f"Unchanged artifacts: {unchanged}")
 
     doc = Document(docx_in)
+
+    # Build set of bookmark names for unchanged artifacts
+    unchanged_bookmarks = set()
+    if unchanged:
+        magic_pattern = get_magic_pattern()
+        for par in doc.paragraphs:
+            if not magic_pattern.search(par.text):
+                continue
+            figure_args = parse_magic_string(par.text)
+            # Check if all figures in this magic string are unchanged
+            all_unchanged = all(
+                f in unchanged for f in figure_args.keys()
+            )
+            if all_unchanged:
+                combined = "".join(figure_args.keys())
+                unchanged_bookmarks.add(_make_bookmark_name(combined))
+            # Also add individual filenames
+            for f in figure_args.keys():
+                if f in unchanged:
+                    unchanged_bookmarks.add(_make_bookmark_name(f))
+
+        # Also check cell-level magic strings for unchanged bookmarks
+        # Use list of (tbl_el, fig_names) to avoid id() instability
+        cell_tbl_order: list[object] = []
+        cell_tbl_figs: dict[int, list[str]] = {}
+        for cell_par, _cell, tbl_el in iter_cell_paragraphs(doc):
+            if not magic_pattern.search(cell_par.text):
+                continue
+            tbl_idx = None
+            for idx, seen_tbl in enumerate(cell_tbl_order):
+                if seen_tbl is tbl_el:
+                    tbl_idx = idx
+                    break
+            if tbl_idx is None:
+                tbl_idx = len(cell_tbl_order)
+                cell_tbl_order.append(tbl_el)
+            figure_args = parse_magic_string(cell_par.text)
+            if tbl_idx not in cell_tbl_figs:
+                cell_tbl_figs[tbl_idx] = []
+            cell_tbl_figs[tbl_idx].extend(figure_args.keys())
+            for f in figure_args.keys():
+                if f in unchanged:
+                    unchanged_bookmarks.add(_make_bookmark_name(f))
+        # Check combined cell figure bookmark names per table
+        for _tbl_idx, fig_names in cell_tbl_figs.items():
+            if all(f in unchanged for f in fig_names):
+                cell_combined = "cell_" + "".join(fig_names)
+                unchanged_bookmarks.add(_make_bookmark_name(cell_combined))
 
     # Remove footnotes with 'fp_' in the bookmark name
     for bookmark in doc.element.xpath("//w:bookmarkStart"):
         name = bookmark.get(namespace + "name")
         if name.startswith("fp_"):
+            # Check if this footnote belongs to an unchanged artifact
+            if unchanged_bookmarks:
+                if name in unchanged_bookmarks:
+                    logger.info(
+                        f"Skipping removal of footnote: {name}"
+                    )
+                    continue
             bookmark_id = bookmark.get(namespace + "id")
             end_bookmark = doc.element.xpath(
                 f'//w:bookmarkEnd[@w:id="{bookmark_id}"]'

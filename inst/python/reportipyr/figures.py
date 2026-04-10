@@ -8,7 +8,9 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 
 from PIL import Image, ImageDraw, ImageFont
 
+from .alt_text import is_artifact_unchanged
 from .config import load_yaml
+from .docx_utils import iter_cell_paragraphs
 from .magic import get_magic_pattern, parse_magic_string
 from .logging import setup_logger
 from .util import check_duplicates, create_label, safe_resolve
@@ -48,6 +50,40 @@ def add_figure(
         matches = magic_pattern.findall(par.text)
         if matches:
             check_duplicates(matches, f"figure names in paragraph {actual_index+1}", logger)
+
+            # Check if figures already exist (skip_unchanged kept them)
+            # Count consecutive drawing paragraphs after the magic string
+            # in the live XML tree and compare to expected PNG count.
+            parent = par._element.getparent()
+            body_children = list(parent)
+            magic_idx = body_children.index(par._element)
+            existing_drawings = 0
+            for offset in range(1, len(body_children) - magic_idx):
+                sibling = body_children[magic_idx + offset]
+                if (
+                    sibling.tag.endswith("}p")
+                    and not "".join(
+                        t.text for t in sibling.xpath(".//w:t") if t.text
+                    ).strip()
+                    and sibling.xpath(".//w:drawing")
+                ):
+                    existing_drawings += 1
+                else:
+                    break
+
+            all_figure_args = parse_magic_string(matches[0])
+            png_count = sum(
+                1 for f in all_figure_args
+                if os.path.splitext(f)[1].lower() == ".png"
+            )
+            if existing_drawings >= png_count > 0:
+                logger.info(
+                    f"Figures already present for: "
+                    f"{list(all_figure_args.keys())}, skipping"
+                )
+                for figure in all_figure_args:
+                    found_magic_strings.append(figure)
+                continue
 
             for match in matches:
                 logger.debug(f"Processing magic string: {match}")
@@ -102,7 +138,7 @@ def add_figure(
                         parent.insert(target_index + 1, new_par._element)
 
                         # Configure image size
-                        if config.get("use_embedded_size", True) and set(
+                        if config.get("use_embedded_dimensions", True) and set(
                             figure_args[figure].keys()
                         ).intersection(["width", "height"]):
                             embedded_width = figure_args[figure].get("width")
@@ -124,7 +160,7 @@ def add_figure(
                                 ),
                             )
 
-                        elif config.get("use_artifact_size", False):
+                        elif config.get("use_artifact_size", True):
                             logger.debug(
                                 "Using artifact size (original image dimensions)"
                             )
@@ -190,6 +226,174 @@ def add_figure(
                         logger.info(f"Inserted figure: {figure}")
                     else:
                         logger.warning(f"Figure file not found: {image_path}")
+
+    # Process figures inside table cells
+    for cell_par, cell, _tbl_el in iter_cell_paragraphs(document):
+        matches = magic_pattern.findall(cell_par.text)
+        if not matches:
+            continue
+
+        check_duplicates(matches, "figure names in table cell", logger)
+
+        for match in matches:
+            logger.debug(f"Processing cell magic string: {match}")
+            figure_args = parse_magic_string(match)
+            figures = list(figure_args.keys())
+
+            # Check if figures already exist (skip_unchanged kept them)
+            cell_paras = cell.paragraphs
+            cell_par_idx = None
+            for ci, cp in enumerate(cell_paras):
+                if cp._element is cell_par._element:
+                    cell_par_idx = ci
+                    break
+
+            if cell_par_idx is not None:
+                existing_drawings = 0
+                for offset in range(1, len(cell_paras) - cell_par_idx):
+                    next_cp = cell_paras[cell_par_idx + offset]
+                    if (
+                        not next_cp.text.strip()
+                        and next_cp._element.xpath(".//w:drawing")
+                    ):
+                        existing_drawings += 1
+                    else:
+                        break
+
+                png_count = sum(
+                    1 for f in figures
+                    if os.path.splitext(f)[1].lower() == ".png"
+                )
+                if existing_drawings >= png_count > 0:
+                    logger.info(
+                        f"Cell figures already present for: {figures}, skipping"
+                    )
+                    found_magic_strings.extend(figures)
+                    continue
+
+            for fig_idx, figure in enumerate(figures):
+                extension = os.path.splitext(figure)[1].lower()
+                if extension != ".png":
+                    logger.debug(f"Skipping non-png file: {figure}")
+                    continue
+
+                logger.info(f"Processing cell figure: {figure}")
+
+                add_label = False
+                if len(figures) > 1 and config.get("label_multi_figures", False):
+                    add_label = True
+
+                found_magic_strings.append(figure)
+                try:
+                    image_path = safe_resolve(figure_dir, figure)
+                except ValueError:
+                    logger.warning(f"Path traversal blocked for: {figure}")
+                    continue
+                if not os.path.exists(image_path):
+                    logger.warning(f"Figure file not found: {image_path}")
+                    continue
+
+                if add_label:
+                    labeled_image = add_label_to_image(
+                        image_path, fig_idx, logger
+                    )
+                else:
+                    labeled_image = image_path
+
+                # Insert new paragraph within the cell after the magic string paragraph
+                new_par = cell.add_paragraph()
+                run = new_par.add_run()
+
+                # Move paragraph to correct position within the cell
+                cell_par._element.addnext(new_par._element)
+
+                # Configure image size — same logic as body-level
+                if config.get("use_embedded_dimensions", True) and set(
+                    figure_args[figure].keys()
+                ).intersection(["width", "height"]):
+                    embedded_width = figure_args[figure].get("width")
+                    embedded_height = figure_args[figure].get("height")
+                    logger.debug(
+                        f"Using embedded size (width={embedded_width}, height={embedded_height})"
+                    )
+                    run.add_picture(
+                        labeled_image,
+                        width=(
+                            Inches(float(embedded_width))
+                            if embedded_width
+                            else None
+                        ),
+                        height=(
+                            Inches(float(embedded_height))
+                            if embedded_height
+                            else None
+                        ),
+                    )
+
+                elif config.get("use_artifact_size", True):
+                    logger.debug(
+                        "Using artifact size (original image dimensions)"
+                    )
+                    run.add_picture(labeled_image)
+
+                else:
+                    default_width = config.get("default_fig_width", 6)
+                    if set(figure_args[figure].keys()).intersection(
+                        ["width", "height"]
+                    ):
+                        logger.debug("Using embedded size from magic string")
+                        embedded_width = figure_args[figure].get("width")
+                        embedded_height = figure_args[figure].get("height")
+                        run.add_picture(
+                            labeled_image,
+                            width=(
+                                Inches(float(embedded_width))
+                                if embedded_width
+                                else None
+                            ),
+                            height=(
+                                Inches(float(embedded_height))
+                                if embedded_height
+                                else None
+                            ),
+                        )
+
+                    elif fig_width is not None and fig_height is not None:
+                        logger.debug(
+                            f"Using CLI arguments (width={fig_width}, height={fig_height})"
+                        )
+                        run.add_picture(
+                            labeled_image,
+                            width=Inches(fig_width),
+                            height=Inches(fig_height),
+                        )
+                    elif fig_width is not None:
+                        logger.debug(f"Using CLI width argument: {fig_width}")
+                        run.add_picture(labeled_image, width=Inches(fig_width))
+                    elif fig_height is not None:
+                        logger.debug(f"Using CLI height argument: {fig_height}")
+                        run.add_picture(
+                            labeled_image, height=Inches(fig_height)
+                        )
+                    else:
+                        logger.debug(f"Using default width: {default_width}")
+                        run.add_picture(
+                            labeled_image, width=Inches(default_width)
+                        )
+
+                # Set alignment
+                alignment = config.get("fig_alignment", "center").lower()
+                match alignment:
+                    case "center":
+                        new_par.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    case "left":
+                        new_par.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                    case "right":
+                        new_par.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+                    case _:
+                        new_par.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+                logger.info(f"Inserted cell figure: {figure}")
 
     if len(set(found_magic_strings)) != len(found_magic_strings):
         logger.warning("Duplicate figure names found in the document")
@@ -263,7 +467,9 @@ def remove_figures(
     docx_in: str,
     docx_out: str,
     config_yaml: Optional[str],
+    figure_dir: str | None = None,
 ):
+    logger = setup_logger()
     doc = Document(docx_in)
     paragraphs = doc.paragraphs
 
@@ -273,10 +479,48 @@ def remove_figures(
     else:
         config = {}
 
+    skip_unchanged = config.get("skip_unchanged", False)
+
     for i, paragraph in enumerate(paragraphs):
         text = paragraph.text.strip()
         if text.startswith("{rpfy}:"):
             figure_args = parse_magic_string(text)
+
+            # Check alt text hashes for skip_unchanged
+            if skip_unchanged and figure_dir:
+                # Check next paragraphs for drawings with alt text
+                all_unchanged = True
+                for j, fig_name in enumerate(figure_args.keys()):
+                    if i + j + 1 < len(paragraphs):
+                        next_par = paragraphs[i + j + 1]
+                        drawings = next_par._element.xpath(
+                            ".//w:drawing"
+                        )
+                        if drawings:
+                            for d in drawings:
+                                for inline in d.xpath(
+                                    ".//wp:inline"
+                                ):
+                                    for dp in inline.xpath(
+                                        ".//wp:docPr"
+                                    ):
+                                        alt = dp.get("descr", "")
+                                        if not is_artifact_unchanged(
+                                            alt, figure_dir, fig_name
+                                        ):
+                                            all_unchanged = False
+                        else:
+                            all_unchanged = False
+                    else:
+                        all_unchanged = False
+
+                if all_unchanged:
+                    logger.info(
+                        f"Skipping removal of unchanged figures: "
+                        f"{list(figure_args.keys())}"
+                    )
+                    continue
+
             update_magic_string = False
 
             paragraphs_to_remove = []
@@ -325,6 +569,115 @@ def remove_figures(
 
             for _, par in reversed(paragraphs_to_remove):
                 par._element.getparent().remove(par._element)
+
+    # Process figures inside table cells
+    for cell_par, cell, _tbl_el in iter_cell_paragraphs(doc):
+        text = cell_par.text.strip()
+        if not text.startswith("{rpfy}:"):
+            continue
+
+        figure_args = parse_magic_string(text)
+
+        # Check skip_unchanged for cell figures
+        if skip_unchanged and figure_dir:
+            cell_paras = cell.paragraphs
+            cell_par_idx = None
+            for ci, cp in enumerate(cell_paras):
+                if cp._element is cell_par._element:
+                    cell_par_idx = ci
+                    break
+
+            if cell_par_idx is not None:
+                all_unchanged = True
+                for j, fig_name in enumerate(figure_args.keys()):
+                    draw_idx = cell_par_idx + j + 1
+                    if draw_idx < len(cell_paras):
+                        next_par = cell_paras[draw_idx]
+                        drawings = next_par._element.xpath(".//w:drawing")
+                        if drawings:
+                            for d in drawings:
+                                for inline in d.xpath(".//wp:inline"):
+                                    for dp in inline.xpath(".//wp:docPr"):
+                                        alt = dp.get("descr", "")
+                                        if not is_artifact_unchanged(
+                                            alt, figure_dir, fig_name
+                                        ):
+                                            all_unchanged = False
+                        else:
+                            all_unchanged = False
+                    else:
+                        all_unchanged = False
+
+                if all_unchanged:
+                    logger.info(
+                        f"Skipping removal of unchanged cell figures: "
+                        f"{list(figure_args.keys())}"
+                    )
+                    continue
+
+        update_magic_string = False
+
+        cell_paras = cell.paragraphs
+        cell_par_idx = None
+        for ci, cp in enumerate(cell_paras):
+            if cp._element is cell_par._element:
+                cell_par_idx = ci
+                break
+        if cell_par_idx is None:
+            continue
+
+        paragraphs_to_remove = []
+        for j, args in enumerate(figure_args.values()):
+            next_idx = cell_par_idx + j + 1
+            if next_idx < len(cell_paras):
+                next_par = cell_paras[next_idx]
+                if not next_par.text.strip() and next_par._element.xpath(
+                    ".//w:drawing"
+                ):
+                    paragraphs_to_remove.append(next_par)
+                    if config.get("use_embedded_dimensions", True):
+                        dimensions = get_figure_dimensions(next_par)
+                        if dimensions.get("width"):
+                            args["width"] = str(
+                                round(dimensions["width"] / 914400, 2)
+                            )
+                            update_magic_string = True
+                        if dimensions.get("height"):
+                            args["height"] = str(
+                                round(dimensions["height"] / 914400, 2)
+                            )
+                            update_magic_string = True
+
+        if update_magic_string:
+            new_magic_string = "{rpfy}:"
+            if len(figure_args) > 1:
+                new_magic_string += "["
+                ending_string = "]"
+            else:
+                ending_string = ""
+            for fig_idx, (fig, arg) in enumerate(figure_args.items()):
+                arg_string = "<"
+                for p_idx, (prop, val) in enumerate(arg.items()):
+                    arg_string += f"{prop}: {val}"
+                    if p_idx + 1 != len(arg):
+                        arg_string += ", "
+                arg_string += ">"
+
+                new_magic_string += f"{fig}{arg_string}"
+                if fig_idx + 1 != len(figure_args):
+                    new_magic_string += ", "
+
+            new_magic_string += ending_string
+            cell_par.text = new_magic_string
+
+        for par in reversed(paragraphs_to_remove):
+            # Keep at least one paragraph in the cell
+            if len(cell._element.xpath(".//w:p")) > 1:
+                par._element.getparent().remove(par._element)
+            else:
+                # Clear text instead of removing
+                for run in par.runs:
+                    run.text = ""
 
     doc.save(docx_out)
 

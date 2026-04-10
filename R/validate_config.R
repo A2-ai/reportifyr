@@ -43,6 +43,20 @@ validate_config <- function(path_to_config_yaml) {
     }
   }
 
+  log4r::debug(.le$logger, "Checking add_hash_to_footnotes now")
+  if (!is.null(config$add_hash_to_footnotes)) {
+    if (typeof(config$add_hash_to_footnotes) != "logical") {
+      log4r::error(
+        .le$logger,
+        paste0(
+          "add_hash_to_footnotes should be logical, not: ",
+          typeof(config$add_hash_to_footnotes)
+        )
+      )
+      valid <- FALSE
+    }
+  }
+
   log4r::debug(.le$logger, "Checking use_object_path_as_source")
   if (!is.null(config$use_object_path_as_source)) {
     if (typeof(config$use_object_path_as_source) != "logical") {
@@ -85,9 +99,23 @@ validate_config <- function(path_to_config_yaml) {
     }
   }
 
+  log4r::debug(.le$logger, "Checking abbreviation_delimiter now")
+  if (!is.null(config$abbreviation_delimiter)) {
+    if (typeof(config$abbreviation_delimiter) != "character") {
+      log4r::error(
+        .le$logger,
+        paste0(
+          "abbreviation_delimiter should be character, not: ",
+          typeof(config$abbreviation_delimiter)
+        )
+      )
+      valid <- FALSE
+    }
+  }
+
   log4r::debug(.le$logger, "Checking footnote_order now")
   if (!is.null(config$footnote_order)) {
-    footnotes <- c("Object", "Source", "Notes", "Abbreviations")
+    footnotes <- c("Object", "Source", "Notes", "Abbreviations", "Hash")
     if (
       !identical(
         intersect(config$footnote_order, footnotes),
@@ -101,6 +129,48 @@ validate_config <- function(path_to_config_yaml) {
           paste0(setdiff(config$footnote_order, footnotes), collapse = ", "),
           ". Acceptable fields are: ",
           paste0(footnotes, collapse = ", ")
+        )
+      )
+      valid <- FALSE
+    }
+  }
+
+  log4r::debug(.le$logger, "Checking keep_caption_next now")
+  if (!is.null(config$keep_caption_next)) {
+    if (typeof(config$keep_caption_next) != "logical") {
+      log4r::error(
+        .le$logger,
+        paste0(
+          "keep_caption_next should be logical, not: ",
+          typeof(config$keep_caption_next)
+        )
+      )
+      valid <- FALSE
+    }
+  }
+
+  log4r::debug(.le$logger, "Checking add_alt_text now")
+  if (!is.null(config$add_alt_text)) {
+    if (typeof(config$add_alt_text) != "logical") {
+      log4r::error(
+        .le$logger,
+        paste0(
+          "add_alt_text should be logical, not: ",
+          typeof(config$add_alt_text)
+        )
+      )
+      valid <- FALSE
+    }
+  }
+
+  log4r::debug(.le$logger, "Checking skip_unchanged now")
+  if (!is.null(config$skip_unchanged)) {
+    if (typeof(config$skip_unchanged) != "logical") {
+      log4r::error(
+        .le$logger,
+        paste0(
+          "skip_unchanged should be logical, not: ",
+          typeof(config$skip_unchanged)
         )
       )
       valid <- FALSE
@@ -163,7 +233,7 @@ validate_config <- function(path_to_config_yaml) {
       log4r::error(
         .le$logger,
         paste0(
-          "footnotes_font_size should be integer/double, not: ",
+          "default_fig_width should be integer/double, not: ",
           typeof(config$default_fig_width)
         )
       )
