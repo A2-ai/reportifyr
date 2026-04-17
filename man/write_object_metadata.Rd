@@ -10,7 +10,8 @@ write_object_metadata(
   meta_equations = NULL,
   meta_notes = NULL,
   meta_abbrevs = NULL,
-  table1_format = FALSE
+  table1_format = FALSE,
+  context = NULL
 )
 }
 \arguments{
@@ -25,6 +26,11 @@ write_object_metadata(
 \item{meta_abbrevs}{A string or vector of strings representing abbreviations to include in the metadata. Default is \code{NULL}.}
 
 \item{table1_format}{A boolean indicating whether table1 formatting is used for \code{add_tables()}. Default is \code{FALSE}.}
+
+\item{context}{An \code{rpfy_context} built via \code{\link[=rpfy_context]{rpfy_context()}}. When
+\code{NULL} (default) an ephemeral context is constructed with all
+defaults. Passing an existing context avoids recomputing
+session-level fields on every artifact.}
 }
 \description{
 Writes an object's metadata .json file

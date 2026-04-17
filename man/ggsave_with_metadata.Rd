@@ -12,6 +12,7 @@ ggsave_with_metadata(
   meta_notes = NULL,
   meta_abbrevs = NULL,
   config_yaml = NULL,
+  context = NULL,
   ...
 )
 }
@@ -33,6 +34,11 @@ to include in the metadata. Default is \code{NULL}.}
 Default is \code{NULL}. If provided and \code{add_path_overlay} is
 \code{TRUE} in the config, the source script path is stamped
 onto the saved image.}
+
+\item{context}{An \code{rpfy_context} built via \code{\link[=rpfy_context]{rpfy_context()}}. When
+\code{NULL} (default) an ephemeral context is constructed with all
+defaults. Passing an existing context avoids recomputing
+session-level fields on every artifact.}
 
 \item{...}{Additional arguments passed to the
 \code{ggplot2::ggsave()} function.}
