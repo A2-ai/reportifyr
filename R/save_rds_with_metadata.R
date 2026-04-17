@@ -9,6 +9,10 @@
 #' @param meta_notes A string or vector of strings representing notes to include in the metadata. Default is `NULL`.
 #' @param meta_abbrevs A string or vector of strings representing abbreviations to include in the metadata. Default is `NULL`.
 #' @param table1_format A boolean indicating whether to apply table1-style formatting. Default is `FALSE`.
+#' @param context An `rpfy_context` built via [rpfy_context()]. When
+#'   `NULL` (default) an ephemeral context is constructed with all
+#'   defaults. Passing an existing context avoids recomputing
+#'   session-level fields on every artifact.
 #' @param ... Additional arguments passed to the `saveRDS()` function.
 #'
 #' @export
@@ -35,9 +39,19 @@ save_rds_with_metadata <- function(
   meta_notes = NULL,
   meta_abbrevs = NULL,
   table1_format = FALSE,
+  context = NULL,
   ...
 ) {
   log4r::debug(.le$logger, "Starting save_rds_with_metadata function")
+
+  if (is.null(context)) {
+    context <- rpfy_context()
+  } else if (!inherits(context, "rpfy_context")) {
+    stop(
+      "`context` must be NULL or inherit from class \"rpfy_context\".",
+      call. = FALSE
+    )
+  }
 
   base::saveRDS(object = object, file = file, ...)
   log4r::info(.le$logger, paste0("RDS written to file: ", file))
@@ -48,7 +62,8 @@ save_rds_with_metadata <- function(
     meta_equations = meta_equations,
     meta_notes = meta_notes,
     meta_abbrevs = meta_abbrevs,
-    table1_format = table1_format
+    table1_format = table1_format,
+    context = context
   )
 
   log4r::debug(.le$logger, "Reading config for RTF saving now")

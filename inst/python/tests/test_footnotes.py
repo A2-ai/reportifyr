@@ -181,6 +181,84 @@ def test_create_meta_text_lines_note_with_trailing_dot():
     assert ".." not in result["Notes"]
 
 
+def test_create_meta_text_lines_script_source():
+    """Script shape: path + latest_time → 'path latest_time'."""
+    metadata = _make_metadata(source_path="prog.R", latest_time="2026-01-01")
+    footnotes = _make_footnotes()
+    config = _default_config()
+
+    result = create_meta_text_lines(footnotes, metadata, False, "figure", config)
+
+    assert result["Source"] == "prog.R 2026-01-01"
+
+
+def test_create_meta_text_lines_text_source():
+    """Free-form `text` key is rendered verbatim."""
+    metadata = _make_metadata()
+    metadata["source_meta"] = {"text": "Manual analysis 2026-04-15"}
+    footnotes = _make_footnotes()
+    config = _default_config()
+
+    result = create_meta_text_lines(footnotes, metadata, False, "figure", config)
+
+    assert result["Source"] == "Manual analysis 2026-04-15"
+
+
+def test_create_meta_text_lines_shiny_source():
+    """Shiny shape: app fields + object_meta.creation_time."""
+    metadata = _make_metadata(obj_creation_time="2026-01-02")
+    metadata["source_meta"] = {
+        "type": "shiny",
+        "app_name": "myapp",
+        "app_version": "1.2.0",
+    }
+    footnotes = _make_footnotes()
+    config = _default_config()
+
+    result = create_meta_text_lines(footnotes, metadata, False, "figure", config)
+
+    assert result["Source"] == "myapp v1.2.0 2026-01-02"
+
+
+def test_create_meta_text_lines_empty_source_when_nothing_resolvable():
+    """Empty source_meta → empty Source string."""
+    metadata = _make_metadata()
+    metadata["source_meta"] = {}
+    footnotes = _make_footnotes()
+    config = _default_config()
+
+    result = create_meta_text_lines(footnotes, metadata, False, "figure", config)
+
+    assert result["Source"] == ""
+
+
+def test_create_meta_text_lines_non_dict_source_meta_does_not_crash():
+    """Malformed source_meta (e.g. a scalar) falls through to empty, not a crash."""
+    metadata = _make_metadata()
+    metadata["source_meta"] = 42
+    footnotes = _make_footnotes()
+    config = _default_config()
+
+    result = create_meta_text_lines(footnotes, metadata, False, "figure", config)
+
+    assert result["Source"] == ""
+
+
+def test_create_meta_text_lines_addl_meta_does_not_affect_source():
+    """addl_meta is purely informational and never touches the Source line."""
+    metadata = _make_metadata(source_path="prog.R", latest_time="2026-01-01")
+    metadata["addl_meta"] = {
+        "analyst": "jake",
+        "reviewer": "anne",
+    }
+    footnotes = _make_footnotes()
+    config = _default_config()
+
+    result = create_meta_text_lines(footnotes, metadata, False, "figure", config)
+
+    assert result["Source"] == "prog.R 2026-01-01"
+
+
 # ---------------------------------------------------------------------------
 # format_metadata_line
 # ---------------------------------------------------------------------------

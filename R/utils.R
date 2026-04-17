@@ -306,6 +306,98 @@ get_source_path <- function() {
   )
 }
 
+#' Build the script-case `source_meta` list via this.path + git lookup
+#'
+#' @param project_root Character. Project root used to relativize the
+#'   detected script path.
+#'
+#' @return Named list suitable for writing as `source_meta`, or `list()`
+#'   if detection failed.
+#'
+#' @keywords internal
+#' @noRd
+detect_script_source_meta <- function(project_root) {
+  source_path <- get_source_path()
+  if (source_path == "SOURCE_PATH_NOT_DETECTED" || is.null(project_root)) {
+    return(list())
+  }
+
+  source_path_relative <- fs::path_rel(source_path, project_root)
+  log4r::info(
+    .le$logger,
+    paste0("Source file path (relative): ", source_path_relative)
+  )
+
+  git_info <- get_git_info(source_path)
+  log4r::info(
+    .le$logger,
+    paste0("Fetched git info for source file: ", git_info)
+  )
+
+  list(
+    creation_author = git_info$creation_author,
+    latest_author = git_info$latest_author,
+    path = as.character(source_path_relative),
+    creation_time = git_info$creation_time,
+    latest_time = git_info$latest_time
+  )
+}
+
+#' Validate an addl_metadata argument
+#'
+#' Accepts `NULL` or a named list whose values are scalar (length-1)
+#' character, numeric, or logical.
+#'
+#' @param x The value passed as `addl_metadata` to a wrapper.
+#'
+#' @return `NULL` or the validated named list.
+#'
+#' @keywords internal
+#' @noRd
+validate_addl_metadata <- function(x) {
+  if (is.null(x)) {
+    return(NULL)
+  }
+  if (!is.list(x) || length(x) == 0L) {
+    if (is.list(x) && length(x) == 0L) {
+      return(NULL)
+    }
+    stop(
+      "`addl_metadata` must be NULL or a non-empty named list.",
+      call. = FALSE
+    )
+  }
+  nms <- names(x)
+  if (is.null(nms) || any(!nzchar(nms)) || anyDuplicated(nms)) {
+    stop(
+      "`addl_metadata` must be a named list with unique, non-empty names.",
+      call. = FALSE
+    )
+  }
+  bad <- vapply(
+    x,
+    function(v) {
+      !(is.character(v) || is.numeric(v) || is.logical(v)) ||
+        length(v) != 1L ||
+        is.na(v)
+    },
+    logical(1)
+  )
+  if (any(bad)) {
+    stop(
+      sprintf(
+        paste0(
+          "`addl_metadata` values must be scalar character/numeric/",
+          "logical. Offending key(s): %s"
+        ),
+        paste(nms[bad], collapse = ", ")
+      ),
+      call. = FALSE
+    )
+  }
+  x
+}
+
 #' Run a Python script via uv
 #'
 #' @param uv_path Path to the uv executable

@@ -60,12 +60,26 @@ def create_meta_text_lines(
     assert artifact_type in ["figure", "table"]
 
     meta_text_lines = {}
-    source_text = ""
-    # Add source metadata
-    source = metadata["source_meta"]["path"]
-    latest_time = metadata["source_meta"]["latest_time"]
-    if source and latest_time:
-        source_text += f"{source} {latest_time}"
+    # Source line branches on source_meta shape:
+    src = metadata.get("source_meta") or {}
+    if not isinstance(src, dict):
+        src = {}
+    obj = metadata.get("object_meta") or {}
+    if src.get("type") == "shiny":
+        app_name = src.get("app_name", "")
+        app_version = src.get("app_version", "")
+        creation_time = obj.get("creation_time", "")
+        source_text = (
+            f"{app_name} v{app_version} {creation_time}".rstrip()
+            if app_name and app_version
+            else ""
+        )
+    elif src.get("text"):
+        source_text = str(src["text"])
+    elif src.get("path") and src.get("latest_time"):
+        source_text = f"{src['path']} {src['latest_time']}"
+    else:
+        source_text = ""
     meta_text_lines["Source"] = source_text
 
     object_source = ""
