@@ -47,7 +47,7 @@ to_list.default <- function(x, ...) list(type = "unresolved")
 #'
 #' @description Returns a classed list suitable for the `origin`
 #'   argument of [rpfy_context()]. The `type` discriminator is not
-#'   stored on the list; it is emitted by [to_list.shiny_source()] at
+#'   stored on the list; it is emitted by [to_list()] at
 #'   serialization time so the class is the single source of truth.
 #'
 #' @param app_name Character scalar. Name of the installed R package that
@@ -128,7 +128,7 @@ to_list.shiny_source <- function(x, ...) {
 #'   argument of [rpfy_context()]. Typically produced internally by
 #'   [rpfy_context()] via auto-detection; exposed for callers that want
 #'   to stamp a known script identity. The `type` discriminator is not
-#'   stored on the list; it is emitted by [to_list.script_source()] at
+#'   stored on the list; it is emitted by [to_list()] at
 #'   serialization time so the class is the single source of truth.
 #'
 #' @param path Character scalar. Path to the source script, relative to

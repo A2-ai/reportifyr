@@ -24,6 +24,8 @@
 #'   `system_meta`, `source_meta`, `addl_metadata`, `author`,
 #'   `project_root`.
 #'
+#' @importFrom rlang `%||%`
+#'
 #' @export
 #'
 #' @examples \dontrun{
@@ -197,8 +199,6 @@ validate_context <- function(context) {
 
   context
 }
-
-`%||%` <- function(a, b) if (is.null(a)) b else a
 
 #' Validate an addl_metadata argument
 #'

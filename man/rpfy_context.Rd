@@ -10,11 +10,10 @@ rpfy_context(origin = NULL, addl_metadata = NULL)
 \item{origin}{Controls what is recorded in \code{source_meta} in the
 artifact JSON. One of:
 \itemize{
-\item \code{NULL} (default) — auto-detect via \code{this.path} + git lookup.
-\item A character scalar — free-form text written as
-\code{source_meta$text}.
-\item A named list — written verbatim, e.g., the structured
-output of \code{\link[=shiny_source]{shiny_source()}}.
+\item \code{NULL} (default) — auto-detect via \code{this.path} + git lookup,
+producing a \code{script_source} (or an empty list if detection fails).
+\item An \code{rpfy_source_meta} object — the output of \code{\link[=shiny_source]{shiny_source()}}
+or \code{\link[=script_source]{script_source()}}.
 }}
 
 \item{addl_metadata}{Optional named list of caller-supplied
