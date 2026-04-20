@@ -44,7 +44,7 @@ save_rds_with_metadata <- function(
 ) {
   log4r::debug(.le$logger, "Starting save_rds_with_metadata function")
 
-  context <- validate_context(context)
+  context <- resolve_context(context)
 
   base::saveRDS(object = object, file = file, ...)
   log4r::info(.le$logger, paste0("RDS written to file: ", file))

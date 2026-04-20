@@ -117,19 +117,78 @@ test_that("format.rpfy_context returns a one-line summary", {
   expect_match(out, "origin=shiny \\| myapp v1\\.0\\.0")
 })
 
-test_that("validate.rpfy_context passes on a well-formed context", {
+test_that("validate_rpfy_context returns invisibly on a well-formed context", {
   ctx <- rpfy_context(origin = shiny_source("myapp", app_version = "1.0.0"))
 
-  msgs <- capture_messages(validate(ctx))
-  expect_true(any(grepl("\\[PASS\\] source_meta", msgs)))
+  expect_silent(out <- validate_rpfy_context(ctx))
+  expect_identical(out, ctx)
 })
 
-test_that("validate.rpfy_context flags empty source_meta", {
+test_that("validate_rpfy_context accepts empty source_meta (unresolved)", {
   ctx <- rpfy_context(origin = shiny_source("myapp", app_version = "1.0.0"))
-  ctx$source_meta <- list()  # simulate detection failure
+  ctx$source_meta <- list()
 
-  msgs <- capture_messages(validate(ctx))
-  expect_true(any(grepl("\\[FAIL\\] source_meta", msgs)))
+  expect_silent(validate_rpfy_context(ctx))
+})
+
+test_that("validate_rpfy_context rejects non-rpfy_context inputs", {
+  expect_error(validate_rpfy_context(list()), "must inherit from class")
+  expect_error(validate_rpfy_context("x"), "must inherit from class")
+})
+
+test_that("validate_rpfy_context rejects hand-crafted objects missing fields", {
+  bad <- structure(list(project_root = NULL), class = "rpfy_context")
+  expect_error(validate_rpfy_context(bad), "missing required field")
+})
+
+test_that("validate_rpfy_context accepts NULL project_root (unresolved)", {
+  ctx <- rpfy_context(origin = shiny_source("myapp", app_version = "1.0.0"))
+  ctx$project_root <- NULL
+  expect_silent(validate_rpfy_context(ctx))
+})
+
+test_that("validate_rpfy_context rejects bad field values", {
+  ctx <- rpfy_context(origin = shiny_source("myapp", app_version = "1.0.0"))
+
+  bad_root <- ctx
+  bad_root$project_root <- "/this/path/does/not/exist/xyz"
+  expect_error(validate_rpfy_context(bad_root), "existing directory")
+
+  bad_source <- ctx
+  bad_source$source_meta <- list(foo = "bar")
+  expect_error(validate_rpfy_context(bad_source), "rpfy_source_meta")
+
+  bad_author <- ctx
+  bad_author$author <- ""
+  expect_error(validate_rpfy_context(bad_author), "non-empty character scalar")
+
+  bad_sys <- ctx
+  bad_sys$system_meta <- list(platform = "x")  # missing software
+  expect_error(validate_rpfy_context(bad_sys), "platform.*software")
+})
+
+test_that("validate_shiny_source errors on wrong class / values", {
+  expect_error(validate_shiny_source(list()), "shiny_source")
+  bad <- structure(
+    list(app_name = "", app_version = "1"),
+    class = c("shiny_source", "rpfy_source_meta")
+  )
+  expect_error(validate_shiny_source(bad), "non-empty character scalar")
+})
+
+test_that("validate_script_source errors on wrong class / values", {
+  expect_error(validate_script_source(list()), "script_source")
+  bad <- structure(
+    list(
+      creation_author = "a",
+      latest_author   = "a",
+      path            = "",
+      creation_time   = "t",
+      latest_time     = "t"
+    ),
+    class = c("script_source", "rpfy_source_meta")
+  )
+  expect_error(validate_script_source(bad), "non-empty character scalar")
 })
 
 test_that("shiny_source rejects invalid inputs", {
@@ -152,6 +211,23 @@ test_that("script_source rejects invalid inputs", {
     ),
     "non-empty character scalar"
   )
+})
+
+test_that("resolve_context() returns a fresh context when input is NULL", {
+  ctx <- resolve_context(NULL)
+  expect_s3_class(ctx, "rpfy_context")
+})
+
+test_that("resolve_context() returns a valid context unchanged", {
+  ctx <- rpfy_context(origin = shiny_source("myapp", app_version = "1.0.0"))
+  out <- resolve_context(ctx)
+  expect_identical(out, ctx)
+})
+
+test_that("resolve_context() rejects non-rpfy_context inputs", {
+  expect_error(resolve_context(list()), "must inherit from class")
+  expect_error(resolve_context("x"), "must inherit from class")
+  expect_error(resolve_context(42), "must inherit from class")
 })
 
 test_that("to_list() emits the type discriminator per variant", {
@@ -178,7 +254,17 @@ test_that("to_list() emits the type discriminator per variant", {
     )
   )
 
-  expect_equal(to_list(list()), list(type = "unresolved"))
+  expect_equal(
+    to_list(list()),
+    list(
+      type            = "unresolved",
+      creation_author = NA_character_,
+      latest_author   = NA_character_,
+      path            = NA_character_,
+      creation_time   = NA_character_,
+      latest_time     = NA_character_
+    )
+  )
 })
 
 test_that("format_source() dispatches per variant", {

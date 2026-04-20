@@ -73,14 +73,14 @@ def create_meta_text_lines(
         app_version = src.get("app_version", "")
         creation_time = obj.get("creation_time", "")
         source_text = (
-            f"{app_name} v{app_version} {creation_time}".rstrip()
+            f"{app_name} v{app_version} {creation_time}"
             if app_name and app_version
             else ""
         )
     elif src_type == "script":
         path = src.get("path", "")
         latest_time = src.get("latest_time", "")
-        source_text = f"{path} {latest_time}".strip() if path else ""
+        source_text = f"{path} {latest_time}" if path else ""
     elif src.get("text"):
         source_text = str(src["text"])
     elif src.get("path") and src.get("latest_time"):

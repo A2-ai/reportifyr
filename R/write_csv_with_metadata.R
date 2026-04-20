@@ -45,7 +45,7 @@ write_csv_with_metadata <- function(
 ) {
   log4r::debug(.le$logger, "Starting write_csv_with_metadata function")
 
-  context <- validate_context(context)
+  context <- resolve_context(context)
 
   utils::write.csv(x = object, file = file, ...)
   log4r::info(.le$logger, paste0("CSV written to file: ", file))

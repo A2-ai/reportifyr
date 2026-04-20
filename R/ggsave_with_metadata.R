@@ -51,7 +51,7 @@ ggsave_with_metadata <- function(
 ) {
   log4r::debug(.le$logger, "Starting ggsave_with_metadata function")
 
-  context <- validate_context(context)
+  context <- resolve_context(context)
 
   ggplot2::ggsave(
     filename = filename,

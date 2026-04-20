@@ -213,7 +213,7 @@ test_that("write_object_metadata writes addl_meta when context has it", {
   expect_equal(json_data$addl_meta$study, "PK-001")
 })
 
-test_that("write_object_metadata omits addl_meta when context has none", {
+test_that("write_object_metadata emits empty addl_meta when context has none", {
   temp_project_dir <- tempfile()
   dir.create(temp_project_dir)
   writeLines(
@@ -240,7 +240,8 @@ test_that("write_object_metadata omits addl_meta when context has none", {
   )
   json_data <- fromJSON(json_file)
 
-  expect_null(json_data$addl_meta)
+  expect_true("addl_meta" %in% names(json_data))
+  expect_length(json_data$addl_meta, 0L)
 })
 
 test_that("write_object_metadata reuses author from context", {

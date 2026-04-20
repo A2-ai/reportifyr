@@ -35,7 +35,7 @@
 #' )
 #'
 #' print(ctx)
-#' validate(ctx)
+#' validate_rpfy_context(ctx)
 #'
 #' ggsave_with_metadata("plot.png", context = ctx, meta_type = "efficacy")
 #' }
@@ -45,21 +45,23 @@ rpfy_context <- function(
 ) {
   log4r::debug(.le$logger, "Building rpfy_context")
 
-  project_root <- find_project_root()
-
-  addl_metadata <- validate_addl_metadata(addl_metadata)
-
-  source_meta <- if (is.null(origin)) {
-    detect_script_source_meta(project_root)
-  } else if (inherits(origin, "rpfy_source_meta")) {
-    origin
-  } else {
+  if (!is.null(origin) && !inherits(origin, "rpfy_source_meta")) {
     stop(
       "`origin` must be NULL or an `rpfy_source_meta` object ",
       "(built via shiny_source() or script_source()). Got: ",
       paste(class(origin), collapse = "/"),
       call. = FALSE
     )
+  }
+
+  project_root <- find_project_root()
+
+  addl_metadata <- validate_addl_metadata(addl_metadata)
+
+  source_meta <- if (is.null(origin)) {
+    detect_script_source_meta(project_root)
+  } else {
+    origin
   }
 
   system_meta <- list(
@@ -72,6 +74,42 @@ rpfy_context <- function(
 
   author <- get_git_config_author()
 
+  context <- new_rpfy_context(
+    system_meta   = system_meta,
+    source_meta   = source_meta,
+    addl_metadata = addl_metadata,
+    author        = author,
+    project_root  = project_root
+  )
+
+  validate_rpfy_context(context)
+
+  context
+}
+
+#' Low-level constructor for `rpfy_context`
+#'
+#' Creates an `rpfy_context` object from already-prepared components.
+#' Performs no validation; callers are expected to pass correct values
+#' and run [validate_rpfy_context()] afterward.
+#'
+#' @param system_meta Named list with `platform` and `software`.
+#' @param source_meta An `rpfy_source_meta` object or empty `list()`.
+#' @param addl_metadata `NULL` or a named scalar-valued list.
+#' @param author Character scalar. Git config author.
+#' @param project_root Character scalar. Absolute path to project root.
+#'
+#' @return An object of class `rpfy_context`.
+#'
+#' @keywords internal
+#' @noRd
+new_rpfy_context <- function(
+  system_meta,
+  source_meta,
+  addl_metadata,
+  author,
+  project_root
+) {
   structure(
     list(
       system_meta   = system_meta,
@@ -123,80 +161,118 @@ print.rpfy_context <- function(x, ...) {
 
   cat("<rpfy_context>\n")
   cat(sprintf("  origin:   %s\n", format_source(x$source_meta)))
-  cat(sprintf("  author:   %s\n", x$author %||% "(unknown)"))
-  cat(sprintf("  platform: %s\n", x$system_meta$platform %||% "(unknown)"))
+  cat(sprintf("  author:   %s\n", x$author))
+  cat(sprintf("  platform: %s\n", x$system_meta$platform))
   cat(sprintf("  addl:     %s\n", addl_line))
   invisible(x)
 }
 
 #' Validate a reportifyr context
 #'
-#' @description Generic for validating structured objects. Reportifyr
-#'   ships a method for `rpfy_context` that checks the context is
-#'   well-formed before artifacts are written. Intended for use at the
-#'   top of a script before the artifact loop.
+#' @description Checks that an `rpfy_context` has the expected fields
+#'   and that each field holds a valid value. Errors on any problem.
 #'
-#' @param x Object to validate.
-#' @param ... Additional arguments passed to methods.
+#' @param context An `rpfy_context` object.
 #'
-#' @return The object invisibly. Emits messages describing each check.
+#' @return The context invisibly.
 #'
 #' @export
-validate <- function(x, ...) {
-  UseMethod("validate")
-}
-
-#' @rdname validate
-#' @export
-validate.rpfy_context <- function(x, ...) {
-  checks <- list()
-
-  checks$project_root <- !is.null(x$project_root) &&
-    dir.exists(x$project_root)
-
-  checks$source_meta <- length(x$source_meta) > 0L
-
-  checks$addl_metadata <- is.null(x$addl_metadata) || (
-    is.list(x$addl_metadata) &&
-      !is.null(names(x$addl_metadata)) &&
-      all(nzchar(names(x$addl_metadata))) &&
-      all(vapply(
-        x$addl_metadata,
-        function(v) {
-          (is.character(v) || is.numeric(v) || is.logical(v)) &&
-            length(v) == 1L &&
-            !is.na(v)
-        },
-        logical(1)
-      ))
-  )
-
-  labels <- c(
-    project_root  = "project root exists",
-    source_meta   = "source_meta is non-empty",
-    addl_metadata = "addl_metadata values are scalar"
-  )
-
-  for (nm in names(checks)) {
-    mark <- if (isTRUE(checks[[nm]])) "PASS" else "FAIL"
-    message(sprintf("[%s] %s", mark, labels[[nm]]))
-  }
-
-  invisible(x)
-}
-
-validate_context <- function(context) {
-  if (is.null(context)) {
-    return(rpfy_context())
-  }
-
+validate_rpfy_context <- function(context) {
   if (!inherits(context, "rpfy_context")) {
     stop(
-      "`context` must be NULL or inherit from class \"rpfy_context\".",
+      "`context` must inherit from class \"rpfy_context\".",
       call. = FALSE
     )
   }
 
+  required <- c(
+    "system_meta",
+    "source_meta",
+    "addl_metadata",
+    "author",
+    "project_root"
+  )
+  missing_fields <- setdiff(required, names(context))
+  if (length(missing_fields)) {
+    stop(
+      sprintf(
+        "`context` is missing required field(s): %s",
+        paste(missing_fields, collapse = ", ")
+      ),
+      call. = FALSE
+    )
+  }
+
+  if (!is.null(context$project_root)) {
+    if (
+      !is.character(context$project_root) ||
+        length(context$project_root) != 1L ||
+        !nzchar(context$project_root) ||
+        !dir.exists(context$project_root)
+    ) {
+      stop(
+        "`context$project_root` must be NULL or a path to an existing directory.",
+        call. = FALSE
+      )
+    }
+  }
+
+  if (
+    !(
+      inherits(context$source_meta, "rpfy_source_meta") ||
+        identical(context$source_meta, list())
+    )
+  ) {
+    stop(
+      "`context$source_meta` must be an `rpfy_source_meta` object or `list()`.",
+      call. = FALSE
+    )
+  }
+
+  if (
+    !is.character(context$author) ||
+      length(context$author) != 1L ||
+      !nzchar(context$author)
+  ) {
+    stop(
+      "`context$author` must be a non-empty character scalar.",
+      call. = FALSE
+    )
+  }
+
+  if (
+    !is.list(context$system_meta) ||
+      !all(c("platform", "software") %in% names(context$system_meta))
+  ) {
+    stop(
+      "`context$system_meta` must be a list with `platform` and `software`.",
+      call. = FALSE
+    )
+  }
+
+  validate_addl_metadata(context$addl_metadata)
+
+  invisible(context)
+}
+
+#' Coerce a caller-supplied `context` argument
+#'
+#' Used by the `*_with_metadata()` wrappers. If `context` is `NULL`,
+#' constructs a default one via [rpfy_context()]. Otherwise runs
+#' [validate_rpfy_context()] and returns the object. Errors for any
+#' other input type.
+#'
+#' @param context `NULL` or an `rpfy_context`.
+#'
+#' @return An `rpfy_context`.
+#'
+#' @keywords internal
+#' @noRd
+resolve_context <- function(context) {
+  if (is.null(context)) {
+    return(rpfy_context())
+  }
+  validate_rpfy_context(context)
   context
 }
 
@@ -215,14 +291,11 @@ validate_addl_metadata <- function(x) {
   if (is.null(x)) {
     return(NULL)
   }
-  if (!is.list(x) || length(x) == 0L) {
-    if (is.list(x) && length(x) == 0L) {
-      return(NULL)
-    }
-    stop(
-      "`addl_metadata` must be NULL or a non-empty named list.",
-      call. = FALSE
-    )
+  if (!is.list(x)) {
+    stop("`addl_metadata` must be NULL or a list.", call. = FALSE)
+  }
+  if (length(x) == 0L) {
+    return(NULL)
   }
   nms <- names(x)
   if (is.null(nms) || any(!nzchar(nms)) || anyDuplicated(nms)) {

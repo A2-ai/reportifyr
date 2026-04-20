@@ -42,7 +42,7 @@ ctx <- rpfy_context(
 )
 
 print(ctx)
-validate(ctx)
+validate_rpfy_context(ctx)
 
 ggsave_with_metadata("plot.png", context = ctx, meta_type = "efficacy")
 }

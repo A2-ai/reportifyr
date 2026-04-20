@@ -41,7 +41,7 @@ write_object_metadata <- function(
 
   log4r::info(.le$logger, paste0("File exists: ", object_file))
 
-  context <- validate_context(context)
+  context <- resolve_context(context)
 
   project_root <- context$project_root
   if (is.null(project_root)) {
@@ -84,8 +84,10 @@ write_object_metadata <- function(
     )
   )
 
-  if (!is.null(context$addl_metadata)) {
-    data_to_save$addl_meta <- context$addl_metadata
+  data_to_save$addl_meta <- if (is.null(context$addl_metadata)) {
+    list()
+  } else {
+    context$addl_metadata
   }
 
   log4r::debug(.le$logger, "Assembled data for saving as JSON")

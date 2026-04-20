@@ -1,54 +1,37 @@
-#' Generics over `rpfy_source_meta` variants
+#' Internal generics dispatching on `rpfy_source_meta` variants.
 #'
-#' @description Two generics dispatch on the class of a source object:
-#'   \itemize{
-#'     \item [format_source()] — one-line human summary for print/format
-#'       of [rpfy_context()].
-#'     \item [to_list()] — plain named list for JSON serialization, with
-#'       the `type` discriminator Python uses to render the footnote
-#'       Source line.
-#'   }
-#'
-#'   Methods are provided for `shiny_source`, `script_source`, and
-#'   `default` (the "unresolved" case where detection failed and
-#'   `source_meta` is a plain empty list).
-#'
-#' @name source_meta_generics
-NULL
-
-#' @rdname source_meta_generics
-#'
-#' @param x An object to summarize.
-#' @param ... Unused.
-#'
-#' @return Character scalar.
-#'
-#' @export
+#' @keywords internal
+#' @noRd
 format_source <- function(x, ...) UseMethod("format_source")
 
-#' @rdname source_meta_generics
-#' @export
+#' @keywords internal
+#' @noRd
 format_source.default <- function(x, ...) "(unresolved)"
 
-#' @rdname source_meta_generics
-#'
-#' @return A plain named list with a `type` field, ready for
-#'   `jsonlite::toJSON()`.
-#'
-#' @export
+#' @keywords internal
+#' @noRd
 to_list <- function(x, ...) UseMethod("to_list")
 
-#' @rdname source_meta_generics
-#' @export
-to_list.default <- function(x, ...) list(type = "unresolved")
+#' @keywords internal
+#' @noRd
+to_list.default <- function(x, ...) {
+  list(
+    type            = "unresolved",
+    creation_author = NA_character_,
+    latest_author   = NA_character_,
+    path            = NA_character_,
+    creation_time   = NA_character_,
+    latest_time     = NA_character_
+  )
+}
 
 
 #' Build a structured `source` value for an artifact produced from a Shiny app
 #'
 #' @description Returns a classed list suitable for the `origin`
 #'   argument of [rpfy_context()]. The `type` discriminator is not
-#'   stored on the list; it is emitted by [to_list()] at
-#'   serialization time so the class is the single source of truth.
+#'   stored on the list; it is emitted at serialization time so the
+#'   class is the single source of truth.
 #'
 #' @param app_name Character scalar. Name of the installed R package that
 #'   is the Shiny app.
@@ -94,29 +77,64 @@ shiny_source <- function(app_name, app_version = NULL) {
     )
   }
 
-  if (
-    !is.character(app_version) ||
-      length(app_version) != 1L ||
-      !nzchar(app_version)
-  ) {
-    stop("`app_version` must be a non-empty character scalar.", call. = FALSE)
-  }
+  x <- new_shiny_source(app_name = app_name, app_version = app_version)
+  validate_shiny_source(x)
+  x
+}
 
+#' Low-level constructor for `shiny_source`
+#'
+#' @param app_name Character scalar.
+#' @param app_version Character scalar.
+#'
+#' @return A `shiny_source` / `rpfy_source_meta` object. Unvalidated.
+#'
+#' @keywords internal
+#' @noRd
+new_shiny_source <- function(app_name, app_version) {
   structure(
     list(
-      app_name = app_name,
+      app_name    = app_name,
       app_version = app_version
     ),
     class = c("shiny_source", "rpfy_source_meta")
   )
 }
 
+#' Validate a `shiny_source` object
+#'
+#' @description Errors if `x` is not a `shiny_source` or if
+#'   `app_name` / `app_version` are not non-empty character scalars.
+#'
+#' @param x A `shiny_source` object.
+#'
+#' @return `x` invisibly.
+#'
 #' @export
+validate_shiny_source <- function(x) {
+  if (!inherits(x, "shiny_source")) {
+    stop("`x` must inherit from class \"shiny_source\".", call. = FALSE)
+  }
+  for (nm in c("app_name", "app_version")) {
+    v <- x[[nm]]
+    if (!is.character(v) || length(v) != 1L || !nzchar(v)) {
+      stop(
+        sprintf("`%s` must be a non-empty character scalar.", nm),
+        call. = FALSE
+      )
+    }
+  }
+  invisible(x)
+}
+
+#' @keywords internal
+#' @noRd
 format_source.shiny_source <- function(x, ...) {
   sprintf("shiny | %s v%s", x$app_name, x$app_version)
 }
 
-#' @export
+#' @keywords internal
+#' @noRd
 to_list.shiny_source <- function(x, ...) {
   c(list(type = "shiny"), unclass(x))
 }
@@ -128,8 +146,8 @@ to_list.shiny_source <- function(x, ...) {
 #'   argument of [rpfy_context()]. Typically produced internally by
 #'   [rpfy_context()] via auto-detection; exposed for callers that want
 #'   to stamp a known script identity. The `type` discriminator is not
-#'   stored on the list; it is emitted by [to_list()] at
-#'   serialization time so the class is the single source of truth.
+#'   stored on the list; it is emitted at serialization time so the
+#'   class is the single source of truth.
 #'
 #' @param path Character scalar. Path to the source script, relative to
 #'   the project root.
@@ -163,22 +181,33 @@ script_source <- function(
   creation_time,
   latest_time
 ) {
-  for (nm in c(
-    "path",
-    "creation_author",
-    "latest_author",
-    "creation_time",
-    "latest_time"
-  )) {
-    v <- get(nm)
-    if (!is.character(v) || length(v) != 1L || !nzchar(v)) {
-      stop(
-        sprintf("`%s` must be a non-empty character scalar.", nm),
-        call. = FALSE
-      )
-    }
-  }
+  x <- new_script_source(
+    path            = path,
+    creation_author = creation_author,
+    latest_author   = latest_author,
+    creation_time   = creation_time,
+    latest_time     = latest_time
+  )
+  validate_script_source(x)
+  x
+}
 
+#' Low-level constructor for `script_source`
+#'
+#' @param path,creation_author,latest_author,creation_time,latest_time
+#'   Character scalars matching the fields of `script_source`.
+#'
+#' @return A `script_source` / `rpfy_source_meta` object. Unvalidated.
+#'
+#' @keywords internal
+#' @noRd
+new_script_source <- function(
+  path,
+  creation_author,
+  latest_author,
+  creation_time,
+  latest_time
+) {
   structure(
     list(
       creation_author = creation_author,
@@ -191,12 +220,47 @@ script_source <- function(
   )
 }
 
+#' Validate a `script_source` object
+#'
+#' @description Errors if `x` is not a `script_source` or if any of
+#'   `path`, `creation_author`, `latest_author`, `creation_time`,
+#'   `latest_time` are not non-empty character scalars.
+#'
+#' @param x A `script_source` object.
+#'
+#' @return `x` invisibly.
+#'
 #' @export
+validate_script_source <- function(x) {
+  if (!inherits(x, "script_source")) {
+    stop("`x` must inherit from class \"script_source\".", call. = FALSE)
+  }
+  for (nm in c(
+    "path",
+    "creation_author",
+    "latest_author",
+    "creation_time",
+    "latest_time"
+  )) {
+    v <- x[[nm]]
+    if (!is.character(v) || length(v) != 1L || !nzchar(v)) {
+      stop(
+        sprintf("`%s` must be a non-empty character scalar.", nm),
+        call. = FALSE
+      )
+    }
+  }
+  invisible(x)
+}
+
+#' @keywords internal
+#' @noRd
 format_source.script_source <- function(x, ...) {
   sprintf("script | %s", x$path)
 }
 
-#' @export
+#' @keywords internal
+#' @noRd
 to_list.script_source <- function(x, ...) {
   c(list(type = "script"), unclass(x))
 }
@@ -213,10 +277,11 @@ to_list.script_source <- function(x, ...) {
 #' @keywords internal
 #' @noRd
 detect_script_source_meta <- function(project_root) {
-  source_path <- get_source_path()
-  if (source_path == "SOURCE_PATH_NOT_DETECTED" || is.null(project_root)) {
+  if (is.null(project_root)) {
     return(list())
   }
+
+  source_path <- get_source_path()
 
   source_path_relative <- fs::path_rel(source_path, project_root)
   log4r::info(
