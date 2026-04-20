@@ -213,4 +213,19 @@ validate.rpfy_context <- function(x, ...) {
   invisible(x)
 }
 
+validate_context <- function(context) {
+  if (is.null(context)) {
+    return(rpfy_context())
+  }
+
+  if (!inherits(context, "rpfy_context")) {
+    stop(
+      "`context` must be NULL or inherit from class \"rpfy_context\".",
+      call. = FALSE
+    )
+  }
+
+  context
+}
+
 `%||%` <- function(a, b) if (is.null(a)) b else a

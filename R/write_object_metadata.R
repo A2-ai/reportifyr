@@ -41,14 +41,7 @@ write_object_metadata <- function(
 
   log4r::info(.le$logger, paste0("File exists: ", object_file))
 
-  if (is.null(context)) {
-    context <- rpfy_context()
-  } else if (!inherits(context, "rpfy_context")) {
-    stop(
-      "`context` must be NULL or inherit from class \"rpfy_context\".",
-      call. = FALSE
-    )
-  }
+  context <- validate_context(context)
 
   project_root <- context$project_root
   if (is.null(project_root)) {

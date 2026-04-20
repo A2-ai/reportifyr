@@ -51,14 +51,7 @@ ggsave_with_metadata <- function(
 ) {
   log4r::debug(.le$logger, "Starting ggsave_with_metadata function")
 
-  if (is.null(context)) {
-    context <- rpfy_context()
-  } else if (!inherits(context, "rpfy_context")) {
-    stop(
-      "`context` must be NULL or inherit from class \"rpfy_context\".",
-      call. = FALSE
-    )
-  }
+  context <- validate_context(context)
 
   ggplot2::ggsave(
     filename = filename,
