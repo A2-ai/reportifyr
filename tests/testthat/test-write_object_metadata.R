@@ -294,6 +294,6 @@ test_that("write_object_metadata rejects non-rpfy_context objects", {
 
   expect_error(
     write_object_metadata(temp_object, context = list(foo = "bar")),
-    regexp = "must be NULL or inherit from class"
+    regexp = "must inherit from class"
   )
 })

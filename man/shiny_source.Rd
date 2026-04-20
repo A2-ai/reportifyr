@@ -21,8 +21,8 @@ classed as \code{c("shiny_source", "rpfy_source_meta")}.
 \description{
 Returns a classed list suitable for the \code{origin}
 argument of \code{\link[=rpfy_context]{rpfy_context()}}. The \code{type} discriminator is not
-stored on the list; it is emitted at serialization time so the class
-is the single source of truth.
+stored on the list; it is emitted at serialization time so the
+class is the single source of truth.
 }
 \examples{
 \dontrun{

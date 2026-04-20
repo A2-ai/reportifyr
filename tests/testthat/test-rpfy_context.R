@@ -143,7 +143,7 @@ test_that("validate_rpfy_context rejects hand-crafted objects missing fields", {
 
 test_that("validate_rpfy_context accepts NULL project_root (unresolved)", {
   ctx <- rpfy_context(origin = shiny_source("myapp", app_version = "1.0.0"))
-  ctx$project_root <- NULL
+  ctx["project_root"] <- list(NULL)
   expect_silent(validate_rpfy_context(ctx))
 })
 
