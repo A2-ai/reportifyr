@@ -67,7 +67,7 @@ write_object_metadata <- function(
 
   data_to_save <- list(
     system_meta = context$system_meta,
-    source_meta = context$source_meta,
+    source_meta = to_list(context$source_meta),
     object_meta = list(
       author = context$author,
       path = object_path_relative,

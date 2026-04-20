@@ -122,7 +122,15 @@ test_that("write_object_metadata writes source_meta from context", {
   })
   setwd(temp_project_dir)
 
-  ctx <- rpfy_context(origin = "Manual analysis")
+  ctx <- rpfy_context(
+    origin = script_source(
+      path            = "scripts/foo.R",
+      creation_author = "jake",
+      latest_author   = "jake",
+      creation_time   = "2026-01-01 00:00:00",
+      latest_time     = "2026-04-20 12:00:00"
+    )
+  )
 
   write_object_metadata(temp_object, context = ctx, meta_type = "table")
 
@@ -132,7 +140,9 @@ test_that("write_object_metadata writes source_meta from context", {
   )
   json_data <- fromJSON(json_file)
 
-  expect_equal(json_data$source_meta$text, "Manual analysis")
+  expect_equal(json_data$source_meta$type, "script")
+  expect_equal(json_data$source_meta$path, "scripts/foo.R")
+  expect_equal(json_data$source_meta$latest_time, "2026-04-20 12:00:00")
 })
 
 test_that("write_object_metadata writes shiny source_meta from context", {
@@ -153,7 +163,7 @@ test_that("write_object_metadata writes shiny source_meta from context", {
   setwd(temp_project_dir)
 
   ctx <- rpfy_context(
-    origin = list(type = "shiny", app_name = "myapp", app_version = "1.0.0")
+    origin = shiny_source(app_name = "myapp", app_version = "1.0.0")
   )
 
   write_object_metadata(temp_object, context = ctx, meta_type = "table")
@@ -187,7 +197,7 @@ test_that("write_object_metadata writes addl_meta when context has it", {
   setwd(temp_project_dir)
 
   ctx <- rpfy_context(
-    origin = "t",
+    origin = shiny_source("myapp", app_version = "1.0.0"),
     addl_metadata = list(analyst = "jake", study = "PK-001")
   )
 
@@ -220,7 +230,7 @@ test_that("write_object_metadata omits addl_meta when context has none", {
   })
   setwd(temp_project_dir)
 
-  ctx <- rpfy_context(origin = "t")
+  ctx <- rpfy_context(origin = shiny_source("myapp", app_version = "1.0.0"))
 
   write_object_metadata(temp_object, context = ctx)
 
@@ -250,7 +260,7 @@ test_that("write_object_metadata reuses author from context", {
   })
   setwd(temp_project_dir)
 
-  ctx <- rpfy_context(origin = "t")
+  ctx <- rpfy_context(origin = shiny_source("myapp", app_version = "1.0.0"))
   ctx$author <- "Test User <test@example.com>"
 
   write_object_metadata(temp_object, context = ctx)

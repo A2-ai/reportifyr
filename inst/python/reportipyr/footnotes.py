@@ -60,12 +60,15 @@ def create_meta_text_lines(
     assert artifact_type in ["figure", "table"]
 
     meta_text_lines = {}
-    # Source line branches on source_meta shape:
+    # Source line dispatches on source_meta["type"] when present.
+    # Shape-sniffing is retained as a backward-compat fallback for
+    # metadata files written by earlier reportifyr versions.
     src = metadata.get("source_meta") or {}
     if not isinstance(src, dict):
         src = {}
     obj = metadata.get("object_meta") or {}
-    if src.get("type") == "shiny":
+    src_type = src.get("type")
+    if src_type == "shiny":
         app_name = src.get("app_name", "")
         app_version = src.get("app_version", "")
         creation_time = obj.get("creation_time", "")
@@ -74,6 +77,10 @@ def create_meta_text_lines(
             if app_name and app_version
             else ""
         )
+    elif src_type == "script":
+        path = src.get("path", "")
+        latest_time = src.get("latest_time", "")
+        source_text = f"{path} {latest_time}".strip() if path else ""
     elif src.get("text"):
         source_text = str(src["text"])
     elif src.get("path") and src.get("latest_time"):

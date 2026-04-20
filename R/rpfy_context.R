@@ -10,11 +10,10 @@
 #' @param origin Controls what is recorded in `source_meta` in the
 #'   artifact JSON. One of:
 #'   \itemize{
-#'     \item `NULL` (default) — auto-detect via `this.path` + git lookup.
-#'     \item A character scalar — free-form text written as
-#'       `source_meta$text`.
-#'     \item A named list — written verbatim, e.g., the structured
-#'       output of [shiny_source()].
+#'     \item `NULL` (default) — auto-detect via `this.path` + git lookup,
+#'       producing a `script_source` (or an empty list if detection fails).
+#'     \item An `rpfy_source_meta` object — the output of [shiny_source()]
+#'       or [script_source()].
 #'   }
 #' @param addl_metadata Optional named list of caller-supplied
 #'   provenance tags, written under the `addl_meta` key in the JSON.
@@ -50,19 +49,13 @@ rpfy_context <- function(
 
   source_meta <- if (is.null(origin)) {
     detect_script_source_meta(project_root)
-  } else if (is.character(origin)) {
-    if (length(origin) != 1L || !nzchar(origin)) {
-      stop(
-        "`origin` must be a non-empty character scalar.",
-        call. = FALSE
-      )
-    }
-    list(text = origin)
-  } else if (is.list(origin)) {
+  } else if (inherits(origin, "rpfy_source_meta")) {
     origin
   } else {
     stop(
-      "`origin` must be NULL, a string, or a list (e.g., shiny_source()).",
+      "`origin` must be NULL or an `rpfy_source_meta` object ",
+      "(built via shiny_source() or script_source()). Got: ",
+      paste(class(origin), collapse = "/"),
       call. = FALSE
     )
   }
@@ -98,17 +91,6 @@ rpfy_context <- function(
 #'
 #' @export
 format.rpfy_context <- function(x, ...) {
-  sm <- x$source_meta
-  origin_str <- if (isTRUE(identical(sm$type, "shiny"))) {
-    sprintf("shiny | %s v%s", sm$app_name %||% "?", sm$app_version %||% "?")
-  } else if (!is.null(sm$text)) {
-    sprintf("text | %s", sm$text)
-  } else if (!is.null(sm$path)) {
-    sprintf("script | %s", sm$path)
-  } else {
-    "unknown"
-  }
-
   addl_str <- if (length(x$addl_metadata)) {
     paste(names(x$addl_metadata), collapse = ", ")
   } else {
@@ -117,7 +99,7 @@ format.rpfy_context <- function(x, ...) {
 
   sprintf(
     "<rpfy_context> origin=%s addl=[%s]",
-    origin_str,
+    format_source(x$source_meta),
     addl_str
   )
 }
@@ -131,18 +113,6 @@ format.rpfy_context <- function(x, ...) {
 #'
 #' @export
 print.rpfy_context <- function(x, ...) {
-  sm <- x$source_meta
-
-  origin_line <- if (isTRUE(identical(sm$type, "shiny"))) {
-    sprintf("shiny | %s v%s", sm$app_name %||% "?", sm$app_version %||% "?")
-  } else if (!is.null(sm$text)) {
-    sprintf("text | %s", sm$text)
-  } else if (!is.null(sm$path)) {
-    sprintf("script | %s", sm$path)
-  } else {
-    "(unresolved)"
-  }
-
   addl_line <- if (length(x$addl_metadata)) {
     paste(names(x$addl_metadata), collapse = ", ")
   } else {
@@ -150,7 +120,7 @@ print.rpfy_context <- function(x, ...) {
   }
 
   cat("<rpfy_context>\n")
-  cat(sprintf("  origin:   %s\n", origin_line))
+  cat(sprintf("  origin:   %s\n", format_source(x$source_meta)))
   cat(sprintf("  author:   %s\n", x$author %||% "(unknown)"))
   cat(sprintf("  platform: %s\n", x$system_meta$platform %||% "(unknown)"))
   cat(sprintf("  addl:     %s\n", addl_line))
@@ -229,3 +199,58 @@ validate_context <- function(context) {
 }
 
 `%||%` <- function(a, b) if (is.null(a)) b else a
+
+#' Validate an addl_metadata argument
+#'
+#' Accepts `NULL` or a named list whose values are scalar (length-1)
+#' character, numeric, or logical.
+#'
+#' @param x The value passed as `addl_metadata` to a wrapper.
+#'
+#' @return `NULL` or the validated named list.
+#'
+#' @keywords internal
+#' @noRd
+validate_addl_metadata <- function(x) {
+  if (is.null(x)) {
+    return(NULL)
+  }
+  if (!is.list(x) || length(x) == 0L) {
+    if (is.list(x) && length(x) == 0L) {
+      return(NULL)
+    }
+    stop(
+      "`addl_metadata` must be NULL or a non-empty named list.",
+      call. = FALSE
+    )
+  }
+  nms <- names(x)
+  if (is.null(nms) || any(!nzchar(nms)) || anyDuplicated(nms)) {
+    stop(
+      "`addl_metadata` must be a named list with unique, non-empty names.",
+      call. = FALSE
+    )
+  }
+  bad <- vapply(
+    x,
+    function(v) {
+      !(is.character(v) || is.numeric(v) || is.logical(v)) ||
+        length(v) != 1L ||
+        is.na(v)
+    },
+    logical(1)
+  )
+  if (any(bad)) {
+    stop(
+      sprintf(
+        paste0(
+          "`addl_metadata` values must be scalar character/numeric/",
+          "logical. Offending key(s): %s"
+        ),
+        paste(nms[bad], collapse = ", ")
+      ),
+      call. = FALSE
+    )
+  }
+  x
+}
