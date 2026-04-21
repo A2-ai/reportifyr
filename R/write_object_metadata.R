@@ -84,11 +84,7 @@ write_object_metadata <- function(
     )
   )
 
-  data_to_save$addl_meta <- if (is.null(context$addl_metadata)) {
-    list()
-  } else {
-    context$addl_metadata
-  }
+  data_to_save$addl_meta <- context$addl_metadata %||% list()
 
   log4r::debug(.le$logger, "Assembled data for saving as JSON")
 

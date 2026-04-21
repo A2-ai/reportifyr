@@ -50,6 +50,39 @@ def load_metadata(artifact_dir: str, artifact_file: str) -> dict | None:
         return None
 
 
+def _source_from_shiny(src: dict, obj: dict) -> str:
+    app_name = src.get("app_name", "")
+    app_version = src.get("app_version", "")
+    creation_time = obj.get("creation_time", "")
+    return (
+        f"{app_name} v{app_version} {creation_time}"
+        if app_name and app_version
+        else ""
+    )
+
+
+def _source_from_script(src: dict, _obj: dict) -> str:
+    path = src.get("path", "")
+    latest_time = src.get("latest_time", "")
+    return f"{path} {latest_time}" if path else ""
+
+
+def _source_from_legacy(src: dict, _obj: dict) -> str:
+    if src.get("text"):
+        return str(src["text"])
+    if src.get("path") and src.get("latest_time"):
+        return f"{src['path']} {src['latest_time']}"
+    return ""
+
+
+# Internal registry. Adding a new source type means writing a handler
+# with signature (src, obj) -> str and registering it here.
+_SOURCE_HANDLERS = {
+    "shiny": _source_from_shiny,
+    "script": _source_from_script,
+}
+
+
 def create_meta_text_lines(
     footnotes: dict,
     metadata: dict,
@@ -61,32 +94,16 @@ def create_meta_text_lines(
 
     meta_text_lines = {}
     # Source line dispatches on source_meta["type"] when present.
-    # Shape-sniffing is retained as a backward-compat fallback for
-    # metadata files written by earlier reportifyr versions.
-    src = metadata.get("source_meta") or {}
+    # The legacy handler is retained as a backward-compat fallback
+    # for metadata files written by earlier reportifyr versions.
+    src = metadata.get("source_meta")
     if not isinstance(src, dict):
         src = {}
-    obj = metadata.get("object_meta") or {}
-    src_type = src.get("type")
-    if src_type == "shiny":
-        app_name = src.get("app_name", "")
-        app_version = src.get("app_version", "")
-        creation_time = obj.get("creation_time", "")
-        source_text = (
-            f"{app_name} v{app_version} {creation_time}"
-            if app_name and app_version
-            else ""
-        )
-    elif src_type == "script":
-        path = src.get("path", "")
-        latest_time = src.get("latest_time", "")
-        source_text = f"{path} {latest_time}" if path else ""
-    elif src.get("text"):
-        source_text = str(src["text"])
-    elif src.get("path") and src.get("latest_time"):
-        source_text = f"{src['path']} {src['latest_time']}"
-    else:
-        source_text = ""
+    obj = metadata["object_meta"]
+
+    handler = _SOURCE_HANDLERS.get(src.get("type"), _source_from_legacy)
+    source_text = handler(src, obj)
+
     meta_text_lines["Source"] = source_text
 
     object_source = ""
