@@ -12,6 +12,10 @@
 #'   Default is `NULL`. If provided and `add_path_overlay` is
 #'   `TRUE` in the config, the source script path is stamped
 #'   onto the saved image.
+#' @param context An `rpfy_context` built via [rpfy_context()]. When
+#'   `NULL` (default) an ephemeral context is constructed with all
+#'   defaults. Passing an existing context avoids recomputing
+#'   session-level fields on every artifact.
 #' @param ... Additional arguments passed to the
 #'   `ggplot2::ggsave()` function.
 #' @export
@@ -42,9 +46,12 @@ ggsave_with_metadata <- function(
   meta_notes = NULL,
   meta_abbrevs = NULL,
   config_yaml = NULL,
+  context = NULL,
   ...
 ) {
   log4r::debug(.le$logger, "Starting ggsave_with_metadata function")
+
+  context <- resolve_context(context)
 
   ggplot2::ggsave(
     filename = filename,
@@ -60,15 +67,8 @@ ggsave_with_metadata <- function(
       isTRUE(config$add_path_overlay) &&
         grepl("\\.png$", filename, ignore.case = TRUE)
     ) {
-      source_path <- get_source_path()
-      project_root <- find_project_root()
-      if (
-        !is.null(project_root) &&
-          source_path != "SOURCE_PATH_NOT_DETECTED"
-      ) {
-        source_rel <- as.character(
-          fs::path_rel(source_path, project_root)
-        )
+      source_rel <- context$source_meta$path
+      if (!is.null(source_rel)) {
         paths <- get_venv_uv_paths()
         args <- c(
           "run",
@@ -105,7 +105,8 @@ ggsave_with_metadata <- function(
     meta_type = meta_type,
     meta_equations = meta_equations,
     meta_notes = meta_notes,
-    meta_abbrevs = meta_abbrevs
+    meta_abbrevs = meta_abbrevs,
+    context = context
   )
   log4r::debug(.le$logger, "Exiting ggsave_with_metadata function")
 }
