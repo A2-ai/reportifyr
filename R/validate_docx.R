@@ -41,7 +41,7 @@ validate_docx <- function(docx_in, config_yaml) {
     log4r::info(.le$logger, "config.yaml not supplied, using strict mode")
   }
 
-  paths <- get_venv_uv_paths()
+  paths <- fyrstartr::get_venv_uv_paths()
 
   args <- c(
     "run",

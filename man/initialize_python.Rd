@@ -2,19 +2,22 @@
 % Please edit documentation in R/initialize_python.R
 \name{initialize_python}
 \alias{initialize_python}
-\title{Initializes python virtual environment}
+\title{Initializes python virtual environment (deprecated)}
 \usage{
 initialize_python(continue = NULL)
 }
 \arguments{
 \item{continue}{Optional argument to bypass asking user for
-confirmation to install python deps}
+confirmation to install python deps.}
 }
 \value{
 invisibly the metadata_file path
 }
 \description{
-Initializes python virtual environment
+This function is deprecated; it forwards to
+\code{fyrstartr::initialize_python()}. The Python environment (uv, Python
+interpreter, pinned dependencies) is owned by the \code{fyrstartr} package;
+call \code{fyrstartr::initialize_python()} directly in new code.
 }
 \examples{
 \dontrun{

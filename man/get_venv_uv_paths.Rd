@@ -2,7 +2,7 @@
 % Please edit documentation in R/get_venv_uv_paths.R
 \name{get_venv_uv_paths}
 \alias{get_venv_uv_paths}
-\title{get_venv_uv_paths}
+\title{get_venv_uv_paths (deprecated)}
 \usage{
 get_venv_uv_paths()
 }
@@ -10,7 +10,8 @@ get_venv_uv_paths()
 list of paths to uv and venv directory for calling py scripts
 }
 \description{
-get_venv_uv_paths
+Deprecated; forwards to \code{fyrstartr::get_venv_uv_paths()}. Prefer
+\code{fyrstartr::get_venv_uv_paths()} in new code.
 }
 \examples{
 \dontrun{

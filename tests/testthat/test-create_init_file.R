@@ -1,3 +1,18 @@
+mock_pyv <- list(
+  versions = c(
+    "0.1.0", ".", "1.1.2", "6.0.2", "11.1.0", "0.7.8", "3.13.2"
+  ),
+  package_names = c(
+    "fyrstartr.version",
+    "venv_dir",
+    "python-docx.version",
+    "pyyaml.version",
+    "pillow.version",
+    "uv.version",
+    "python.version"
+  )
+)
+
 ## Helper: scaffold a minimal project structure for create_init_file
 make_test_project <- function() {
   project_dir <- tempfile()
@@ -15,21 +30,6 @@ make_test_project <- function() {
     file.path(report_dir, "config.yaml")
   )
 
-  # .python_dependency_versions.json as initialize_report_project would write it
-  # (venv_dir already relativized to report_dir by the caller)
-  py_meta <- list(
-    venv_dir = "../..",
-    `python-docx.version` = "1.1.2",
-    `pyyaml.version` = "6.0.2",
-    `pillow.version` = "11.1.0",
-    `uv.version` = "0.7.8",
-    `python.version` = "3.13.2"
-  )
-  write(
-    jsonlite::toJSON(py_meta, pretty = TRUE, auto_unbox = TRUE),
-    file = file.path(report_dir, ".python_dependency_versions.json")
-  )
-
   list(
     project_dir = project_dir,
     report_dir = report_dir,
@@ -37,11 +37,14 @@ make_test_project <- function() {
   )
 }
 
-test_that("init file venv_dir is relative to project_dir", {
+test_that("init file python_versions carries the 7-key canonical schema", {
   dirs <- make_test_project()
   on.exit(unlink(dirs$project_dir, recursive = TRUE))
 
-  withr::local_options(list(venv_dir = dirs$project_dir))
+  mockery::stub(
+    create_init_file, "build_python_version_data",
+    function(project_dir) mock_pyv
+  )
 
   create_init_file(dirs$project_dir, dirs$report_dir, dirs$outputs_dir)
 
@@ -49,36 +52,28 @@ test_that("init file venv_dir is relative to project_dir", {
   expect_true(file.exists(init_file))
 
   init <- jsonlite::read_json(init_file)
-  venv_rel <- init$python_versions$venv_dir
-
-  # Should be relative, not absolute (works on both Unix and Windows)
-  expect_false(fs::is_absolute_path(venv_rel))
-
-  # Should resolve back to the original absolute path
-  resolved <- normalizePath(
-    file.path(dirs$project_dir, venv_rel),
-    mustWork = FALSE
-  )
-  expect_equal(resolved, normalizePath(dirs$project_dir))
+  nms <- names(init$python_versions)
+  expect_equal(nms[1], "fyrstartr.version")
+  expect_equal(nms[2], "venv_dir")
+  expect_equal(length(init$python_versions), 7L)
+  expect_equal(init$python_versions$venv_dir, ".")
 })
 
 test_that("init file is named correctly for custom report_dir_name", {
   dirs <- make_test_project()
   on.exit(unlink(dirs$project_dir, recursive = TRUE))
 
-  # Create a custom report dir
   custom_report <- file.path(dirs$project_dir, "custom_reports")
   dir.create(custom_report, recursive = TRUE)
   file.copy(
     file.path(dirs$report_dir, "config.yaml"),
     file.path(custom_report, "config.yaml")
   )
-  file.copy(
-    file.path(dirs$report_dir, ".python_dependency_versions.json"),
-    file.path(custom_report, ".python_dependency_versions.json")
-  )
 
-  withr::local_options(list(venv_dir = dirs$project_dir))
+  mockery::stub(
+    create_init_file, "build_python_version_data",
+    function(project_dir) mock_pyv
+  )
 
   create_init_file(dirs$project_dir, custom_report, dirs$outputs_dir)
 
@@ -90,7 +85,10 @@ test_that("init file contains required structure", {
   dirs <- make_test_project()
   on.exit(unlink(dirs$project_dir, recursive = TRUE))
 
-  withr::local_options(list(venv_dir = dirs$project_dir))
+  mockery::stub(
+    create_init_file, "build_python_version_data",
+    function(project_dir) mock_pyv
+  )
 
   create_init_file(dirs$project_dir, dirs$report_dir, dirs$outputs_dir)
 

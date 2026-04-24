@@ -43,37 +43,9 @@ sync_report_project <- function(project_dir, report_dir_name = NULL) {
   # bool for later use
   update_init_file <- FALSE
 
-  log4r::debug(
-    .le$logger,
-    "Grabbing python deps info from options and filesystem"
-  )
-  uv_path <- get_uv_path()
-  args <- get_args(uv_path)
-  args_name <- c(
-    "venv_dir",
-    "python-docx.version",
-    "pyyaml.version",
-    "pillow.version",
-    "uv.version",
-    "python.version"
-  )
-
-  pyvers <- get_py_version(getOption("venv_dir"))
-
-  # Ensure args has a slot for python.version
-  idx <- match("python.version", args_name)
-  if (length(args) < idx) {
-    args <- c(args, rep("", idx - length(args)))
-  }
-
-  # Replace (or set) python.version value
-  args[idx] <- pyvers
-
-  py_version_data <- stats::setNames(as.list(args), args_name)
-  # Convert venv_dir to relative for comparison with init file
-  py_version_data$venv_dir <- fs::path_rel(
-    py_version_data$venv_dir, project_dir
-  )
+  log4r::debug(.le$logger, "Building current python version data")
+  pyv <- build_python_version_data(project_dir)
+  py_version_data <- stats::setNames(as.list(pyv$versions), pyv$package_names)
   formatted_deps <- paste0(
     names(py_version_data),
     "=",
@@ -82,10 +54,7 @@ sync_report_project <- function(project_dir, report_dir_name = NULL) {
   )
   log4r::debug(
     .le$logger,
-    paste0(
-      "Obtained the following python deps: ",
-      formatted_deps
-    )
+    paste0("Obtained the following python deps: ", formatted_deps)
   )
 
   # check init against current py dep requests
@@ -98,18 +67,22 @@ sync_report_project <- function(project_dir, report_dir_name = NULL) {
       )
     )
     log4r::debug(.le$logger, "Calling initialize_python now")
-    metadata_path <- initialize_python(continue = "Y")
+    fyrstartr::initialize_python(continue = "Y")
     update_init_file <- TRUE
 
+    pyv <- build_python_version_data(project_dir)
+    keep <- pyv$package_names != "venv_dir"
+    venv_path <- file.path(getOption("venv_dir"), ".venv")
+    metadata_path <- fyrstartr::write_package_version_metadata(
+      pyv$versions[keep], pyv$package_names[keep], venv_path
+    )
+    py_version_data <- stats::setNames(as.list(pyv$versions), pyv$package_names)
+
     if (file.exists(metadata_path) && dir.exists(report_dir)) {
-      # Write with venv_dir relative to report_dir
-      py_meta <- jsonlite::read_json(metadata_path)
-      py_meta$venv_dir <- fs::path_rel(
-        py_meta$venv_dir, report_dir
-      )
-      write(
-        jsonlite::toJSON(py_meta, pretty = TRUE, auto_unbox = TRUE),
-        file = file.path(report_dir, basename(metadata_path))
+      file.copy(
+        metadata_path,
+        file.path(report_dir, basename(metadata_path)),
+        overwrite = TRUE
       )
       log4r::debug(
         .le$logger,

@@ -72,7 +72,7 @@ build_report <- function(
   validate_input_args(docx_in, doc_dirs$doc_clean)
   validate_alt_text_magic_strings(docx_in)
 
-  paths <- get_venv_uv_paths()
+  paths <- fyrstartr::get_venv_uv_paths()
 
   # Remove footnotes only if add_footnotes is TRUE
   if (add_footnotes) {

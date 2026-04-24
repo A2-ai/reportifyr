@@ -69,7 +69,7 @@ ggsave_with_metadata <- function(
     ) {
       source_rel <- context$source_meta$path
       if (!is.null(source_rel)) {
-        paths <- get_venv_uv_paths()
+        paths <- fyrstartr::get_venv_uv_paths()
         args <- c(
           "run",
           "-m",

@@ -48,7 +48,7 @@ remove_tables_figures_footnotes <- function(
   }
   log4r::info(.le$logger, paste0("config yaml set: ", config_yaml))
 
-  paths <- get_venv_uv_paths()
+  paths <- fyrstartr::get_venv_uv_paths()
 
   notes_args <- c(
     "run",
