@@ -67,7 +67,7 @@ sync_report_project <- function(project_dir, report_dir_name = NULL) {
       )
     )
     log4r::debug(.le$logger, "Calling initialize_python now")
-    fyrstartr::initialize_python(continue = "Y")
+    fyrstartr::initialize_python(continue = "Y", groups = "reportifyr")
     update_init_file <- TRUE
 
     pyv <- build_python_version_data(project_dir)

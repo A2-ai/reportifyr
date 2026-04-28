@@ -45,7 +45,7 @@ initialize_report_project <- function(
     # Create artifact output directory tree
     outputs_dir <- create_outputs_directories(project_dir, outputs_dir_name)
 
-    fyrstartr::initialize_python()
+    fyrstartr::initialize_python(groups = "reportifyr")
 
     # Overwrite fyrstartr's default JSON with reportifyr's schema; deps
     pyv <- build_python_version_data(project_dir)
@@ -153,7 +153,7 @@ initialize_report_project <- function(
         ".venv directory missing, reinitializing Python environment"
       )
       message("Python virtual environment missing. Reinitializing...")
-      metadata_path <- fyrstartr::initialize_python()
+      metadata_path <- fyrstartr::initialize_python(groups = "reportifyr")
     }
 
     sync_report_project(project_dir, report_dir_name)

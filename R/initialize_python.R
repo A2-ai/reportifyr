@@ -17,7 +17,7 @@
 #' }
 initialize_python <- function(continue = NULL) {
   .Deprecated("fyrstartr::initialize_python")
-  fyrstartr::initialize_python(continue = continue)
+  fyrstartr::initialize_python(continue = continue, groups = "reportifyr")
 }
 
 #' Build canonical python-versions schema
