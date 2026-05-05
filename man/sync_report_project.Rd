@@ -4,7 +4,7 @@
 \alias{sync_report_project}
 \title{Synchronizes report project with the bundled fyrstartr Python
 environment and reconciles the report \code{config.yaml} against the
-\code{.<report>_init.json} snapshot. Always runs
+\verb{.<report>_init.json} snapshot. Always runs
 \code{fyrstartr::initialize_python(groups = "reportifyr")}, which is a
 no-op when uv reports no work needed.}
 \usage{
@@ -21,7 +21,7 @@ Default is \code{NULL}. If \code{NULL}, \code{report} will be used.}
 \description{
 Synchronizes report project with the bundled fyrstartr Python
 environment and reconciles the report \code{config.yaml} against the
-\code{.<report>_init.json} snapshot. Always runs
+\verb{.<report>_init.json} snapshot. Always runs
 \code{fyrstartr::initialize_python(groups = "reportifyr")}, which is a
 no-op when uv reports no work needed.
 }
