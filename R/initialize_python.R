@@ -17,5 +17,6 @@
 #' }
 initialize_python <- function(continue = NULL) {
   .Deprecated("fyrstartr::initialize_python")
+  fyrstartr::write_group_to_pyproject("reportifyr")
   fyrstartr::initialize_python(continue = continue, groups = "reportifyr")
 }
