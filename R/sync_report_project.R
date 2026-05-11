@@ -47,7 +47,7 @@ sync_report_project <- function(project_dir, report_dir_name = NULL) {
 
   log4r::debug(.le$logger, "Calling fyrstartr::initialize_python")
   fyrstartr::write_group_to_pyproject("reportifyr")
-  fyrstartr::initialize_python(continue = "Y", groups = "reportifyr")
+  fyrstartr::initialize_python(groups = "reportifyr")
 
   # Check config
   log4r::debug(.le$logger, "getting config path now")
