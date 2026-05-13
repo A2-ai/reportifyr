@@ -5,8 +5,9 @@
 \title{Synchronizes report project with the bundled fyrstartr Python
 environment and reconciles the report \code{config.yaml} against the
 \verb{.<report>_init.json} snapshot. Always runs
-\code{fyrstartr::initialize_python(groups = "reportifyr")}, which is a
-no-op when uv reports no work needed.}
+\code{fyrstartr::initialize_python(groups = "reportifyr")}; prompts the
+user only when the project \code{.venv} is missing, otherwise runs
+non-interactively (a no-op when uv reports no work needed).}
 \usage{
 sync_report_project(project_dir, report_dir_name = NULL)
 }
@@ -22,8 +23,9 @@ Default is \code{NULL}. If \code{NULL}, \code{report} will be used.}
 Synchronizes report project with the bundled fyrstartr Python
 environment and reconciles the report \code{config.yaml} against the
 \verb{.<report>_init.json} snapshot. Always runs
-\code{fyrstartr::initialize_python(groups = "reportifyr")}, which is a
-no-op when uv reports no work needed.
+\code{fyrstartr::initialize_python(groups = "reportifyr")}; prompts the
+user only when the project \code{.venv} is missing, otherwise runs
+non-interactively (a no-op when uv reports no work needed).
 }
 \examples{
 \dontrun{
