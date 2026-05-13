@@ -201,9 +201,20 @@ process_table_file <- function(table_file, document, table_name) {
       flextable <- data_in
     }
   } else {
-    # Format the table using flextable
     metadata <- jsonlite::fromJSON(metadata_file)
-    flextable <- format_flextable(data_in, metadata$object_meta$table1)
+    if (!inherits(data_in, "flextable")) {
+      flextable <- format_flextable(data_in, metadata$object_meta$table1)
+    } else {
+      log4r::info(
+        .le$logger,
+        paste0(
+          "Data is already a flextable so no formatting will be applied for ",
+          table_file,
+          "."
+        )
+      )
+      flextable <- data_in
+    }
   }
 
   document <- officer::cursor_reach(
