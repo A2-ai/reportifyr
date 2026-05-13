@@ -1,8 +1,9 @@
 #' Synchronizes report project with the bundled fyrstartr Python
 #' environment and reconciles the report `config.yaml` against the
 #' `.<report>_init.json` snapshot. Always runs
-#' `fyrstartr::initialize_python(groups = "reportifyr")`, which is a
-#' no-op when uv reports no work needed.
+#' `fyrstartr::initialize_python(groups = "reportifyr")`; prompts the
+#' user only when the project `.venv` is missing, otherwise runs
+#' non-interactively (a no-op when uv reports no work needed).
 #'
 #' @param project_dir The file path to the main project directory
 #' where the directory structure will be created.
@@ -47,7 +48,13 @@ sync_report_project <- function(project_dir, report_dir_name = NULL) {
 
   log4r::debug(.le$logger, "Calling fyrstartr::initialize_python")
   fyrstartr::write_group_to_pyproject("reportifyr")
-  fyrstartr::initialize_python(groups = "reportifyr")
+  venv_path <- file.path(getOption("venv_dir") %||% project_dir, ".venv")
+  if (dir.exists(venv_path)) {
+    fyrstartr::initialize_python(continue = "Y", groups = "reportifyr")
+  } else {
+    message("Python virtual environment missing. Reinitializing...")
+    fyrstartr::initialize_python(groups = "reportifyr")
+  }
 
   # Check config
   log4r::debug(.le$logger, "getting config path now")
