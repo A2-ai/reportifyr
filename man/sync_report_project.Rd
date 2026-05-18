@@ -2,10 +2,10 @@
 % Please edit documentation in R/sync_report_project.R
 \name{sync_report_project}
 \alias{sync_report_project}
-\title{Synchronizes report project with the bundled fyrstartr Python
+\title{Synchronizes report project with the bundled pyro Python
 environment and reconciles the report \code{config.yaml} against the
 \verb{.<report>_init.json} snapshot. Always runs
-\code{fyrstartr::initialize_python(groups = "reportifyr")}; prompts the
+\code{pyro::initialize_python(groups = "reportifyr")}; prompts the
 user only when the project \code{.venv} is missing, otherwise runs
 non-interactively (a no-op when uv reports no work needed).}
 \usage{
@@ -20,10 +20,10 @@ The directory must already exist; otherwise, an error will be thrown.}
 Default is \code{NULL}. If \code{NULL}, \code{report} will be used.}
 }
 \description{
-Synchronizes report project with the bundled fyrstartr Python
+Synchronizes report project with the bundled pyro Python
 environment and reconciles the report \code{config.yaml} against the
 \verb{.<report>_init.json} snapshot. Always runs
-\code{fyrstartr::initialize_python(groups = "reportifyr")}; prompts the
+\code{pyro::initialize_python(groups = "reportifyr")}; prompts the
 user only when the project \code{.venv} is missing, otherwise runs
 non-interactively (a no-op when uv reports no work needed).
 }

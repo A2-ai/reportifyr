@@ -46,14 +46,14 @@ reportifyr_options_message <- function() {
   # NICE TO HAVES
   uvversion <- getOption("uv.version")
   if (is.null(uvversion)) {
-    uv_path <- fyrstartr::get_uv_path(quiet = TRUE)
+    uv_path <- pyro::get_uv_path(quiet = TRUE)
     if (is.null(uv_path)) {
       optional_options <- c(
         optional_options,
         "uv not installed; initialize_python() will install a default version"
       )
     } else {
-      uv_version <- fyrstartr::get_uv_version(uv_path)
+      uv_version <- pyro::get_uv_version(uv_path)
       set_options <- c(
         set_options,
         paste0("Using installed uv version ", uv_version)

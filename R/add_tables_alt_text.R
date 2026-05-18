@@ -43,7 +43,7 @@ add_tables_alt_text <- function(
     args <- c(args, "-d", tables_path)
   }
 
-  paths <- fyrstartr::get_venv_uv_paths()
+  paths <- pyro::get_venv_uv_paths()
 
   log4r::debug(.le$logger, "Running add table alt text script")
   run_python_script(

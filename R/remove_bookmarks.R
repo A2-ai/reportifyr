@@ -71,7 +71,7 @@ remove_bookmarks <- function(docx_in, docx_out) {
       )
       stop(paste("The input document does not exist:", docx_in))
     }
-    paths <- fyrstartr::get_venv_uv_paths()
+    paths <- pyro::get_venv_uv_paths()
 
     args <- c(
       "run",

@@ -10,8 +10,8 @@ get_venv_uv_paths()
 list of paths to uv and venv directory for calling py scripts
 }
 \description{
-Deprecated; forwards to \code{fyrstartr::get_venv_uv_paths()}. Prefer
-\code{fyrstartr::get_venv_uv_paths()} in new code.
+Deprecated; forwards to \code{pyro::get_venv_uv_paths()}. Prefer
+\code{pyro::get_venv_uv_paths()} in new code.
 }
 \examples{
 \dontrun{

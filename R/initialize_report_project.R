@@ -45,8 +45,8 @@ initialize_report_project <- function(
     # Create artifact output directory tree
     outputs_dir <- create_outputs_directories(project_dir, outputs_dir_name)
 
-    fyrstartr::write_group_to_pyproject("reportifyr")
-    fyrstartr::initialize_python(groups = "reportifyr")
+    pyro::write_group_to_pyproject("reportifyr")
+    pyro::initialize_python(groups = "reportifyr")
 
     copy_footnotes(report_dir)
     copy_config(report_dir, report_dir_name, outputs_dir_name)

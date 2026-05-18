@@ -30,7 +30,7 @@ Imports:
     dplyr,
     flextable,
     fs,
-    fyrstartr,
+    pyro,
     gert,
     ggplot2,
     here,

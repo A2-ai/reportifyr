@@ -232,10 +232,10 @@ get_source_path <- function() {
   )
 }
 
-#' Run a Python script via uv, forwarding to fyrstartr with reportifyr's
+#' Run a Python script via uv, forwarding to pyro with reportifyr's
 #' py-log stderr callback
 #'
-#' Thin wrapper over `fyrstartr::run_python_script()` that supplies
+#' Thin wrapper over `pyro::run_python_script()` that supplies
 #' reportifyr's `PYTHONPATH` (`inst/python/`) and a stderr callback that
 #' mirrors every Python log line into the rpfy session log file while
 #' filtering console output by `RPFY_VERBOSE`.
@@ -245,7 +245,7 @@ get_source_path <- function() {
 #' @param venv_path Path to the virtual environment
 #' @param script_name Name of the script for logging purposes
 #'
-#' @return The result from `fyrstartr::run_python_script()`
+#' @return The result from `pyro::run_python_script()`
 #'
 #' @keywords internal
 #' @noRd
@@ -283,7 +283,7 @@ run_python_script <- function(uv_path, args, venv_path, script_name) {
     }
   }
 
-  fyrstartr::run_python_script(
+  pyro::run_python_script(
     uv_path = uv_path,
     args = args,
     venv_path = venv_path,

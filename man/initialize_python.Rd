@@ -15,9 +15,9 @@ invisibly the metadata_file path
 }
 \description{
 This function is deprecated; it forwards to
-\code{fyrstartr::initialize_python()}. The Python environment (uv, Python
-interpreter, pinned dependencies) is owned by the \code{fyrstartr} package;
-call \code{fyrstartr::initialize_python()} directly in new code.
+\code{pyro::initialize_python()}. The Python environment (uv, Python
+interpreter, pinned dependencies) is owned by the \code{pyro} package;
+call \code{pyro::initialize_python()} directly in new code.
 }
 \examples{
 \dontrun{
