@@ -12,5 +12,6 @@ repositories = [
 dependencies = [
 	{ name = "reportifyr", path = ".", dependencies_only = true, install_suggestions = true },
 	{ name = "pyro", repository = "pyro" },
+	{ name = "gdtools", repository = "PRISM" },
 	"devtools",
 ]
