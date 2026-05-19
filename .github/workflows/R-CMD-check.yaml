@@ -56,6 +56,19 @@ jobs:
         shell: pwsh
         if: runner.os == 'Windows'
 
+      - name: fix mac repository
+        if: runner.os == 'macOS'
+        run: |
+          rv configure repository remove PRISM
+          rv configure repository add PPM --url https://packagemanager.posit.co/cran/2026-05-10
+
+      - name: fix windows repository
+        if: runner.os == 'Windows'
+        run: |
+          rv.exe configure repository remove PRISM
+          rv.exe configure repository add PPM --url https://packagemanager.posit.co/cran/2026-05-10
+        shell: cmd
+
       - name: rv-plan
         run: rv plan
         if: runner.os != 'Windows'
