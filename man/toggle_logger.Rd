@@ -3,7 +3,9 @@
 \name{toggle_logger}
 \alias{toggle_logger}
 \title{Updates the logging level for console output. Default is set to WARN.
-File logging is always at DEBUG level when log_file is provided.}
+File logging is always at DEBUG level when log_file is provided. Set
+\code{options(rpfy.no_log = TRUE)} to suppress file logging for the
+session (console output is unaffected).}
 \usage{
 toggle_logger(quiet = FALSE, log_file = get_log_file(), lazy_file = FALSE)
 }
@@ -18,7 +20,9 @@ path. Pass a custom path to write to a different file.}
 }
 \description{
 Updates the logging level for console output. Default is set to WARN.
-File logging is always at DEBUG level when log_file is provided.
+File logging is always at DEBUG level when log_file is provided. Set
+\code{options(rpfy.no_log = TRUE)} to suppress file logging for the
+session (console output is unaffected).
 }
 \examples{
 \dontrun{

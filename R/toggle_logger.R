@@ -15,7 +15,9 @@ get_log_file <- function() {
 }
 
 #' Updates the logging level for console output. Default is set to WARN.
-#' File logging is always at DEBUG level when log_file is provided.
+#' File logging is always at DEBUG level when log_file is provided. Set
+#' \code{options(rpfy.no_log = TRUE)} to suppress file logging for the
+#' session (console output is unaffected).
 #'
 #' @param quiet suppresses messaging about log level.
 #' @param log_file path to log file. Defaults to the current session log file
