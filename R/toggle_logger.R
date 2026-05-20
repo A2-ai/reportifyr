@@ -15,7 +15,9 @@ get_log_file <- function() {
 }
 
 #' Updates the logging level for console output. Default is set to WARN.
-#' File logging is always at DEBUG level when log_file is provided.
+#' File logging is always at DEBUG level when log_file is provided. Set
+#' \code{options(rpfy.no_log = TRUE)} to suppress file logging for the
+#' session (console output is unaffected).
 #'
 #' @param quiet suppresses messaging about log level.
 #' @param log_file path to log file. Defaults to the current session log file
@@ -83,7 +85,17 @@ toggle_logger <- function(quiet = FALSE, log_file = get_log_file(), lazy_file = 
             )
             initialized <<- TRUE
           }
-          delegate(level, ...)
+          tryCatch(
+            suppressWarnings(delegate(level, ...)),
+            error = function(e) {
+              dir.create(
+                dirname(log_file),
+                recursive = TRUE,
+                showWarnings = FALSE
+              )
+              delegate(level, ...)
+            }
+          )
         }
       })
       appenders <- c(appenders, list(lazy_appender))
@@ -97,9 +109,22 @@ toggle_logger <- function(quiet = FALSE, log_file = get_log_file(), lazy_file = 
       if (!file.exists(log_file)) {
         file.create(log_file)
       }
+      file_appender <- log4r::file_appender(log_file, layout = my_layout)
       appenders <- c(
         appenders,
-        list(log4r::file_appender(log_file, layout = my_layout))
+        list(function(level, ...) {
+          tryCatch(
+            suppressWarnings(file_appender(level, ...)),
+            error = function(e) {
+              dir.create(
+                dirname(log_file),
+                recursive = TRUE,
+                showWarnings = FALSE
+              )
+              file_appender(level, ...)
+            }
+          )
+        })
       )
     }
     assign("log_file", log_file, envir = .le)
@@ -121,4 +146,49 @@ toggle_logger <- function(quiet = FALSE, log_file = get_log_file(), lazy_file = 
 
 my_layout <- function(level, ...) {
   paste0(format(Sys.time()), " [R] [", level, "] ", ..., "\n", collapse = "")
+}
+
+#' Prune `.rpfy-logs` entries
+#'
+#' Deletes session log files older than `max_age_days`, and trims to at
+#' most `max_files` if more remain. Silent: pruning failures must never
+#' block package load.
+#'
+#' @param log_dir Directory containing `*-rpfy.log` files.
+#' @param max_age_days Maximum age in days.
+#' @param max_files Safety ceiling on file count.
+#'
+#' @keywords internal
+#' @noRd
+prune_rpfy_logs <- function(
+  log_dir,
+  max_age_days = 30,
+  max_files = 500
+) {
+  if (!dir.exists(log_dir)) {
+    return(invisible(NULL))
+  }
+  files <- list.files(
+    log_dir,
+    pattern = "-rpfy\\.log$",
+    full.names = TRUE
+  )
+  if (!length(files)) {
+    return(invisible(NULL))
+  }
+  info <- file.info(files)
+  cutoff <- Sys.time() - (max_age_days * 86400)
+  too_old <- !is.na(info$mtime) & info$mtime < cutoff
+  to_delete <- files[too_old]
+  remaining <- files[!too_old]
+  if (length(remaining) > max_files) {
+    rem_info <- info[!too_old, , drop = FALSE]
+    ord <- order(rem_info$mtime, decreasing = TRUE)
+    overflow <- remaining[ord][(max_files + 1):length(remaining)]
+    to_delete <- c(to_delete, overflow)
+  }
+  if (length(to_delete)) {
+    try(file.remove(to_delete), silent = TRUE)
+  }
+  invisible(NULL)
 }
