@@ -94,7 +94,6 @@
 ## Bug Fixes
 * Fixed `validate_config()` reporting the wrong field name in `default_fig_width` validation, which previously said `"footnotes_font_size should be integer/double"`.
 * Fixed an incorrect log message in `add_plots()` that said `"Deleting intermediate tabs document"` from the figure insertion path; it now correctly says `"Deleting intermediate figs document"`.
-* Fixed `add_tables()` re-inserting tables that `skip_unchanged` had preserved. With `skip_unchanged: true`, an unchanged table preserved by `remove_tables` was previously re-inserted as a duplicate because `add_tables` did not check whether a table element already followed the magic string paragraph.
 
 # reportifyr 0.3.4
 ## Bug Fixes
