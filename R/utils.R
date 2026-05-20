@@ -128,80 +128,6 @@ get_packages <- function() {
 }
 
 
-#' /.cargo/bin post v0.5.0 to /.local/bin
-#'
-#' @param quite boolean to suppress log message
-#'
-#' @return path to uv
-#'
-#' @keywords internal
-#' @noRd
-get_uv_path <- function(quiet = FALSE) {
-  # First check if uv is available in PATH (cross-platform)
-  # Only check PATH if it's not empty (for test isolation)
-  path_env <- Sys.getenv("PATH")
-  uv_in_path <- if (nzchar(path_env)) Sys.which("uv") else ""
-
-  # Get home directory - respect HOME env var for test isolation
-  home_env <- Sys.getenv("HOME")
-  if (nzchar(home_env)) {
-    # Use HOME env var (for tests or Unix)
-    home_dir <- home_env
-  } else {
-    # Use default expansion
-    home_dir <- path.expand("~")
-  }
-
-  if (.Platform$OS.type == "windows") {
-    # Windows paths
-    uv_paths <- c(
-      file.path(home_dir, ".local", "bin", "uv.exe"),
-      file.path(home_dir, ".local", "bin", "uv"), # for tests without .exe
-      file.path(home_dir, ".cargo", "bin", "uv.exe"),
-      file.path(home_dir, ".cargo", "bin", "uv") # for tests without .exe
-    )
-  } else {
-    # Unix paths
-    uv_paths <- c(
-      file.path(home_dir, ".local", "bin", "uv"),
-      file.path(home_dir, ".cargo", "bin", "uv")
-    )
-  }
-
-  # Combine PATH result with known locations (prefer PATH version)
-  if (nzchar(uv_in_path)) {
-    uv_paths <- c(uv_in_path, uv_paths)
-  }
-
-  # Find the first existing path
-  uv_paths <- uv_paths[nzchar(uv_paths) & file.exists(uv_paths)]
-
-  uv_path <- if (length(uv_paths)) normalizePath(uv_paths[[1]]) else NULL
-
-  if (!quiet) {
-    if (is.null(uv_path)) {
-      log4r::warn(
-        .le$logger,
-        "uv not found. Please install with initialize_python"
-      )
-    }
-  }
-  uv_path
-}
-
-#' Gets the version of uv
-#'
-#' @param uv_path path to uv
-#' @keywords internal
-#' @noRd
-get_uv_version <- function(uv_path) {
-  result <- processx::run(uv_path, "--version")
-  # output should be "uv version (commit date)"
-  uv_version <- trimws(strsplit(result$stdout, " ")[[1]][2])
-
-  uv_version
-}
-
 #' Find the reportifyr project root directory
 #'
 #' Searches upward from `start_path` for a reportifyr init file
@@ -306,14 +232,20 @@ get_source_path <- function() {
   )
 }
 
-#' Run a Python script via uv
+#' Run a Python script via uv, forwarding to pyro with reportifyr's
+#' py-log stderr callback
+#'
+#' Thin wrapper over `pyro::run_python_script()` that supplies
+#' reportifyr's `PYTHONPATH` (`inst/python/`) and a stderr callback that
+#' mirrors every Python log line into the rpfy session log file while
+#' filtering console output by `RPFY_VERBOSE`.
 #'
 #' @param uv_path Path to the uv executable
 #' @param args Arguments to pass to uv
 #' @param venv_path Path to the virtual environment
 #' @param script_name Name of the script for logging purposes
 #'
-#' @return The result from processx::run
+#' @return The result from `pyro::run_python_script()`
 #'
 #' @keywords internal
 #' @noRd
@@ -321,73 +253,44 @@ run_python_script <- function(uv_path, args, venv_path, script_name) {
   log_file <- .le$log_file
   no_log <- getOption("rpfy.no_log", FALSE)
 
-  tryCatch(
-    {
-      python_path <- system.file("python", package = "reportifyr")
-      env_vars <- c(
-        "current",
-        VIRTUAL_ENV = venv_path,
-        RPFY_VERBOSE = Sys.getenv("RPFY_VERBOSE", unset = "WARN")
-      )
-      if (nzchar(python_path)) {
-        env_vars <- c(env_vars, PYTHONPATH = python_path)
+  py_levels <- c(
+    "DEBUG" = 1, "INFO" = 2, "WARNING" = 3, "ERROR" = 4, "CRITICAL" = 5
+  )
+  r_levels <- c(
+    "DEBUG" = 1, "INFO" = 2, "WARN" = 3, "ERROR" = 4, "FATAL" = 5
+  )
+  threshold <- r_levels[[Sys.getenv("RPFY_VERBOSE", unset = "WARN")]]
+
+  py_callback <- function(chunk, proc) {
+    lines <- strsplit(chunk, "\n")[[1]]
+    for (line in lines) {
+      line <- trimws(line)
+      if (nchar(line) == 0) next
+
+      if (!is.null(log_file) && !no_log) {
+        cat(line, "\n", file = log_file, append = TRUE)
       }
 
-      # Callback: pass Python's pre-formatted lines through raw
-      py_levels <- c(
-        "DEBUG" = 1, "INFO" = 2, "WARNING" = 3, "ERROR" = 4, "CRITICAL" = 5
+      show <- TRUE
+      level_match <- regmatches(
+        line, regexpr("\\[(DEBUG|INFO|WARNING|ERROR|CRITICAL)\\]", line)
       )
-      r_levels <- c(
-        "DEBUG" = 1, "INFO" = 2, "WARN" = 3, "ERROR" = 4, "FATAL" = 5
-      )
-      threshold <- r_levels[[Sys.getenv("RPFY_VERBOSE", unset = "WARN")]]
-
-      py_callback <- function(chunk, proc) {
-        lines <- strsplit(chunk, "\n")[[1]]
-        for (line in lines) {
-          line <- trimws(line)
-          if (nchar(line) == 0) next
-
-          # Log file: always write (DEBUG level)
-          if (!is.null(log_file) && !no_log) {
-            cat(line, "\n", file = log_file, append = TRUE)
-          }
-
-          # Console: filter by verbosity
-          show <- TRUE
-          level_match <- regmatches(
-            line, regexpr("\\[(DEBUG|INFO|WARNING|ERROR|CRITICAL)\\]", line)
-          )
-          if (length(level_match) == 1) {
-            level <- gsub("\\[|\\]", "", level_match)
-            show <- py_levels[[level]] >= threshold
-          }
-          if (show) cat(line, "\n")
-        }
+      if (length(level_match) == 1) {
+        level <- gsub("\\[|\\]", "", level_match)
+        show <- py_levels[[level]] >= threshold
       }
-
-      processx::run(
-        command = uv_path,
-        args = args,
-        env = env_vars,
-        stderr_callback = py_callback,
-        error_on_status = TRUE
-      )
-    },
-    error = function(e) {
-      py_err <- trimws(e$stderr %||% "")
-      if (nzchar(py_err)) {
-        # Filter out log lines (already handled by callback), keep raw output
-        lines <- strsplit(py_err, "\n")[[1]]
-        raw_lines <- lines[!grepl("^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2} \\[py\\]", lines)]
-        raw <- paste(trimws(raw_lines), collapse = "\n")
-        # Write raw output (tracebacks, etc.) to log file
-        if (nzchar(raw) && !is.null(log_file) && !no_log) {
-          cat(raw, "\n", file = log_file, append = TRUE)
-        }
-      }
-      stop(paste0(script_name, " failed."), call. = FALSE)
+      if (show) cat(line, "\n")
     }
+  }
+
+  pyro::run_python_script(
+    uv_path = uv_path,
+    args = args,
+    venv_path = venv_path,
+    script_name = script_name,
+    pythonpath = system.file("python", package = "reportifyr"),
+    stderr_callback = py_callback,
+    verbose_env = "RPFY_VERBOSE"
   )
 }
 

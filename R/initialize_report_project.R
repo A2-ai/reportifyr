@@ -45,17 +45,8 @@ initialize_report_project <- function(
     # Create artifact output directory tree
     outputs_dir <- create_outputs_directories(project_dir, outputs_dir_name)
 
-    metadata_path <- initialize_python()
-
-    if (file.exists(metadata_path)) {
-      # Copy version info to report dir with venv_dir relative to report_dir
-      py_meta <- jsonlite::read_json(metadata_path)
-      py_meta$venv_dir <- fs::path_rel(py_meta$venv_dir, report_dir)
-      write(
-        jsonlite::toJSON(py_meta, pretty = TRUE, auto_unbox = TRUE),
-        file = file.path(report_dir, basename(metadata_path))
-      )
-    }
+    pyro::write_group_to_pyproject("reportifyr")
+    pyro::initialize_python(groups = "reportifyr")
 
     copy_footnotes(report_dir)
     copy_config(report_dir, report_dir_name, outputs_dir_name)
@@ -136,20 +127,6 @@ initialize_report_project <- function(
       message(paste0("Outputs directory missing. Recreating: ", outputs_dir))
     }
     create_outputs_directories(project_dir, resolved_outputs_name)
-
-    # Check if .venv directory still exists, recreate if missing
-    uv_path <- get_uv_path(quiet = TRUE)
-    args <- get_args(uv_path)
-    venv_dir <- file.path(args[[1]], ".venv")
-
-    if (!dir.exists(venv_dir)) {
-      log4r::warn(
-        .le$logger,
-        ".venv directory missing, reinitializing Python environment"
-      )
-      message("Python virtual environment missing. Reinitializing...")
-      metadata_path <- initialize_python()
-    }
 
     sync_report_project(project_dir, report_dir_name)
   }
@@ -338,18 +315,9 @@ create_init_file <- function(project_dir, report_dir, outputs_dir) {
   config <- yaml::read_yaml(file.path(report_dir, "config.yaml"))
   data$config <- config
 
-  log4r::debug(
-    .le$logger,
-    paste0("Reading ", report_dir, "/.python_dependency_versions.json")
+  data$venv_dir <- as.character(
+    fs::path_rel(getOption("venv_dir") %||% project_dir, project_dir)
   )
-  py_versions <- jsonlite::read_json(
-    file.path(report_dir, ".python_dependency_versions.json")
-  )
-  # the report-dir copy already has venv_dir relative to report_dir,
-  # but the init file needs it relative to project_dir instead
-  venv_dir_abs <- getOption("venv_dir")
-  py_versions$venv_dir <- fs::path_rel(venv_dir_abs, project_dir)
-  data$python_versions <- py_versions
 
   log4r::debug(.le$logger, "Assembled data for saving as JSON")
   json_data <- jsonlite::toJSON(data, pretty = TRUE, auto_unbox = TRUE)

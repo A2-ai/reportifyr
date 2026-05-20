@@ -56,6 +56,17 @@ jobs:
         shell: pwsh
         if: runner.os == 'Windows'
 
+      - name: prepend PPM repository (mac)
+        if: runner.os == 'macOS'
+        run: |
+          rv configure repository add PPM --url https://packagemanager.posit.co/cran/2026-05-10 --first
+
+      - name: prepend PPM repository (windows)
+        if: runner.os == 'Windows'
+        run: |
+          rv.exe configure repository add PPM --url https://packagemanager.posit.co/cran/2026-05-10 --first
+        shell: cmd
+
       - name: rv-plan
         run: rv plan
         if: runner.os != 'Windows'

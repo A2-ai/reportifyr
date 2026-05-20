@@ -5,13 +5,14 @@ name = "reportifyr"
 r_version = "4.5"
 
 repositories = [
-	#{ alias = "PRISM", url = "https://prism.dev.a2-ai.cloud/rpkgs/stratus/2025-07-28/" },
-	{alias = "ppm", url = "https://packagemanager.posit.co/cran/latest"},
-	{alias = "CRAN", url = "https://cran.r-project.org"},
+	{ alias = "PRISM", url = "https://prism.dev.a2-ai.cloud/rpkgs/stratus/2026-04-30/" },
+    { alias = "pyro", url = "https://prism.dev.a2-ai.cloud/rpkgs/fyrverse/v1" },
+    { alias = "CRAN", url = "https://cran.r-project.org" },
 ]
 
 dependencies = [
+	{ name = "reportifyr", path = ".", dependencies_only = true, install_suggestions = true },
+	{ name = "pyro", repository = "pyro" },
+	{ name = "gdtools", repository = "CRAN" },
 	"devtools",
-	{name = "reportifyr", path = ".", dependencies_only = true, install_suggestions = true },
-	{name = "gdtools", repository = "CRAN"},
 ]

@@ -29,7 +29,7 @@ validate_alt_text_magic_strings <- function(
     docx_in
   )
 
-  paths <- get_venv_uv_paths()
+  paths <- pyro::get_venv_uv_paths()
 
   log4r::debug(.le$logger, "Running check_alt_text_magic_strings script")
   run_python_script(
