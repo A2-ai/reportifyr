@@ -28,6 +28,41 @@ test_that("toggle_logger emits a message unless quiet = TRUE", {
   expect_message(toggle_logger(quiet = FALSE), "Console logging at ERROR level")
 })
 
+test_that("lazy file logger recreates missing log directory", {
+  withr::local_envvar(c(RPFY_VERBOSE = NA))
+  withr::local_options(list(rpfy.no_log = FALSE))
+  log_dir <- file.path(withr::local_tempdir(), ".rpfy-logs")
+  log_file <- file.path(log_dir, "lazy-rpfy.log")
+
+  toggle_logger(quiet = TRUE, log_file = log_file, lazy_file = TRUE)
+  logger <- get("logger", envir = .le)
+  log4r::debug(logger, "before deleting log directory")
+  unlink(log_dir, recursive = TRUE)
+
+  expect_silent(log4r::debug(logger, "after deleting log directory"))
+  expect_true(dir.exists(log_dir))
+  expect_true(file.exists(log_file))
+  expect_true(any(grepl("after deleting log directory", readLines(log_file))))
+})
+
+test_that("eager file logger recreates missing log directory", {
+  withr::local_envvar(c(RPFY_VERBOSE = NA))
+  log_dir <- file.path(withr::local_tempdir(), ".rpfy-logs")
+  log_file <- file.path(log_dir, "eager-rpfy.log")
+
+  toggle_logger(quiet = TRUE, log_file = log_file, lazy_file = FALSE)
+  logger <- get("logger", envir = .le)
+  unlink(log_dir, recursive = TRUE)
+
+  expect_silent(log4r::debug(logger, "after deleting eager log directory"))
+  expect_true(dir.exists(log_dir))
+  expect_true(file.exists(log_file))
+  expect_true(any(grepl(
+    "after deleting eager log directory",
+    readLines(log_file)
+  )))
+})
+
 test_that("prune_rpfy_logs is a no-op when log_dir does not exist", {
   tmp <- withr::local_tempdir()
   missing_dir <- file.path(tmp, "nope")

@@ -83,7 +83,17 @@ toggle_logger <- function(quiet = FALSE, log_file = get_log_file(), lazy_file = 
             )
             initialized <<- TRUE
           }
-          delegate(level, ...)
+          tryCatch(
+            suppressWarnings(delegate(level, ...)),
+            error = function(e) {
+              dir.create(
+                dirname(log_file),
+                recursive = TRUE,
+                showWarnings = FALSE
+              )
+              delegate(level, ...)
+            }
+          )
         }
       })
       appenders <- c(appenders, list(lazy_appender))
@@ -97,9 +107,22 @@ toggle_logger <- function(quiet = FALSE, log_file = get_log_file(), lazy_file = 
       if (!file.exists(log_file)) {
         file.create(log_file)
       }
+      file_appender <- log4r::file_appender(log_file, layout = my_layout)
       appenders <- c(
         appenders,
-        list(log4r::file_appender(log_file, layout = my_layout))
+        list(function(level, ...) {
+          tryCatch(
+            suppressWarnings(file_appender(level, ...)),
+            error = function(e) {
+              dir.create(
+                dirname(log_file),
+                recursive = TRUE,
+                showWarnings = FALSE
+              )
+              file_appender(level, ...)
+            }
+          )
+        })
       )
     }
     assign("log_file", log_file, envir = .le)
