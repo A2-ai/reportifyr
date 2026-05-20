@@ -122,3 +122,48 @@ toggle_logger <- function(quiet = FALSE, log_file = get_log_file(), lazy_file = 
 my_layout <- function(level, ...) {
   paste0(format(Sys.time()), " [R] [", level, "] ", ..., "\n", collapse = "")
 }
+
+#' Prune `.rpfy-logs` entries
+#'
+#' Deletes session log files older than `max_age_days`, and trims to at
+#' most `max_files` if more remain. Silent: pruning failures must never
+#' block package load.
+#'
+#' @param log_dir Directory containing `*-rpfy.log` files.
+#' @param max_age_days Maximum age in days.
+#' @param max_files Safety ceiling on file count.
+#'
+#' @keywords internal
+#' @noRd
+prune_rpfy_logs <- function(
+  log_dir,
+  max_age_days = 30,
+  max_files = 500
+) {
+  if (!dir.exists(log_dir)) {
+    return(invisible(NULL))
+  }
+  files <- list.files(
+    log_dir,
+    pattern = "-rpfy\\.log$",
+    full.names = TRUE
+  )
+  if (!length(files)) {
+    return(invisible(NULL))
+  }
+  info <- file.info(files)
+  cutoff <- Sys.time() - (max_age_days * 86400)
+  too_old <- !is.na(info$mtime) & info$mtime < cutoff
+  to_delete <- files[too_old]
+  remaining <- files[!too_old]
+  if (length(remaining) > max_files) {
+    rem_info <- info[!too_old, , drop = FALSE]
+    ord <- order(rem_info$mtime, decreasing = TRUE)
+    overflow <- remaining[ord][(max_files + 1):length(remaining)]
+    to_delete <- c(to_delete, overflow)
+  }
+  if (length(to_delete)) {
+    try(file.remove(to_delete), silent = TRUE)
+  }
+  invisible(NULL)
+}

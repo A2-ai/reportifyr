@@ -4,12 +4,10 @@
   if (is.null(project_root)) {
     project_root <- here::here()
   }
+  log_dir <- file.path(project_root, ".rpfy-logs")
+  prune_rpfy_logs(log_dir)
   session_timestamp <- format(Sys.time(), "%Y-%m-%d-%H-%M-%S")
-  log_file <- file.path(
-    project_root,
-    ".rpfy-logs",
-    paste0(session_timestamp, "-rpfy.log")
-  )
+  log_file <- file.path(log_dir, paste0(session_timestamp, "-rpfy.log"))
   toggle_logger(quiet = TRUE, log_file = log_file, lazy_file = TRUE)
 }
 
