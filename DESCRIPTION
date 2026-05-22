@@ -44,7 +44,8 @@ Imports:
     tictoc,
     xml2,
     yaml
-Suggests: 
+Suggests:
+    gt,
     knitr,
     mockery,
     rmarkdown,
