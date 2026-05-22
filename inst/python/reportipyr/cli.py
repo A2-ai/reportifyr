@@ -11,6 +11,7 @@ from .figures import add_figure, add_path_overlay_to_image, remove_figures
 from .footnotes import add_figure_footnotes, add_table_footnotes, remove_footnotes
 from .magic import remove_magic_strings, parse_magic_string
 from .tables import remove_tables
+from .tables_xml import add_table_xml
 from .validate import validate_docx
 
 
@@ -30,6 +31,14 @@ def main():
     p.add_argument("-c", "--config", default=None)
     p.add_argument("-w", "--width", type=float, default=None)
     p.add_argument("-g", "--height", type=float, default=None)
+
+    # add-table-xml
+    p = subparsers.add_parser(
+        "add-table-xml", help="Insert <w:tbl> XML fragments into docx"
+    )
+    p.add_argument("-i", "--input", required=True)
+    p.add_argument("-o", "--output", required=True)
+    p.add_argument("-d", "--table-dir", required=True)
 
     # add-figure-alt-text
     p = subparsers.add_parser(
@@ -135,6 +144,8 @@ def main():
             args.width,
             args.height,
         )
+    elif args.command == "add-table-xml":
+        add_table_xml(args.input, args.output, args.table_dir)
     elif args.command == "add-figure-alt-text":
         add_figure_alt_text(args.input, args.output, args.dir)
     elif args.command == "add-table-alt-text":
