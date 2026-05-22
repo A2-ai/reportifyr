@@ -6,7 +6,11 @@
 #'   `.xml` file is consumed by the Python-side `add-table-xml` CLI when
 #'   [add_tables()] encounters an `{rpfy}:name.xml` magic string.
 #'
-#' @param object A `flextable` or `gt` object.
+#' @param object A `flextable` or `gt` object. `flextable` is the preferred
+#'   input — `gt` support uses `gt::as_word()`, whose Word output is less
+#'   feature-complete than gt's HTML output. Complex gt styling (group rows,
+#'   spanners, summary rows, footnotes) may not survive the round-trip; for
+#'   table layouts that require full fidelity, build with `flextable` instead.
 #' @param file Path to write the XML fragment to. Must end in `.xml`.
 #' @param config_yaml The file path to the `config.yaml`. Currently unused for
 #'   the XML path (kept for API symmetry with [write_csv_with_metadata()] and
@@ -93,12 +97,32 @@ gt_to_word_xml <- function(gt_obj) {
     )
   }
 
-  tmp_docx <- tempfile(fileext = ".docx")
-  on.exit(unlink(tmp_docx), add = TRUE)
+  raw <- gt::as_word(gt_obj)
 
-  gt::gtsave(gt_obj, filename = tmp_docx)
+  # gt::as_word() returns the <w:tbl> tag content as a character string but
+  # may not declare the `w` namespace on the root, so wrap it in a parent
+  # that declares the namespace before parsing.
+  w_ns <- "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+  wrapped <- paste0(
+    '<rpfy_root xmlns:w="',
+    w_ns,
+    '">',
+    paste(raw, collapse = ""),
+    "</rpfy_root>"
+  )
 
-  extract_tbl_from_docx(tmp_docx)
+  parsed <- xml2::read_xml(wrapped)
+  tbl_node <- xml2::xml_find_first(
+    parsed,
+    ".//w:tbl",
+    ns = c(w = w_ns)
+  )
+
+  if (inherits(tbl_node, "xml_missing")) {
+    stop("Could not extract <w:tbl> element from gt::as_word() output")
+  }
+
+  tbl_node
 }
 
 extract_tbl_from_docx <- function(docx_path) {

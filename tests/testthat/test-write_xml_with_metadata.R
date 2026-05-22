@@ -1,7 +1,7 @@
 library(testthat)
 library(jsonlite)
 
-W_NS <- "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+w_ns <- "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 
 setup_project <- function() {
   temp_project_dir <- tempfile()
@@ -46,17 +46,17 @@ test_that("write_xml_with_metadata writes a w:tbl fragment for a flextable", {
 
   parsed <- xml2::read_xml(out_file)
   expect_equal(xml2::xml_name(parsed), "tbl")
-  expect_equal(xml2::xml_ns(parsed)[["w"]], W_NS)
+  expect_equal(xml2::xml_ns(parsed)[["w"]], w_ns)
 
   rows <- xml2::xml_find_all(
     parsed,
     ".//w:tr",
-    ns = c(w = W_NS)
+    ns = c(w = w_ns)
   )
   expect_gt(length(rows), 0)
 })
 
-test_that("write_xml_with_metadata writes metadata sidecar with file_type=xml", {
+test_that("write_xml_with_metadata writes metadata sidecar with xml type", {
   project_dir <- setup_project()
   old_wd <- getwd()
   on.exit({
@@ -107,5 +107,5 @@ test_that("write_xml_with_metadata handles gt objects", {
 
   parsed <- xml2::read_xml(out_file)
   expect_equal(xml2::xml_name(parsed), "tbl")
-  expect_equal(xml2::xml_ns(parsed)[["w"]], W_NS)
+  expect_equal(xml2::xml_ns(parsed)[["w"]], w_ns)
 })
