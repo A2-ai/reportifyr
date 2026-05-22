@@ -1,6 +1,14 @@
 #' Inserts Tables in appropriate places in a Microsoft Word file
 #'
-#' @description Reads in a `.docx` file and returns a new version with tables placed at appropriate places in the document.
+#' @description Reads in a `.docx` file and returns a new version with tables
+#'   placed at appropriate places in the document. Supports two artifact
+#'   formats via magic strings:
+#'   - `{rpfy}:name.csv` / `{rpfy}:name.rds` — table data is loaded in R and
+#'     inserted via flextable + officer.
+#'   - `{rpfy}:name.xml` — pre-rendered `<w:tbl>` OOXML fragment (produced by
+#'     [write_xml_with_metadata()]) is spliced in via the Python `add-table-xml`
+#'     CLI. Use this path when you want to bake flextable/gt styling directly
+#'     into the XML at save time.
 #' @param docx_in The file path to the input `.docx` file.
 #' @param docx_out The file path to the output `.docx` file to save to.
 #' @param tables_path The file path to the tables and associated metadata directory.
@@ -95,6 +103,55 @@ add_tables <- function(
 
     print(document, target = docx_out)
     return(invisible(NULL))
+  }
+
+  # Dispatch .xml magic strings to the Python add-table-xml CLI first.
+  # The R/officer loop below silently skips .xml extensions, so the two
+  # paths cooperate: Python splices <w:tbl> fragments, R/officer formats
+  # CSV/RDS data via flextable + officer.
+  xml_magic_strings <- character(0)
+  for (i in magic_indices) {
+    name <- trimws(gsub("\\{rpfy\\}:", "", doc_summary$text[[i]]))
+    if (tolower(tools::file_ext(name)) == "xml") {
+      xml_magic_strings <- c(xml_magic_strings, name)
+    }
+  }
+
+  if (length(xml_magic_strings) > 0) {
+    log4r::info(
+      .le$logger,
+      paste0(
+        "Dispatching XML tables to Python: ",
+        paste(xml_magic_strings, collapse = ", ")
+      )
+    )
+    intermediate_xml_docx <- gsub(".docx", "-intxml.docx", docx_out)
+    paths <- pyro::get_venv_uv_paths()
+    xml_args <- c(
+      "run",
+      "-m",
+      "reportipyr.cli",
+      "add-table-xml",
+      "-i",
+      intermediate_docx,
+      "-o",
+      intermediate_xml_docx,
+      "-d",
+      tables_path
+    )
+    run_python_script(
+      paths$uv,
+      xml_args,
+      paths$venv,
+      "Add table xml script"
+    )
+
+    unlink(intermediate_docx)
+    file.rename(intermediate_xml_docx, intermediate_docx)
+
+    document <- officer::read_docx(intermediate_docx)
+    doc_summary <- officer::docx_summary(document)
+    magic_indices <- grep(magic_pattern, doc_summary$text)
   }
 
   for (i in magic_indices) {
