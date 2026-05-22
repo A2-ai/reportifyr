@@ -27,8 +27,8 @@
 #'
 #' write_csv_with_metadata(
 #'   object = Theoph,
-#'   file = file.path(tables_path, out_name),
-#'   row_names = FALSE
+#'   file = file.path(tables_path, outfile_name),
+#'   row.names = FALSE
 #' )
 #' }
 write_csv_with_metadata <- function(
