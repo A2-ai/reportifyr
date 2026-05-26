@@ -66,7 +66,7 @@ write_xml_with_metadata <- function(
     )
   }
 
-  xml2::write_xml(tbl_node, file)
+  write_tbl_fragment(tbl_node, file)
   log4r::info(.le$logger, paste0("XML written to file: ", file))
 
   write_object_metadata(
@@ -141,4 +141,30 @@ extract_tbl_from_docx <- function(docx_path) {
   }
 
   tbl_node
+}
+
+# Serialize a <w:tbl> node extracted from a parent document as a self-contained
+# fragment. When a node is pulled out of its source document, libxml2 only
+# emits the namespace declarations stored on the node itself (its `nsDef`) --
+# decls inherited from ancestors (notably `xmlns:w` on the root `<w:document>`)
+# are dropped, producing XML that uses the `w` prefix without declaring it.
+# lxml on the Python side then refuses to parse it. We rebuild the start tag
+# with the full in-scope namespace set so the fragment stands alone. This is
+# safe because a `w:tbl` element carries no real attributes of its own -- all
+# table properties live in the child `<w:tblPr>` -- so the only thing in its
+# start tag is namespace declarations.
+write_tbl_fragment <- function(tbl_node, file) {
+  ns <- xml2::xml_ns(tbl_node)
+  ns <- ns[!grepl("^d[0-9]+$", names(ns))] # drop xml2 aliases for default ns
+  decls <- paste0(
+    'xmlns:',
+    names(ns),
+    '="',
+    as.character(ns),
+    '"',
+    collapse = " "
+  )
+  inner <- as.character(tbl_node)
+  inner <- sub("^\\s*<w:tbl[^>]*>", paste0("<w:tbl ", decls, ">"), inner)
+  xml2::write_xml(xml2::read_xml(inner), file)
 }

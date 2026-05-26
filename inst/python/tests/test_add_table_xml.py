@@ -127,6 +127,24 @@ def test_add_table_xml_rejects_malformed_xml():
     assert _count_tbls(out_doc) == 0
 
 
+def test_add_table_xml_rejects_undeclared_w_namespace():
+    # A <w:tbl> that uses the `w` prefix without declaring xmlns:w -- the exact
+    # shape produced when a fragment is extracted from a parent docx without
+    # re-declaring the ancestor's namespace. lxml raises XMLSyntaxError; the
+    # loader must degrade gracefully (no crash, no insertion) rather than
+    # corrupt the document.
+    table_dir = Path(tempfile.mkdtemp())
+    (table_dir / "no_ns.xml").write_text("<w:tbl><w:tblPr/></w:tbl>")
+
+    docx_in = _make_docx_with_magic("{rpfy}:no_ns.xml")
+    docx_out = _out_docx()
+
+    add_table_xml(docx_in, docx_out, str(table_dir))
+
+    out_doc = Document(docx_out)
+    assert _count_tbls(out_doc) == 0
+
+
 def test_add_table_xml_ignores_non_xml_extensions():
     table_dir = Path(tempfile.mkdtemp())
     (table_dir / "demographics.csv").write_text("a,b\n1,2\n")

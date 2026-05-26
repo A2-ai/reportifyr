@@ -56,6 +56,38 @@ test_that("write_xml_with_metadata writes a w:tbl fragment for a flextable", {
   expect_gt(length(rows), 0)
 })
 
+test_that("write_xml_with_metadata declares xmlns:w on the fragment root", {
+  # Regression: the <w:tbl> node is extracted from a parent document where
+  # xmlns:w is declared on the ancestor <w:document>. A naive write drops that
+  # declaration, leaving the `w` prefix undeclared -- libxml2/xml2 parses it
+  # leniently but lxml (Python's add-table-xml CLI) rejects it with
+  # "Namespace prefix w on tbl is not defined". Assert the literal declaration
+  # is present so the fragment stands alone.
+  project_dir <- setup_project()
+  old_wd <- getwd()
+  on.exit({
+    setwd(old_wd)
+    unlink(project_dir, recursive = TRUE)
+  })
+  setwd(project_dir)
+
+  out_file <- file.path(project_dir, "iris.xml")
+  ft <- flextable::qflextable(head(iris, 3))
+
+  write_xml_with_metadata(ft, file = out_file)
+
+  raw <- paste(readLines(out_file, warn = FALSE), collapse = "\n")
+  # The w namespace must be declared on the root, not just used as a prefix.
+  expect_match(raw, paste0('xmlns:w="', w_ns, '"'), fixed = TRUE)
+  # No namespace prefix may appear duplicated on the root start tag.
+  start_tag <- sub("^\\s*(<w:tbl[^>]*>).*$", "\\1", raw)
+  prefixes <- regmatches(
+    start_tag,
+    gregexpr("xmlns:[A-Za-z0-9]+", start_tag)
+  )[[1]]
+  expect_equal(anyDuplicated(prefixes), 0L)
+})
+
 test_that("write_xml_with_metadata writes metadata sidecar with xml type", {
   project_dir <- setup_project()
   old_wd <- getwd()
