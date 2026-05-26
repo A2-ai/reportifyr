@@ -18,7 +18,17 @@ add_tables(docx_in, docx_out, tables_path, config_yaml = NULL, debug = FALSE)
 \item{debug}{Debug.}
 }
 \description{
-Reads in a \code{.docx} file and returns a new version with tables placed at appropriate places in the document.
+Reads in a \code{.docx} file and returns a new version with tables
+placed at appropriate places in the document. Supports two artifact
+formats via magic strings:
+\itemize{
+\item \code{{rpfy}:name.csv} / \code{{rpfy}:name.rds} — table data is loaded in R and
+inserted via flextable + officer.
+\item \code{{rpfy}:name.xml} — pre-rendered \verb{<w:tbl>} OOXML fragment (produced by
+\code{\link[=write_xml_with_metadata]{write_xml_with_metadata()}}) is spliced in via the Python \code{add-table-xml}
+CLI. Use this path when you want to bake flextable/gt styling directly
+into the XML at save time.
+}
 }
 \examples{
 \dontrun{
