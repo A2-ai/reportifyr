@@ -443,7 +443,7 @@ def test_create_footnote_paragraph_structure():
     assert bk_end is not None
     assert bk_start.get(qn("w:id")) == "42"
     assert bk_end.get(qn("w:id")) == "42"
-    assert bk_start.get(qn("w:name")) == "fp_figure1"
+    assert bk_start.get(qn("w:name")) == _make_bookmark_name("figure1")
 
     # Runs contain the expected text
     all_text = "".join(
@@ -516,41 +516,25 @@ def test_create_footnote_paragraph_skips_missing_keys():
 # _make_bookmark_name
 # ---------------------------------------------------------------------------
 
-def test_make_bookmark_name_short():
-    """Short names get fp_ prefix directly."""
-    result = _make_bookmark_name("figure1")
-    assert result == "fp_figure1"
-    assert len(result) <= 40
+def test_make_bookmark_name_always_hashed():
+    """Every name -- short or long -- becomes fp_ + 32 hex chars (35 total)."""
+    short = _make_bookmark_name("figure1")
+    assert short.startswith("fp_")
+    assert len(short) == 35
+    assert short != "fp_figure1"  # not the legacy short-name format
+
+    long_name = _make_bookmark_name("a" * 100)
+    assert len(long_name) == 35
 
 
-def test_make_bookmark_name_at_limit():
-    """Name exactly at 40 chars (with fp_ prefix) is kept as-is."""
-    name = "a" * 37  # fp_ + 37 = 40
-    result = _make_bookmark_name(name)
-    assert result == f"fp_{name}"
-    assert len(result) == 40
-
-
-def test_make_bookmark_name_over_limit():
-    """Name exceeding 40 chars (with fp_ prefix) gets md5-hashed."""
-    name = "a" * 38  # fp_ + 38 = 41, over limit
-    result = _make_bookmark_name(name)
-    assert result.startswith("fp_")
-    assert len(result) <= 40
-    assert result != f"fp_{name}"
-
-
-def test_make_bookmark_name_long_deterministic():
-    """Long names produce deterministic hashes."""
+def test_make_bookmark_name_deterministic():
+    """The same name always produces the same hash."""
     name = "pk/theoph-pk-concentration-over-time.png"
-    result1 = _make_bookmark_name(name)
-    result2 = _make_bookmark_name(name)
-    assert result1 == result2
-    assert len(result1) <= 40
+    assert _make_bookmark_name(name) == _make_bookmark_name(name)
 
 
-def test_make_bookmark_name_long_no_collision():
-    """Different long names produce different hashes."""
+def test_make_bookmark_name_no_collision():
+    """Different names produce different hashes."""
     name1 = "pk/theoph-pk-concentration-over-time.png"
     name2 = "pk/theoph-pk-exposure-over-time-long.png"
     assert _make_bookmark_name(name1) != _make_bookmark_name(name2)

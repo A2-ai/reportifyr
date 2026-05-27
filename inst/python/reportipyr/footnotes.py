@@ -13,18 +13,15 @@ from docx.oxml import OxmlElement
 from .alt_text import extract_artifact_hashes, load_artifact_hash
 from .docx_utils import iter_cell_paragraphs
 
-_BOOKMARK_MAX = 40
-
-
 def _make_bookmark_name(name: str) -> str:
-    """Create a bookmark name that fits Word's 40-char limit.
+    """Create a bookmark name from a deterministic md5 hash of the name.
 
-    Short names get fp_ prefix directly. Long names use a deterministic
-    md5 hash to stay under 40 characters.
+    Every bookmark uses ``fp_`` + a 32-char md5 hex digest (35 chars total),
+    which stays under Word's 40-char bookmark limit regardless of how long the
+    artifact name is, and avoids the prefix collisions a plain truncation would
+    cause. Writers and matchers both route through this function, so the hash is
+    consistent across a run.
     """
-    full = f"fp_{name}"
-    if len(full) <= _BOOKMARK_MAX:
-        return full
     h = hashlib.md5(name.encode("utf-8")).hexdigest()
     return f"fp_{h}"  # fp_ + 32 hex chars = 35 chars
 
