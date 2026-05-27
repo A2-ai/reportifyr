@@ -48,8 +48,6 @@ remove_tables_figures_footnotes <- function(
   }
   log4r::info(.le$logger, paste0("config yaml set: ", config_yaml))
 
-  paths <- pyro::get_venv_uv_paths()
-
   notes_args <- c(
     "run",
     "-m",
@@ -71,9 +69,7 @@ remove_tables_figures_footnotes <- function(
 
   log4r::debug(.le$logger, "Running remove footnotes script")
   run_python_script(
-    paths$uv,
     notes_args,
-    paths$venv,
     "Remove footnotes script"
   )
 
@@ -95,9 +91,7 @@ remove_tables_figures_footnotes <- function(
 
   log4r::debug(.le$logger, "Running remove tables script")
   run_python_script(
-    paths$uv,
     tab_args,
-    paths$venv,
     "Remove tables script"
   )
 
@@ -119,9 +113,7 @@ remove_tables_figures_footnotes <- function(
 
   log4r::debug(.le$logger, "Running remove figures script")
   run_python_script(
-    paths$uv,
     fig_args,
-    paths$venv,
     "Remove figures script"
   )
 

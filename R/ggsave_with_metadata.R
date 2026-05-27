@@ -81,7 +81,6 @@ ggsave_with_metadata <- function(
         NULL
       }
       if (!is.null(overlay_text)) {
-        paths <- pyro::get_venv_uv_paths()
         args <- c(
           "run",
           "-m",
@@ -92,9 +91,7 @@ ggsave_with_metadata <- function(
           "-k", overlay
         )
         run_python_script(
-          paths$uv,
           args,
-          paths$venv,
           "Add path overlay script"
         )
         log4r::info(

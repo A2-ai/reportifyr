@@ -235,21 +235,21 @@ get_source_path <- function() {
 #' Run a Python script via uv, forwarding to pyro with reportifyr's
 #' py-log stderr callback
 #'
-#' Thin wrapper over `pyro::run_python_script()` that supplies
-#' reportifyr's `PYTHONPATH` (`inst/python/`) and a stderr callback that
-#' mirrors every Python log line into the rpfy session log file while
-#' filtering console output by `RPFY_VERBOSE`.
+#' Thin wrapper over `pyro::run_python_script()` that resolves the uv and
+#' venv paths via `pyro::get_venv_uv_paths()` and supplies reportifyr's
+#' `PYTHONPATH` (`inst/python/`) and a stderr callback that mirrors every
+#' Python log line into the rpfy session log file while filtering console
+#' output by `RPFY_VERBOSE`.
 #'
-#' @param uv_path Path to the uv executable
 #' @param args Arguments to pass to uv
-#' @param venv_path Path to the virtual environment
 #' @param script_name Name of the script for logging purposes
 #'
 #' @return The result from `pyro::run_python_script()`
 #'
 #' @keywords internal
 #' @noRd
-run_python_script <- function(uv_path, args, venv_path, script_name) {
+run_python_script <- function(args, script_name) {
+  paths <- pyro::get_venv_uv_paths()
   log_file <- .le$log_file
   no_log <- getOption("rpfy.no_log", FALSE)
 
@@ -284,9 +284,9 @@ run_python_script <- function(uv_path, args, venv_path, script_name) {
   }
 
   pyro::run_python_script(
-    uv_path = uv_path,
+    uv_path = paths$uv,
     args = args,
-    venv_path = venv_path,
+    venv_path = paths$venv,
     script_name = script_name,
     pythonpath = system.file("python", package = "reportifyr"),
     stderr_callback = py_callback,

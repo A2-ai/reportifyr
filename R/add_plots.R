@@ -110,13 +110,9 @@ add_plots <- function(
     log4r::info(.le$logger, paste0("Figure height set: ", fig_height))
   }
 
-  paths <- pyro::get_venv_uv_paths()
-
   log4r::debug(.le$logger, "Running add plots script")
   run_python_script(
-    paths$uv,
     args,
-    paths$venv,
     "Add plots script"
   )
 

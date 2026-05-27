@@ -72,8 +72,6 @@ remove_magic_strings <- function(docx_in, docx_out) {
       stop(paste("The input document does not exist:", docx_in))
     }
 
-    paths <- pyro::get_venv_uv_paths()
-
     args <- c(
       "run",
       "-m",
@@ -87,9 +85,7 @@ remove_magic_strings <- function(docx_in, docx_out) {
 
     log4r::debug(.le$logger, "Running remove magic strings script")
     run_python_script(
-      paths$uv,
       args,
-      paths$venv,
       "Remove magic strings script"
     )
   } else if (tolower(continue) == "n") {

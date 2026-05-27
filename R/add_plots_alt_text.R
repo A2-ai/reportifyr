@@ -43,13 +43,9 @@ add_plots_alt_text <- function(
     args <- c(args, "-d", figures_path)
   }
 
-  paths <- pyro::get_venv_uv_paths()
-
   log4r::debug(.le$logger, "Running add plots alt text script")
   run_python_script(
-    paths$uv,
     args,
-    paths$venv,
     "Add plots alt text script"
   )
 

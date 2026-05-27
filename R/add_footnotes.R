@@ -158,20 +158,15 @@ add_footnotes <- function(
   fig_args <- c(fig_args, "-c", config_yaml)
   tab_args <- c(tab_args, "-c", config_yaml)
 
-  paths <- pyro::get_venv_uv_paths()
   log4r::debug(.le$logger, "Running figure footnotes script")
   run_python_script(
-    paths$uv,
     fig_args,
-    paths$venv,
     "Figure footnotes script"
   )
 
   log4r::debug(.le$logger, "Running table footnotes script")
   run_python_script(
-    paths$uv,
     tab_args,
-    paths$venv,
     "Table footnotes script"
   )
 

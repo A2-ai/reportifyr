@@ -8,8 +8,6 @@ keep_caption_next <- function(docx_in, docx_out) {
   log4r::debug(.le$logger, "Starting keep_caption_next function")
   validate_input_args(docx_in, docx_out)
 
-  paths <- pyro::get_venv_uv_paths()
-
   args <- c(
     "run",
     "-m",
@@ -23,9 +21,7 @@ keep_caption_next <- function(docx_in, docx_out) {
 
   log4r::debug(.le$logger, "Running keep caption next script")
   run_python_script(
-    paths$uv,
     args,
-    paths$venv,
     "Keep caption next script"
   )
 

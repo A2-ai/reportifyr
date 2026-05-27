@@ -72,8 +72,6 @@ build_report <- function(
   validate_input_args(docx_in, doc_dirs$doc_clean)
   validate_alt_text_magic_strings(docx_in)
 
-  paths <- pyro::get_venv_uv_paths()
-
   # Remove footnotes only if add_footnotes is TRUE
   if (add_footnotes) {
     notes_args <- c(
@@ -89,7 +87,7 @@ build_report <- function(
     }
     log4r::debug(.le$logger, "Running remove footnotes script")
     run_python_script(
-      paths$uv, notes_args, paths$venv, "Remove footnotes script"
+      notes_args, "Remove footnotes script"
     )
   } else {
     log4r::debug(.le$logger, "Skipping footnote removal (add_footnotes = FALSE)")
@@ -107,7 +105,7 @@ build_report <- function(
   }
   log4r::debug(.le$logger, "Running remove tables script")
   run_python_script(
-    paths$uv, tab_args, paths$venv, "Remove tables script"
+    tab_args, "Remove tables script"
   )
 
   # Remove figures
@@ -121,7 +119,7 @@ build_report <- function(
   }
   log4r::debug(.le$logger, "Running remove figures script")
   run_python_script(
-    paths$uv, fig_args, paths$venv, "Remove figures script"
+    fig_args, "Remove figures script"
   )
 
   add_tables(
