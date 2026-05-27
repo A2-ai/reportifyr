@@ -726,10 +726,16 @@ def get_figure_dimensions(paragraph) -> dict[str, Optional[int]]:
     return {"width": width, "height": height}
 
 
-def add_path_overlay_to_image(image_path: str, source_text: str) -> None:
-    """Stamp a source-path label onto the bottom-left of an image, in-place."""
+def add_path_overlay_to_image(
+    image_path: str, overlay_text: str, kind: str = "source"
+) -> None:
+    """Stamp a path label onto the bottom-left of an image, in-place.
+
+    ``kind`` ("source" or "object") prefixes the label, so the stamp reads
+    e.g. "source: scripts/fig.R" or "object: OUTPUTS/figures/fig.png".
+    """
     logger = setup_logger()
-    logger.debug(f"Adding path overlay to {image_path}: {source_text}")
+    logger.debug(f"Adding {kind} path overlay to {image_path}: {overlay_text}")
 
     if not image_path.lower().endswith(".png"):
         logger.warning(
@@ -752,7 +758,7 @@ def add_path_overlay_to_image(image_path: str, source_text: str) -> None:
     text_position = (padding, img_height - padding - font_size)
     draw.text(
         text_position,
-        f"source: {source_text}",
+        f"{kind}: {overlay_text}",
         fill=(0, 0, 0),
         font=font,
     )

@@ -9,9 +9,11 @@
 #' @param meta_abbrevs A string or vector of strings representing abbreviations
 #'   to include in the metadata. Default is `NULL`.
 #' @param config_yaml The file path to the `config.yaml`.
-#'   Default is `NULL`. If provided and `add_path_overlay` is
-#'   `TRUE` in the config, the source script path is stamped
-#'   onto the saved image.
+#'   Default is `NULL`. If provided, `add_path_overlay` in the
+#'   config controls whether a path is stamped onto the saved PNG:
+#'   `"source"` stamps the source script path, `"object"` stamps
+#'   the saved image's path (relative to the project root), and
+#'   `"none"` (default) disables the overlay.
 #' @param context An `rpfy_context` built via [rpfy_context()]. When
 #'   `NULL` (default) an ephemeral context is constructed with all
 #'   defaults. Passing an existing context avoids recomputing
@@ -63,12 +65,22 @@ ggsave_with_metadata <- function(
   # Overlay runs before metadata so the hash reflects the final image
   if (!is.null(config_yaml)) {
     config <- yaml::read_yaml(config_yaml)
+    overlay <- config$add_path_overlay
     if (
-      isTRUE(config$add_path_overlay) &&
+      !is.null(overlay) &&
+        overlay %in% c("source", "object") &&
         grepl("\\.png$", filename, ignore.case = TRUE)
     ) {
-      source_rel <- context$source_meta$path
-      if (!is.null(source_rel)) {
+      overlay_text <- if (overlay == "source") {
+        context$source_meta$path
+      } else if (!is.null(context$project_root)) {
+        as.character(
+          fs::path_rel(normalizePath(filename), context$project_root)
+        )
+      } else {
+        NULL
+      }
+      if (!is.null(overlay_text)) {
         paths <- pyro::get_venv_uv_paths()
         args <- c(
           "run",
@@ -76,7 +88,8 @@ ggsave_with_metadata <- function(
           "reportipyr.cli",
           "add-path-overlay",
           "-i", normalizePath(filename),
-          "-s", source_rel
+          "-s", overlay_text,
+          "-k", overlay
         )
         run_python_script(
           paths$uv,
@@ -86,14 +99,15 @@ ggsave_with_metadata <- function(
         )
         log4r::info(
           .le$logger,
-          paste0("Path overlay added to: ", filename)
+          paste0(overlay, " path overlay added to: ", filename)
         )
       } else {
         log4r::warn(
           .le$logger,
           paste0(
-            "Skipping path overlay: could not determine",
-            " source path or project root"
+            "Skipping path overlay: could not determine ",
+            overlay,
+            " path or project root"
           )
         )
       }

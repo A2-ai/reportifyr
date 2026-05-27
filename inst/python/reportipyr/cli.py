@@ -115,10 +115,13 @@ def main():
 
     # add-path-overlay
     p = subparsers.add_parser(
-        "add-path-overlay", help="Stamp source path onto image"
+        "add-path-overlay", help="Stamp a source or object path onto image"
     )
     p.add_argument("-i", "--input", required=True)
-    p.add_argument("-s", "--source-text", required=True)
+    p.add_argument("-s", "--text", required=True)
+    p.add_argument(
+        "-k", "--kind", default="source", choices=["source", "object"]
+    )
 
     # parse-magic-string (optional)
     p = subparsers.add_parser("parse-magic-string", help="Parse a magic string")
@@ -182,7 +185,7 @@ def main():
         if not result.get("success", False):
             raise SystemExit(1)
     elif args.command == "add-path-overlay":
-        add_path_overlay_to_image(args.input, args.source_text)
+        add_path_overlay_to_image(args.input, args.text, args.kind)
     elif args.command == "parse-magic-string":
         print(json.dumps(parse_magic_string(args.input)))
 

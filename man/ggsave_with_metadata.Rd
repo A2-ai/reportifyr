@@ -31,9 +31,11 @@ ggsave_with_metadata(
 to include in the metadata. Default is \code{NULL}.}
 
 \item{config_yaml}{The file path to the \code{config.yaml}.
-Default is \code{NULL}. If provided and \code{add_path_overlay} is
-\code{TRUE} in the config, the source script path is stamped
-onto the saved image.}
+Default is \code{NULL}. If provided, \code{add_path_overlay} in the
+config controls whether a path is stamped onto the saved PNG:
+\code{"source"} stamps the source script path, \code{"object"} stamps
+the saved image's path (relative to the project root), and
+\code{"none"} (default) disables the overlay.}
 
 \item{context}{An \code{rpfy_context} built via \code{\link[=rpfy_context]{rpfy_context()}}. When
 \code{NULL} (default) an ephemeral context is constructed with all

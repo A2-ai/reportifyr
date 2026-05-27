@@ -271,12 +271,19 @@ validate_config <- function(path_to_config_yaml) {
 
   log4r::debug(.le$logger, "Checking add_path_overlay now")
   if (!is.null(config$add_path_overlay)) {
-    if (typeof(config$add_path_overlay) != "logical") {
+    allowed_overlay <- c("none", "source", "object")
+    if (
+      !is.character(config$add_path_overlay) ||
+        length(config$add_path_overlay) != 1 ||
+        !(config$add_path_overlay %in% allowed_overlay)
+    ) {
       log4r::error(
         .le$logger,
         paste0(
-          "add_path_overlay should be logical, not: ",
-          typeof(config$add_path_overlay)
+          "add_path_overlay should be one of ",
+          paste(allowed_overlay, collapse = ", "),
+          ", not: ",
+          paste(config$add_path_overlay, collapse = ", ")
         )
       )
       valid <- FALSE
