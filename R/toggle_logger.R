@@ -9,7 +9,10 @@ get_log_file <- function() {
   if (exists("log_file", envir = .le)) {
     .le$log_file
   } else {
-    message("No log file set. Log file is created on package load.")
+    message(
+      "No log file set. If logging is configured with lazy file creation, ",
+      "the log file may not exist until the first log write."
+    )
     NULL
   }
 }
@@ -38,8 +41,9 @@ toggle_logger <- function(quiet = FALSE, log_file = get_log_file(), lazy_file = 
     cat(
       "Invalid verbosity level. Available options are:",
       paste(LEVEL_NAMES, collapse = ", "),
-      "\n"
+      "\nDefaulting to WARN.\n"
     )
+    verbosity <- "WARN"
   }
 
   # Custom console appender that filters by verbosity

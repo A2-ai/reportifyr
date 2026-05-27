@@ -1,18 +1,27 @@
-test_that("toggle_logger sets default log level to WARN when RPFY_VERBOSE is unset", {
+# The logger is always built at DEBUG (file logging captures everything);
+# RPFY_VERBOSE controls only what reaches the console via the filtered
+# console appender. These tests assert on console output, not on
+# log4r::level(logger), which would be "DEBUG" regardless of RPFY_VERBOSE.
+
+test_that("console defaults to WARN threshold when RPFY_VERBOSE is unset", {
   withr::local_envvar(c(RPFY_VERBOSE = NA)) # Unset the env var
-  toggle_logger(quiet = TRUE)
+  toggle_logger(quiet = TRUE, log_file = NULL)
   logger <- get("logger", envir = .le)
-  level_name <- as.character(log4r::level(logger))
   expect_s3_class(logger, "logger")
-  expect_equal(level_name, "DEBUG")
+  # Below the WARN threshold: nothing reaches the console
+  expect_output(log4r::info(logger, "info-hidden"), NA)
+  # At/above the WARN threshold: message reaches the console
+  expect_output(log4r::warn(logger, "warn-shown"), "warn-shown")
 })
 
-test_that("toggle_logger sets the correct log level from RPFY_VERBOSE", {
+test_that("RPFY_VERBOSE controls the console verbosity threshold", {
   withr::local_envvar(c(RPFY_VERBOSE = "INFO"))
-  toggle_logger(quiet = TRUE)
+  toggle_logger(quiet = TRUE, log_file = NULL)
   logger <- get("logger", envir = .le)
-  level_name <- as.character(log4r::level(logger))
-  expect_equal(level_name, "DEBUG")
+  # Below the INFO threshold: DEBUG is suppressed
+  expect_output(log4r::debug(logger, "debug-hidden"), NA)
+  # At/above the INFO threshold: INFO now reaches the console
+  expect_output(log4r::info(logger, "info-shown"), "info-shown")
 })
 
 test_that("toggle_logger does not error on invalid verbosity", {
