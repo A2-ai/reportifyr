@@ -1,0 +1,615 @@
+# =============================================================================
+# R RELEASE WORKFLOW
+# =============================================================================
+# Builds a source tarball, optional binary packages for multiple platforms,
+# and publishes everything as a GitHub Release.
+#
+# How it works:
+#   1. build-primary                      -- Builds the source tarball and one binary on the
+#                                            primary platform (AlmaLinux 8 / R 4.5 by default).
+#   2. build-bin-bare (matrix)            -- Builds additional binaries in parallel for each
+#                                            entry in the platform matrix and add to release.
+#   3. build-bin-linux-container (matrix) -- Builds additional binaries in parallel for each
+#                                            entry in the platform matrix and add to release.
+#   4. finalize-manifest                  -- Merges all per-build manifests into one and
+#                                            attaches it to the GitHub Release.
+#
+# Getting started:
+#   1. Copy this file into your package repo at .github/workflows/r-release.yml
+#   2. Search for FIXME and TODO comments and adjust for your package.
+#   3. Push a tag (e.g. v1.0.0) or trigger manually via workflow_dispatch.
+# =============================================================================
+
+name: R Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag to release
+        required: true
+        type: string
+
+
+jobs:
+  determine-tag:
+    runs-on: ubuntu-latest
+    name: Determine tag
+    outputs:
+      tag: ${{ steps.determine-tag.outputs.tag }}
+    steps:
+      - name: Determine tag
+        id: determine-tag
+        run: |
+          TAG="${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+  # ===========================================================================
+  # PLAN-MATRICES
+  # Sets up the build matrices for the build-bin jobs, one
+  # for platforms that require containers and one for bare-metal platforms.
+  # ===========================================================================
+  plan-matrices:
+    runs-on: ubuntu-latest
+    name: Build binary matrices for build-bin jobs
+    outputs:
+      matrix_bare: ${{ steps.plan-bare.outputs.matrix }}
+      matrix_container: ${{ steps.plan-container.outputs.matrix }}
+    steps:
+
+      # Example entries:
+      # {"os":"ubuntu-24.04", "os_name":"ubuntu-noble", "arch":"x86_64", "r":"4.4"}
+      # {"os":["self-hosted", "macOS", "ARM64"], "os_name":"macos", "arch":"arm64", "r":"4.4"}
+      - name: Plan bare-metal matrix
+        id: plan-bare
+        run: |
+          # FIXME: Add more entries for other platforms into the JSON array.
+          MATRIX_JSON=$(cat <<'JSON'
+          [
+            {"runner": "macos-14", "os": "macos", "arch": "arm64", "r": "4.4"},
+            {"runner": "macos-14", "os": "macos", "arch": "arm64", "r": "4.5"},
+            {"runner": "macos-14", "os": "macos", "arch": "arm64", "r": "4.6"},
+            {"runner": "windows-latest", "os": "windows", "arch": "x64", "r": "4.4"},
+            {"runner": "windows-latest", "os": "windows", "arch": "x64", "r": "4.5"},
+            {"runner": "windows-latest", "os": "windows", "arch": "x64", "r": "4.6"}
+          ]
+          JSON
+          )
+          MATRIX_JSON=$(printf '%s' "$MATRIX_JSON" | jq -c .)
+          echo "matrix=$MATRIX_JSON" >> "$GITHUB_OUTPUT"
+
+      # Example entries:
+      # {"os":"ubuntu-latest", "os_name":"almalinux8", "arch":"x86_64", "r":"4.4", "container":"almalinux:8"}
+      - name: Plan container matrix
+        id: plan-container
+        run: |
+          # FIXME: Add more entries for other platforms into the JSON array.
+          MATRIX_JSON=$(cat <<'JSON'
+          [
+            {"os":"ubuntu-latest", "os_name":"almalinux8", "arch":"x86_64", "r":"4.4", "container":"almalinux:8"},
+            {"os":"ubuntu-latest", "os_name":"almalinux8", "arch":"x86_64", "r":"4.6", "container":"almalinux:8"}
+          ]
+          JSON
+          )
+          MATRIX_JSON=$(printf '%s' "$MATRIX_JSON" | jq -c .)
+          echo "matrix=$MATRIX_JSON" >> "$GITHUB_OUTPUT"
+
+  # ===========================================================================
+  # BUILD-PRIMARY
+  # Builds the source tarball and one binary on the primary platform.
+  # This job runs first; every other job depends on its outputs.
+  # ===========================================================================
+  build-primary:
+    needs: determine-tag
+    runs-on: ubuntu-latest
+    container:
+      image: almalinux:8
+    permissions:
+      contents: write
+    outputs:
+      tarball_name: ${{ steps.releaser.outputs.tarball_name }}
+      linking_to_deps: ${{ steps.releaser.outputs.linking_to_deps }}
+      package_name: ${{ steps.pkg-info.outputs.name }}
+      package_version: ${{ steps.pkg-info.outputs.version }}
+      tag: ${{ steps.release-type.outputs.tag }}
+      is_rc: ${{ steps.release-type.outputs.is_rc }}
+
+    steps:
+      # -- Determine whether this is a release candidate (tag ends in -rc or -rcN) --
+      - name: Determine release type
+        id: release-type
+        shell: bash
+        run: |
+          TAG="${{ needs['determine-tag'].outputs.tag }}"
+          if [[ "$TAG" =~ -rc[0-9]*$ ]]; then
+            echo "is_rc=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_rc=false" >> $GITHUB_OUTPUT
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: refs/tags/${{ needs['determine-tag'].outputs.tag }}
+
+      - name: Get R version from rproject.toml
+        id: r-version
+        run: |
+          R_VERSION=$(sed -n 's/^r_version = "\(.*\)"$/\1/p' rproject.toml | head -n1)
+          echo "r_version=$R_VERSION" >> $GITHUB_OUTPUT
+
+      # -- Install R via rig ------------------------------------------------
+      - name: Setup R
+        run: |
+          dnf install -y curl
+          curl -Ls https://github.com/r-lib/rig/releases/download/latest/rig-linux-x86_64-latest.tar.gz | tar xz -C /usr/local
+          rig add ${{ steps.r-version.outputs.r_version }}
+          echo "/opt/R/${{ steps.r-version.outputs.r_version }}/bin" >> $GITHUB_PATH
+
+      # -- Install rv -------------------------------------------------------
+      - name: Install the latest version of rv
+        uses: a2-ai/setup-rv@main
+
+      # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      # TODO: If your package requires a compiled-language toolchain, add
+      # the installation steps here.
+
+      - name: rv-sysdeps-install
+        run: |
+          dnf install -y epel-release dnf-plugins-core
+          dnf config-manager --set-enabled powertools
+          MISSING_DEPS="$(rv sysdeps --only-absent --ignore 'libgit2_1.7-devel' --ignore pandoc) libgit2-devel libcurl-devel"
+          if [ -n "$MISSING_DEPS" ]; then
+            echo "Found missing system dependencies:"
+            echo "$MISSING_DEPS"
+            echo "Installing..."
+            echo "$MISSING_DEPS" | xargs dnf install -y
+          else
+            echo "All system dependencies are present"
+          fi
+
+
+      # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      # TODO: If your package relies on system libraries, add
+      # the installation steps here.
+      # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+      - name: Sync R dependencies
+        run: rv sync
+
+      - name: Get library path
+        id: library
+        run: |
+          OUTPUT=$(rv library)
+          echo "result=$OUTPUT" >> $GITHUB_OUTPUT
+          echo "Library path: $OUTPUT"
+
+      # -- Read package metadata from DESCRIPTION ---------------------------
+      - name: Get package info from DESCRIPTION
+        id: pkg-info
+        run: |
+          PKG_NAME=$(grep '^Package:' DESCRIPTION | sed 's/^Package:[[:space:]]*//')
+          PKG_VERSION=$(grep '^Version:' DESCRIPTION | sed 's/^Version:[[:space:]]*//')
+          echo "name=$PKG_NAME" >> $GITHUB_OUTPUT
+          echo "version=$PKG_VERSION" >> $GITHUB_OUTPUT
+
+      # -- Build the source tarball ------------------------------------------
+      - name: Build source tarball
+        id: releaser
+        uses: A2-ai/r-releaser/build-src@deploy-prism
+        with:
+          library: ${{ steps.library.outputs.result }}
+          resave-data: false          # Set to true if your package ships data/ that needs resaving
+          md5: true
+          user: r-releaser
+          build-vignettes: false      # Set to true if your package includes vignettes
+          metadata: |
+            {
+              "PrismRemoteType": "git",
+              "PrismRemoteRef": "${{ needs['determine-tag'].outputs.tag }}",
+              "PrismRemoteSha": "${{ github.sha }}"
+            }
+
+      # -- Attach source tarball to the GitHub Release -----------------------
+      - name: Upload source tarball to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ${{ steps.releaser.outputs.tarball_path }}
+          asset_name: ${{ steps.releaser.outputs.tarball_name }}
+          tag: ${{ steps.release-type.outputs.tag }}
+          release_name: ${{ steps.release-type.outputs.tag }}
+          overwrite: true
+          prerelease: ${{ steps.release-type.outputs.is_rc == 'true' }}
+          make_latest: ${{ steps.release-type.outputs.is_rc == 'true' && 'false' || 'legacy' }}
+
+      # -- Save artifacts for downstream jobs --------------------------------
+      - name: Upload source tarball as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-tarball
+          path: ${{ steps.releaser.outputs.tarball_path }}
+          if-no-files-found: error
+
+      - name: Upload manifest as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: manifest-source
+          path: manifest.json
+          if-no-files-found: error
+
+      # -- Build binary for the primary platform -----------------------------
+      - name: Build binary
+        id: releaser-bin
+        uses: A2-ai/r-releaser/build-bin@deploy-prism
+        with:
+          library: ${{ steps.library.outputs.result }}
+          src_tarball_path: ${{ steps.releaser.outputs.tarball_path }}
+          linking_to_deps: ${{ steps.releaser.outputs.linking_to_deps }}
+
+      - name: Upload binary to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ${{ steps.releaser-bin.outputs.binary_path }}
+          asset_name: ${{ steps.releaser-bin.outputs.binary_name }}
+          tag: ${{ steps.release-type.outputs.tag }}
+          release_name: ${{ steps.release-type.outputs.tag }}
+          overwrite: true
+          prerelease: ${{ steps.release-type.outputs.is_rc == 'true' }}
+          make_latest: ${{ steps.release-type.outputs.is_rc == 'true' && 'false' || 'legacy' }}
+
+      - name: Upload binary manifest as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: manifest-almalinux8-r4.5
+          path: manifest.json
+          if-no-files-found: error
+
+  # ===========================================================================
+  # BUILD-BIN-BARE (matrix)
+  # Builds additional bare-metal binaries for each entry in the platform
+  # matrix.
+  # ===========================================================================
+  build-bin-bare:
+    name: build-bin-bare (${{ matrix.config.os_name }} (${{ matrix.config.arch }}) / R ${{ matrix.config.r }})
+    needs: [build-primary, plan-matrices, determine-tag]
+    runs-on: ${{ matrix.config.runner }}
+    if: needs['plan-matrices'].outputs.matrix_bare != '[]'
+    strategy:
+      fail-fast: false
+      matrix:
+        config: ${{ fromJSON(needs['plan-matrices'].outputs.matrix_bare) }}
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: refs/tags/${{ needs['determine-tag'].outputs.tag }}
+
+      # -- Install R --------------------------------------------------------
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.config.r }}
+
+      # -- Install rv -------------------------------------------------------
+      - name: Install the latest version of rv
+        uses: a2-ai/setup-rv@main
+
+      # -- MacOS prep
+      - name: Prepare macOS for static linking
+        if: matrix.config.os == 'macos'
+        uses: a2-ai/r-gh-mac-build/prep@main
+        with:
+          r-version: ${{ matrix.config.r }}
+
+      # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      # TODO: If your package requires a compiled-language toolchain, add
+      # the installation steps here.
+      #
+      # NOTE: remember to add steps for each OS type required
+      # by the platforms specified in the matrix.
+      # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+      # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      # TODO: If your package relies on system libraries, add
+      # the installation steps here.
+      #
+      # NOTE: remember to add steps for each OS type required
+      # by the platforms specified in the matrix.
+      # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+      - name: replace-rversion
+        run: |
+          perl -i -pe 's|^r_version = "4\.[0-9\.]+"$|r_version = "${{ matrix.config.r }}"|' rproject.toml
+          cat rproject.toml
+        if: runner.os != 'Windows'
+
+      - name: replace-rversion (Windows)
+        run: |
+          $rVersion = "${{ matrix.config.r }}"
+          (Get-Content rproject.toml) -replace '^r_version = "4\.[0-9\.]+"$', "r_version = `"$rVersion`"" | Set-Content rproject.toml
+          Get-Content rproject.toml
+        shell: pwsh
+        if: runner.os == 'Windows'
+
+      # Windows binaries for CRAN packages live on PPM, not PRISM. Without this
+      # swap, rv would fall back to source compilation of every dep on Windows.
+      - name: Swap PRISM for PPM (Windows)
+        run: |
+          rv.exe configure repository remove PRISM
+          rv.exe configure repository add PPM --url https://packagemanager.posit.co/cran/2026-05-10
+        shell: cmd
+        if: runner.os == 'Windows'
+
+      - name: rv-sync
+        run: rv sync
+        if: runner.os != 'Windows'
+
+      - name: rv-sync (Windows)
+        run: rv.exe sync
+        shell: cmd
+        if: runner.os == 'Windows'
+
+      - name: Get library path
+        id: library-unix
+        run: |
+          OUTPUT=$(rv library)
+          echo "result=$OUTPUT" >> $GITHUB_OUTPUT
+          echo "Library path: $OUTPUT"
+        if: runner.os != 'Windows'
+
+      - name: Get library path (Windows)
+        id: library-windows
+        shell: pwsh
+        run: |
+          $output = (& rv.exe library).Trim()
+          "result=$output" >> $env:GITHUB_OUTPUT
+          "Library path: $output"
+        if: runner.os == 'Windows'
+
+      # -- Download the source tarball from build-primary --------------------
+      - name: Download source tarball artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: source-tarball
+          path: dist-src
+
+      - name: Verify source tarball path
+        id: src-tarball
+        shell: bash
+        run: |
+          SRC_PATH="$GITHUB_WORKSPACE/dist-src/${{ needs.build-primary.outputs.tarball_name }}"
+          test -f "$SRC_PATH"
+          echo "path=$SRC_PATH" >> $GITHUB_OUTPUT
+        if: runner.os != 'Windows'
+
+      - name: Verify source tarball path (Windows)
+        id: src-tarball-windows
+        shell: pwsh
+        run: |
+          $srcPath = Join-Path $env:GITHUB_WORKSPACE "dist-src/${{ needs.build-primary.outputs.tarball_name }}"
+          if (-not (Test-Path -LiteralPath $srcPath)) {
+            throw "Source tarball not found: $srcPath"
+          }
+          "path=$srcPath" >> $env:GITHUB_OUTPUT
+        if: runner.os == 'Windows'
+
+      # -- Build the binary --------------------------------------------------
+      - name: Build binary
+        id: releaser-bin
+        uses: A2-ai/r-releaser/build-bin@deploy-prism
+        with:
+          library: ${{ steps.library-unix.outputs.result || steps.library-windows.outputs.result }}
+          src_tarball_path: ${{ steps.src-tarball.outputs.path || steps.src-tarball-windows.outputs.path }}
+          linking_to_deps: ${{ needs.build-primary.outputs.linking_to_deps }}
+
+      # -- Attach binary to the GitHub Release --------------------------------
+      - name: Upload binary to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ${{ steps.releaser-bin.outputs.binary_path }}
+          asset_name: ${{ steps.releaser-bin.outputs.binary_name }}
+          tag: ${{ needs.build-primary.outputs.tag }}
+          release_name: ${{ needs.build-primary.outputs.tag }}
+          overwrite: true
+          prerelease: ${{ needs.build-primary.outputs.is_rc == 'true' }}
+          make_latest: ${{ needs.build-primary.outputs.is_rc == 'true' && 'false' || 'legacy' }}
+
+      - name: Upload manifest as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: manifest-${{ matrix.config.os_name }}-r${{ matrix.config.r }}-${{ matrix.config.arch }}
+          path: manifest.json
+          if-no-files-found: error
+
+  # ===========================================================================
+  # BUILD-BIN-CONTAINER (matrix)
+  # Builds additional container-based binaries for each entry in the platform
+  # matrix. Right now used for AlmaLinux 8.
+  # ===========================================================================
+  build-bin-linux-container:
+    name: build-bin-linux-container (${{ matrix.config.os_name }} (${{ matrix.config.arch }}) / R ${{ matrix.config.r }})
+    needs: [build-primary, plan-matrices, determine-tag]
+    runs-on: ${{ matrix.config.os }}
+    if: needs['plan-matrices'].outputs.matrix_container != '[]'
+    container:
+      image: ${{ matrix.config.container }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config: ${{ fromJSON(needs['plan-matrices'].outputs.matrix_container) }}
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: refs/tags/${{ needs['determine-tag'].outputs.tag }}
+
+      # -- Install R via rig ------------------------------------------------
+      - name: Setup R
+        run: |
+          curl -Ls https://github.com/r-lib/rig/releases/download/latest/rig-linux-x86_64-latest.tar.gz | tar xz -C /usr/local
+          rig add ${{ matrix.config.r }}
+          echo "/opt/R/${{ matrix.config.r }}/bin" >> $GITHUB_PATH
+
+      # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      # TODO: If your package requires a compiled-language toolchain, add
+      # the installation steps here.
+      #
+      # NOTE: remember to add steps for each OS type required
+      # by the platforms specified in the matrix.
+      # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      - name: Install Rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Add Rust target
+        run: |
+          . "$HOME/.cargo/env"
+          rustup target add x86_64-unknown-linux-gnu
+
+
+      # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      # TODO: If your package relies on system libraries, add
+      # the installation steps here.
+      #
+      # NOTE: remember to add steps for each OS type required
+      # by the platforms specified in the matrix.
+      # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+      # -- Install rv and resolve R package dependencies ---------------------
+      - name: Install the latest version of rv
+        uses: a2-ai/setup-rv@main
+
+      - name: Pin R version in rproject.toml
+        run: |
+          sed -i 's|^r_version = ".*"$|r_version = "${{ matrix.config.r }}"|' rproject.toml
+          cat rproject.toml
+
+      - name: rv-sysdeps-install
+        run: |
+          dnf install -y epel-release dnf-plugins-core
+          dnf config-manager --set-enabled powertools
+          MISSING_DEPS="$(rv sysdeps --only-absent --ignore 'libgit2_1.7-devel' --ignore pandoc) libgit2-devel libcurl-devel"
+          if [ -n "$MISSING_DEPS" ]; then
+            echo "Found missing system dependencies:"
+            echo "$MISSING_DEPS"
+            echo "Installing..."
+            echo "$MISSING_DEPS" | xargs dnf install -y
+          else
+            echo "All system dependencies are present"
+          fi
+
+      - name: Sync R dependencies
+        run: rv sync
+
+      - name: Get library path
+        id: library
+        run: |
+          OUTPUT=$(rv library)
+          echo "result=$OUTPUT" >> $GITHUB_OUTPUT
+          echo "Library path: $OUTPUT"
+
+      # -- Download the source tarball from build-primary --------------------
+      - name: Download source tarball artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: source-tarball
+          path: dist-src
+
+      - name: Verify source tarball path
+        id: src-tarball
+        shell: bash
+        run: |
+          SRC_PATH="$GITHUB_WORKSPACE/dist-src/${{ needs.build-primary.outputs.tarball_name }}"
+          test -f "$SRC_PATH"
+          echo "path=$SRC_PATH" >> $GITHUB_OUTPUT
+
+      # -- Build the binary --------------------------------------------------
+      - name: Build binary
+        id: releaser-bin
+        uses: A2-ai/r-releaser/build-bin@deploy-prism
+        with:
+          library: ${{ steps.library.outputs.result }}
+          src_tarball_path: ${{ steps.src-tarball.outputs.path }}
+          linking_to_deps: ${{ needs.build-primary.outputs.linking_to_deps }}
+
+      # -- Attach binary to the GitHub Release --------------------------------
+      - name: Upload binary to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ${{ steps.releaser-bin.outputs.binary_path }}
+          asset_name: ${{ steps.releaser-bin.outputs.binary_name }}
+          tag: ${{ needs.build-primary.outputs.tag }}
+          release_name: ${{ needs.build-primary.outputs.tag }}
+          overwrite: true
+          prerelease: ${{ needs.build-primary.outputs.is_rc == 'true' }}
+          make_latest: ${{ needs.build-primary.outputs.is_rc == 'true' && 'false' || 'legacy' }}
+
+      - name: Upload manifest as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: manifest-${{ matrix.config.os_name }}-r${{ matrix.config.r }}-${{ matrix.config.arch }}
+          path: manifest.json
+          if-no-files-found: error
+
+
+  # ===========================================================================
+  # FINALIZE-MANIFEST
+  # Merges all per-build manifests into a single manifest.json and attaches
+  # it to the GitHub Release. This runs even if some build-bin jobs fail,
+  # as long as build-primary succeeded.
+  # ===========================================================================
+  finalize-manifest:
+    name: Publish manifest to release
+    needs: [build-primary, build-bin-bare, build-bin-linux-container]
+    if: always() && needs.build-primary.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Prepare manifest directory
+        run: mkdir -p "${{ github.workspace }}/manifests"
+
+      # -- Collect all manifest-* artifacts from previous jobs ----------------
+      - name: Download manifest artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: manifest-*
+          path: ${{ github.workspace }}/manifests
+
+      - name: Merge manifests
+        id: merge
+        uses: A2-ai/r-releaser/merge-manifests@deploy-prism
+        with:
+          manifest_dir: ${{ github.workspace }}/manifests
+
+      - name: Upload manifest to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ${{ steps.merge.outputs.manifest_path }}
+          asset_name: manifest.json
+          tag: ${{ needs.build-primary.outputs.tag }}
+          release_name: ${{ needs.build-primary.outputs.tag }}
+          overwrite: true
+          prerelease: ${{ needs.build-primary.outputs.is_rc == 'true' }}
+          make_latest: ${{ needs.build-primary.outputs.is_rc == 'true' && 'false' || 'legacy' }}
