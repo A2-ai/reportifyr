@@ -45,8 +45,9 @@ def validate_docx(docx_in: str, strict: bool = True) -> dict:
             magic_strings.append(cell_par.text)
 
     if len(magic_strings) == 0:
-        result["success"] = False
-        result["errors"].append("The file does not contain magic strings.")
+        result["warnings"].append(
+            "The file does not contain magic strings; nothing to process."
+        )
         return result
 
     # Parse filenames from magic strings
