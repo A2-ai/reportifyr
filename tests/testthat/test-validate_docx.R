@@ -85,7 +85,7 @@ test_that("validate_docx errors if input .docx does not exist", {
   )
 })
 
-test_that("validate_docx errors if magic string is missing", {
+test_that("validate_docx warns and succeeds if magic strings are missing", {
   docx <- tempfile(fileext = ".docx")
   print(officer::read_docx(), target = docx)
   config <- create_config_yaml()
@@ -93,14 +93,14 @@ test_that("validate_docx errors if magic string is missing", {
   mockery::stub(validate_docx, "pyro::get_venv_uv_paths", function() mock_paths)
   mockery::stub(validate_docx, "processx::run", function(...) {
     list(stdout = jsonlite::toJSON(list(
-      success = FALSE,
+      success = TRUE,
       file_names = list(),
-      warnings = list(),
-      errors = list("The file does not contain magic strings.")
+      warnings = list("The file does not contain magic strings; nothing to process."),
+      errors = list()
     )))
   })
 
-  expect_error(validate_docx(docx, config), "does not contain magic strings")
+  expect_no_error(validate_docx(docx, config))
 })
 
 test_that("validate_docx errors if .venv directory is missing", {

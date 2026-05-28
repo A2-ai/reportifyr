@@ -28,8 +28,10 @@ def test_validate_docx_corrupt_file():
 def test_validate_docx_missing_magic():
     path = _make_docx_with_text("no magic here")
     result = validate_docx(path, strict=True)
-    assert result["success"] is False
-    assert "does not contain magic strings" in result["errors"][0]
+    assert result["success"] is True
+    assert any("does not contain magic strings" in msg for msg in result["warnings"])
+    assert result["errors"] == []
+    assert result["file_names"] == []
 
 
 def test_validate_docx_invalid_extension_strict():
