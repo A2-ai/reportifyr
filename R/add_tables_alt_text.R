@@ -2,6 +2,7 @@
 #'
 #' @param docx_in The file path to the input `.docx` file.
 #' @param docx_out The file path to the output `.docx` file to save to.
+#' @param tables_path The file path to the tables directory. Used to embed artifact hashes in alt text. Default is `NULL`.
 #' @param debug Debug.
 #'
 #' @export
@@ -12,10 +13,11 @@
 add_tables_alt_text <- function(
   docx_in,
   docx_out,
+  tables_path = NULL,
   debug = FALSE
 ) {
-  log4r::debug(.le$logger, "Starting add_plots function")
-  tictoc::tic()
+  log4r::debug(.le$logger, "Starting add_tables_alt_text function")
+  tictoc::tic("add tables alt text")
 
   if (debug) {
     log4r::debug(.le$logger, "Debug mode enabled")
@@ -26,61 +28,28 @@ add_tables_alt_text <- function(
 
   log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
 
-  script <- system.file("scripts/add_table_alt_text.py", package = "reportifyr")
-  args <- c("run", script, "-i", docx_in, "-o", docx_out)
-
-  paths <- get_venv_uv_paths()
-
-  log4r::debug(.le$logger, "Running add table alt text script")
-  result <- tryCatch(
-    {
-      processx::run(
-        command = paths$uv,
-        args = args,
-        env = c("current", VIRTUAL_ENV = paths$venv),
-        error_on_status = TRUE
-      )
-    },
-    error = function(e) {
-      log4r::error(
-        .le$logger,
-        paste0("Add table alt text script failed. Status: ", e$status)
-      )
-      log4r::error(
-        .le$logger,
-        paste0("Add table alt text script failed. Stderr: ", e$stderr)
-      )
-      log4r::info(
-        .le$logger,
-        paste0("Add table alt text script failed. Stdout: ", e$stdout)
-      )
-      stop(paste(
-        "Add table alt text script failed. Status: ",
-        e$status,
-        "Stderr: ",
-        e$stderr
-      ))
-    }
+  args <- c(
+    "run",
+    "-m",
+    "reportipyr.cli",
+    "add-table-alt-text",
+    "-i",
+    docx_in,
+    "-o",
+    docx_out
   )
 
-  if (grepl("Duplicate figure names found in the document", result$stdout)) {
-    log4r::warn(
-      .le$logger,
-      "Duplicate figures found in magic strings of document."
-    )
+  if (!is.null(tables_path)) {
+    args <- c(args, "-d", tables_path)
   }
 
-  if (grepl("Unsupported", result$stdout)) {
-    stdout_lines <- strsplit(result$stdout, "\n")[[1]]
-    matching_lines <- stdout_lines[grepl("Unsupported", stdout_lines)]
-    log4r::warn(.le$logger, matching_lines)
-  }
-
-  log4r::info(.le$logger, paste0("Returning status: ", result$status))
-  log4r::info(.le$logger, paste0("Returning stdout: ", result$stdout))
-  log4r::info(.le$logger, paste0("Returning stderr: ", result$stderr))
+  log4r::debug(.le$logger, "Running add table alt text script")
+  run_python_script(
+    args,
+    "Add table alt text script"
+  )
 
   tictoc::toc()
 
-  log4r::debug(.le$logger, "Exiting add_alt_text function")
+  log4r::debug(.le$logger, "Exiting add_tables_alt_text function")
 }

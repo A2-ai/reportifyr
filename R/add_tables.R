@@ -38,7 +38,7 @@ add_tables <- function(
   debug = FALSE
 ) {
   log4r::debug(.le$logger, "Starting add_tables function")
-  tictoc::tic()
+  tictoc::tic("add tables")
 
   if (debug) {
     log4r::debug(.le$logger, "Debug mode enabled")
@@ -54,13 +54,19 @@ add_tables <- function(
   validate_docx(docx_in, config_yaml)
   log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
 
+  config <- yaml::read_yaml(config_yaml)
+
   intermediate_docx <- gsub(".docx", "-int.docx", docx_out)
   log4r::info(
     .le$logger,
     paste0("Intermediate document path set: ", intermediate_docx)
   )
 
-  keep_caption_next(docx_in, intermediate_docx)
+  if (isTRUE(config$keep_caption_next)) {
+    keep_caption_next(docx_in, intermediate_docx)
+  } else {
+    file.copy(docx_in, intermediate_docx, overwrite = TRUE)
+  }
 
   # define magic string pattern
   start_pattern <- "\\{rpfy\\}:" # matches "{rpfy}:"
@@ -73,7 +79,7 @@ add_tables <- function(
   doc_summary <- officer::docx_summary(document)
   magic_indices <- grep(magic_pattern, doc_summary$text)
   processed_files <- c()
-  # find duplicated tables
+  skipped_duplicates <- FALSE
   if (length(magic_indices) > 0) {
     log4r::info(
       .le$logger,
@@ -84,7 +90,9 @@ add_tables <- function(
     )
   } else {
     log4r::warn(.le$logger, "No magic strings were found in the document.")
+
     tictoc::toc()
+
     print(document, target = docx_out)
     return(invisible(NULL))
   }
@@ -92,7 +100,7 @@ add_tables <- function(
   for (i in magic_indices) {
     # Remove "{rpfy}:"
     table_name <- gsub("\\{rpfy\\}:", "", doc_summary$text[[i]]) |> trimws()
-    table_file <- file.path(tables_path, table_name)
+    table_file <- safe_resolve(tables_path, table_name)
     # check extension is valid
     if (tolower(tools::file_ext(table_file)) %in% c("rds", "csv")) {
       # Check if the file exists
@@ -100,44 +108,55 @@ add_tables <- function(
         if (!(table_file %in% processed_files)) {
           document <- process_table_file(
             table_file,
-            document
+            document,
+            table_name
           )
           processed_files <- c(processed_files, table_file)
         } else {
-          # strict mode fail - config option, deafult FALSE
-          # log4r::error
-          # else
-          log4r::warn(
-            .le$logger,
-            paste0("Duplicate table file fount: ", table_file)
-          )
+          skipped_duplicates <- TRUE
         }
       } else {
         log4r::warn(.le$logger, paste0("Table file not found: ", table_file))
       }
+    } else {
+      log4r::debug(.le$logger, paste0("Skipping non-table file: ", table_name))
     }
   }
-  intermediate_tabs_docx <- gsub(".docx", "-inttabs.docx", docx_out)
 
-  print(document, target = intermediate_tabs_docx)
+  if (skipped_duplicates) {
+    log4r::warn(
+      .le$logger,
+      "Duplicate tables found in magic strings of document."
+    )
+  }
 
-  add_tables_alt_text(
-    intermediate_tabs_docx,
-    docx_out
-  )
+  if (isTRUE(config$add_alt_text)) {
+    intermediate_tabs_docx <- gsub(".docx", "-inttabs.docx", docx_out)
+
+    print(document, target = intermediate_tabs_docx)
+
+    add_tables_alt_text(
+      intermediate_tabs_docx,
+      docx_out,
+      tables_path = tables_path
+    )
+
+    unlink(intermediate_tabs_docx)
+    log4r::debug(.le$logger, "Deleting intermediate tabs document")
+  } else {
+    print(document, target = docx_out)
+  }
 
   unlink(intermediate_docx)
   log4r::debug(.le$logger, "Deleting intermediate document")
 
-  unlink(intermediate_tabs_docx)
-  log4r::debug(.le$logger, "Deleting intermediate tabs document")
-
   log4r::info(.le$logger, paste0("Final document saved to: ", docx_out))
+
   tictoc::toc()
 }
 
 ### New function for processing #####
-process_table_file <- function(table_file, document) {
+process_table_file <- function(table_file, document, table_name) {
   log4r::info(
     .le$logger,
     paste0("Processing table file: ", table_file)
@@ -182,15 +201,58 @@ process_table_file <- function(table_file, document) {
       flextable <- data_in
     }
   } else {
-    # Format the table using flextable
     metadata <- jsonlite::fromJSON(metadata_file)
-    flextable <- format_flextable(data_in, metadata$object_meta$table1)
+    if (!inherits(data_in, "flextable")) {
+      flextable <- format_flextable(data_in, metadata$object_meta$table1)
+    } else {
+      log4r::info(
+        .le$logger,
+        paste0(
+          "Data is already a flextable so no formatting will be applied for ",
+          table_file,
+          "."
+        )
+      )
+      flextable <- data_in
+    }
   }
 
   document <- officer::cursor_reach(
     document,
-    paste0("\\{rpfy\\}:", basename(table_file))
+    paste0("\\{rpfy\\}:", table_name)
   )
+
+  # Check if table already exists after the magic string (skip_unchanged kept it)
+  # Access the XML body directly via officer's internal structure
+  body_node <- xml2::xml_find_first(
+    document$doc_obj$get(),
+    "//w:body",
+    ns = c(w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main")
+  )
+  body_children <- xml2::xml_children(body_node)
+  for (ci in seq_along(body_children)) {
+    child <- body_children[[ci]]
+    if (xml2::xml_name(child) == "p") {
+      child_text <- xml2::xml_text(child)
+      if (grepl(table_name, child_text, fixed = TRUE)) {
+        # Check if next sibling is a table
+        if (ci < length(body_children)) {
+          next_child <- body_children[[ci + 1]]
+          if (xml2::xml_name(next_child) == "tbl") {
+            log4r::info(
+              .le$logger,
+              paste0(
+                "Table already present, skipping insertion for: ",
+                table_name
+              )
+            )
+            return(document)
+          }
+        }
+        break
+      }
+    }
+  }
 
   flextable::body_add_flextable(
     document,

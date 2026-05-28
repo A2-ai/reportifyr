@@ -52,16 +52,23 @@ add_plots <- function(
   debug = FALSE
 ) {
   log4r::debug(.le$logger, "Starting add_plots function")
-  tictoc::tic()
+  tictoc::tic("add plots")
 
   if (debug) {
     log4r::debug(.le$logger, "Debug mode enabled")
     browser()
   }
 
+  if (is.null(config_yaml)) {
+    config_yaml <- system.file("extdata", "config.yaml", package = "reportifyr")
+    log4r::info(.le$logger, paste0("using built-in config.yaml: ", config_yaml))
+  }
+
   validate_input_args(docx_in, docx_out)
   validate_docx(docx_in, config_yaml)
   log4r::info(.le$logger, paste0("Output document path set: ", docx_out))
+
+  config <- yaml::read_yaml(config_yaml)
 
   intermediate_docx <- gsub(".docx", "-int.docx", docx_out)
   log4r::info(
@@ -69,14 +76,19 @@ add_plots <- function(
     paste0("Intermediate document path set: ", intermediate_docx)
   )
 
-  keep_caption_next(docx_in, intermediate_docx)
+  if (isTRUE(config$keep_caption_next)) {
+    keep_caption_next(docx_in, intermediate_docx)
+  } else {
+    file.copy(docx_in, intermediate_docx, overwrite = TRUE)
+  }
 
   intermediate_figs_docx <- gsub(".docx", "-intfigs.docx", docx_out)
 
-  script <- system.file("scripts/add_figure.py", package = "reportifyr")
   args <- c(
     "run",
-    script,
+    "-m",
+    "reportipyr.cli",
+    "add-figure",
     "-i",
     intermediate_docx,
     "-o",
@@ -84,11 +96,6 @@ add_plots <- function(
     "-d",
     figures_path
   )
-
-  if (is.null(config_yaml)) {
-    config_yaml <- system.file("extdata", "config.yaml", package = "reportifyr")
-    log4r::info(.le$logger, paste0("using built-in config.yaml: ", config_yaml))
-  }
 
   args <- c(args, "-c", config_yaml)
   log4r::info(.le$logger, paste0("config yaml set: ", config_yaml))
@@ -103,67 +110,27 @@ add_plots <- function(
     log4r::info(.le$logger, paste0("Figure height set: ", fig_height))
   }
 
-  paths <- get_venv_uv_paths()
-
   log4r::debug(.le$logger, "Running add plots script")
-  result <- tryCatch(
-    {
-      processx::run(
-        command = paths$uv,
-        args = args,
-        env = c("current", VIRTUAL_ENV = paths$venv),
-        error_on_status = TRUE
-      )
-    },
-    error = function(e) {
-      log4r::error(
-        .le$logger,
-        paste0("Add plots script failed. Status: ", e$status)
-      )
-      log4r::error(
-        .le$logger,
-        paste0("Add plots script failed. Stderr: ", e$stderr)
-      )
-      log4r::info(
-        .le$logger,
-        paste0("Add plots script failed. Stdout: ", e$stdout)
-      )
-      stop(paste(
-        "Add plots script failed. Status: ",
-        e$status,
-        "Stderr: ",
-        e$stderr
-      ))
-    }
+  run_python_script(
+    args,
+    "Add plots script"
   )
 
-  add_plots_alt_text(
-    intermediate_figs_docx,
-    docx_out
-  )
+  if (isTRUE(config$add_alt_text)) {
+    add_plots_alt_text(
+      intermediate_figs_docx,
+      docx_out,
+      figures_path = figures_path
+    )
+  } else {
+    file.copy(intermediate_figs_docx, docx_out, overwrite = TRUE)
+  }
 
   unlink(intermediate_docx)
   log4r::debug(.le$logger, "Deleting intermediate document")
 
   unlink(intermediate_figs_docx)
-  log4r::debug(.le$logger, "Deleting intermediate tabs document")
-
-  if (grepl("Duplicate figure names found in the document", result$stdout)) {
-    log4r::warn(
-      .le$logger,
-      "Duplicate figures found in magic strings of document."
-    )
-  }
-
-  if (grepl("Unsupported", result$stdout)) {
-    stdout_lines <- strsplit(result$stdout, "\n")[[1]]
-    matching_lines <- stdout_lines[grepl("Unsupported", stdout_lines)]
-    log4r::warn(.le$logger, matching_lines)
-  }
-
-  log4r::info(.le$logger, paste0("Returning status: ", result$status))
-  log4r::info(.le$logger, paste0("Returning stdout: ", result$stdout))
-  log4r::info(.le$logger, paste0("Returning stderr: ", result$stderr))
+  log4r::debug(.le$logger, "Deleting intermediate figs document")
 
   tictoc::toc()
 

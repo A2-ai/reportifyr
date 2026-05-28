@@ -45,15 +45,8 @@ initialize_report_project <- function(
     # Create artifact output directory tree
     outputs_dir <- create_outputs_directories(project_dir, outputs_dir_name)
 
-    metadata_path <- initialize_python()
-
-    if (file.exists(metadata_path)) {
-      file.copy(
-        from = metadata_path,
-        to = file.path(report_dir, basename(metadata_path)),
-        overwrite = TRUE
-      )
-    }
+    pyro::write_group_to_pyproject("reportifyr")
+    pyro::initialize_python(groups = "reportifyr")
 
     copy_footnotes(report_dir)
     copy_config(report_dir, report_dir_name, outputs_dir_name)
@@ -63,16 +56,77 @@ initialize_report_project <- function(
       "reportifyr has already been initialized. Syncing with config file now."
     )
 
-    # Check if .venv directory still exists, recreate if missing
-    uv_path <- get_uv_path(quiet = TRUE)
-    args <- get_args(uv_path)
-    venv_dir <- file.path(args[[1]], ".venv")
+    # Resolve report and outputs dir paths
+    init_path <- file.path(project_dir, init_file)
+    init_data <- jsonlite::read_json(init_path, simplifyVector = TRUE)
 
-    if (!dir.exists(venv_dir)) {
-      log4r::warn(.le$logger, ".venv directory missing, reinitializing Python environment")
-      message("Python virtual environment missing. Reinitializing...")
-      metadata_path <- initialize_python()
+    if (is.null(report_dir_name)) {
+      rdn <- init_data$config$report_dir_name
+      resolved_report_name <- if (!is.null(rdn)) rdn else "report"
+    } else {
+      resolved_report_name <- report_dir_name
     }
+    report_dir <- file.path(project_dir, resolved_report_name)
+
+    odn <- init_data$config$outputs_dir_name
+    resolved_outputs_name <- if (!is.null(odn)) odn else "OUTPUTS"
+    outputs_dir <- file.path(project_dir, resolved_outputs_name)
+
+    # Check report directory and subdirectories
+    if (!dir.exists(report_dir)) {
+      log4r::warn(
+        .le$logger,
+        paste0("Report directory missing, recreating: ", report_dir)
+      )
+      message(paste0("Report directory missing. Recreating: ", report_dir))
+      create_report_directories(project_dir, resolved_report_name)
+    } else {
+      report_subdirs <- c("draft", "final", "scripts", "shell")
+      for (subdir in report_subdirs) {
+        subdir_path <- file.path(report_dir, subdir)
+        if (!dir.exists(subdir_path)) {
+          log4r::warn(
+            .le$logger,
+            paste0("Report subdirectory missing, recreating: ", subdir_path)
+          )
+          message(paste0("Recreating missing directory: ", subdir_path))
+          dir.create(subdir_path, showWarnings = FALSE, recursive = TRUE)
+        }
+      }
+    }
+
+    # Check config.yaml
+    if (!file.exists(file.path(report_dir, "config.yaml"))) {
+      log4r::warn(
+        .le$logger,
+        "config.yaml missing from report directory, restoring default"
+      )
+      message("config.yaml missing. Restoring default.")
+      copy_config(report_dir, resolved_report_name, resolved_outputs_name)
+    }
+
+    # Check standard_footnotes.yaml
+    if (!file.exists(file.path(report_dir, "standard_footnotes.yaml"))) {
+      log4r::warn(
+        .le$logger,
+        paste0(
+          "standard_footnotes.yaml missing from report directory,",
+          " restoring default"
+        )
+      )
+      message("standard_footnotes.yaml missing. Restoring default.")
+      copy_footnotes(report_dir)
+    }
+
+    # Check outputs directory and subdirectories
+    if (!dir.exists(outputs_dir)) {
+      log4r::warn(
+        .le$logger,
+        paste0("Outputs directory missing, recreating: ", outputs_dir)
+      )
+      message(paste0("Outputs directory missing. Recreating: ", outputs_dir))
+    }
+    create_outputs_directories(project_dir, resolved_outputs_name)
 
     sync_report_project(project_dir, report_dir_name)
   }
@@ -261,14 +315,9 @@ create_init_file <- function(project_dir, report_dir, outputs_dir) {
   config <- yaml::read_yaml(file.path(report_dir, "config.yaml"))
   data$config <- config
 
-  log4r::debug(
-    .le$logger,
-    paste0("Reading ", report_dir, "/.python_dependency_versions.json")
+  data$venv_dir <- as.character(
+    fs::path_rel(getOption("venv_dir") %||% project_dir, project_dir)
   )
-  py_versions <- jsonlite::read_json(
-    file.path(report_dir, ".python_dependency_versions.json")
-  )
-  data$python_versions <- py_versions
 
   log4r::debug(.le$logger, "Assembled data for saving as JSON")
   json_data <- jsonlite::toJSON(data, pretty = TRUE, auto_unbox = TRUE)

@@ -1,6 +1,9 @@
-#' Synchronizes report project with config and python
-#' dependencies set through options. Uses .report_dir_name_init.json
-#' to track differences.
+#' Synchronizes report project with the bundled pyro Python
+#' environment and reconciles the report `config.yaml` against the
+#' `.<report>_init.json` snapshot. Always runs
+#' `pyro::initialize_python(groups = "reportifyr")`; prompts the
+#' user only when the project `.venv` is missing, otherwise runs
+#' non-interactively (a no-op when uv reports no work needed).
 #'
 #' @param project_dir The file path to the main project directory
 #' where the directory structure will be created.
@@ -43,69 +46,16 @@ sync_report_project <- function(project_dir, report_dir_name = NULL) {
   # bool for later use
   update_init_file <- FALSE
 
-  log4r::debug(
-    .le$logger,
-    "Grabbing python deps info from options and filesystem"
-  )
-  uv_path <- get_uv_path()
-  args <- get_args(uv_path)
-  args_name <- c(
-    "venv_dir",
-    "python-docx.version",
-    "pyyaml.version",
-    "pillow.version",
-    "uv.version",
-    "python.version"
-  )
-
-  pyvers <- get_py_version(getOption("venv_dir"))
-
-  # Ensure args has a slot for python.version
-  idx <- match("python.version", args_name)
-  if (length(args) < idx) {
-    args <- c(args, rep("", idx - length(args)))
+  log4r::debug(.le$logger, "Calling pyro::initialize_python")
+  pyro::write_group_to_pyproject("reportifyr")
+  venv_path <- file.path(getOption("venv_dir") %||% project_dir, ".venv")
+  if (dir.exists(venv_path)) {
+    pyro::initialize_python(continue = "Y", groups = "reportifyr")
+  } else {
+    message("Python virtual environment missing. Reinitializing...")
+    pyro::initialize_python(groups = "reportifyr")
   }
 
-  # Replace (or set) python.version value
-  args[idx] <- pyvers
-
-  py_version_data <- stats::setNames(as.list(args), args_name)
-  formatted_deps <- paste0(
-    names(py_version_data),
-    "=",
-    unlist(py_version_data),
-    collapse = ", "
-  )
-  log4r::debug(
-    .le$logger,
-    paste0(
-      "Obtained the following python deps: ",
-      formatted_deps
-    )
-  )
-
-  # check init against current py dep requests
-  if (!identical(init$python_versions, py_version_data)) {
-    log4r::debug(.le$logger, "init file and py version deps out of sync.")
-    message(
-      paste0(
-        "Python dependency versions have been changed, updating ",
-        init_file
-      )
-    )
-    log4r::debug(.le$logger, "Calling initialize_python now")
-    metadata_path <- initialize_python(continue = "Y")
-    update_init_file <- TRUE
-
-    if (file.exists(metadata_path) && dir.exists(report_dir)) {
-      file.copy(
-        from = metadata_path,
-        to = file.path(report_dir, basename(metadata_path)),
-        overwrite = TRUE
-      )
-      log4r::debug(.le$logger, "Updating .python_dependency_versions.json in report_dir_name")
-    }
-  }
   # Check config
   log4r::debug(.le$logger, "getting config path now")
   config_path <- file.path(report_dir, "config.yaml")
@@ -162,7 +112,6 @@ sync_report_project <- function(project_dir, report_dir_name = NULL) {
     message("Updated")
     init$last_modified <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
     init$user <- Sys.info()[["user"]]
-    init$python_versions <- py_version_data
     init$config <- config
 
     json_data <- jsonlite::toJSON(init, pretty = TRUE, auto_unbox = TRUE)

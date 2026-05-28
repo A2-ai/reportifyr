@@ -11,6 +11,8 @@ ggsave_with_metadata(
   meta_equations = NULL,
   meta_notes = NULL,
   meta_abbrevs = NULL,
+  config_yaml = NULL,
+  context = NULL,
   ...
 )
 }
@@ -25,9 +27,23 @@ ggsave_with_metadata(
 
 \item{meta_notes}{A string or vector of strings representing notes to include in the metadata. Default is \code{NULL}.}
 
-\item{meta_abbrevs}{A string or vector of strings representing abbreviations to include in the metadata. Default is \code{NULL}.}
+\item{meta_abbrevs}{A string or vector of strings representing abbreviations
+to include in the metadata. Default is \code{NULL}.}
 
-\item{...}{Additional arguments passed to the \code{ggplot2::ggsave()} function.}
+\item{config_yaml}{The file path to the \code{config.yaml}.
+Default is \code{NULL}. If provided, \code{add_path_overlay} in the
+config controls whether a path is stamped onto the saved PNG:
+\code{"source"} stamps the source script path, \code{"object"} stamps
+the saved image's path (relative to the project root), and
+\code{"none"} (default) disables the overlay.}
+
+\item{context}{An \code{rpfy_context} built via \code{\link[=rpfy_context]{rpfy_context()}}. When
+\code{NULL} (default) an ephemeral context is constructed with all
+defaults. Passing an existing context avoids recomputing
+session-level fields on every artifact.}
+
+\item{...}{Additional arguments passed to the
+\code{ggplot2::ggsave()} function.}
 }
 \description{
 Extension to the \code{ggsave()} function that allows capturing object metadata as a separate \code{.json} file.

@@ -68,11 +68,58 @@ build_report <- function(
     )
   }
 
-  # Save over input docx without tfls
-  remove_tables_figures_footnotes(
-    docx_in = docx_in,
-    docx_out = doc_dirs$doc_clean,
-    config_yaml
+  # Remove existing artifacts selectively
+  validate_input_args(docx_in, doc_dirs$doc_clean)
+  validate_alt_text_magic_strings(docx_in)
+
+  # Remove footnotes only if add_footnotes is TRUE
+  if (add_footnotes) {
+    notes_args <- c(
+      "run", "-m", "reportipyr.cli", "remove-footnotes",
+      "-i", docx_in, "-o", doc_dirs$doc_clean,
+      "-c", config_yaml
+    )
+    if (!is.null(figures_path)) {
+      notes_args <- c(notes_args, "--figures-dir", figures_path)
+    }
+    if (!is.null(tables_path)) {
+      notes_args <- c(notes_args, "--tables-dir", tables_path)
+    }
+    log4r::debug(.le$logger, "Running remove footnotes script")
+    run_python_script(
+      notes_args, "Remove footnotes script"
+    )
+  } else {
+    log4r::debug(.le$logger, "Skipping footnote removal (add_footnotes = FALSE)")
+    file.copy(docx_in, doc_dirs$doc_clean, overwrite = TRUE)
+  }
+
+  # Remove tables
+  tab_args <- c(
+    "run", "-m", "reportipyr.cli", "remove-tables",
+    "-i", doc_dirs$doc_clean, "-o", doc_dirs$doc_clean,
+    "-c", config_yaml
+  )
+  if (!is.null(tables_path)) {
+    tab_args <- c(tab_args, "-d", tables_path)
+  }
+  log4r::debug(.le$logger, "Running remove tables script")
+  run_python_script(
+    tab_args, "Remove tables script"
+  )
+
+  # Remove figures
+  fig_args <- c(
+    "run", "-m", "reportipyr.cli", "remove-figures",
+    "-i", doc_dirs$doc_clean, "-o", doc_dirs$doc_clean,
+    "-c", config_yaml
+  )
+  if (!is.null(figures_path)) {
+    fig_args <- c(fig_args, "-d", figures_path)
+  }
+  log4r::debug(.le$logger, "Running remove figures script")
+  run_python_script(
+    fig_args, "Remove figures script"
   )
 
   add_tables(
@@ -113,10 +160,7 @@ build_report <- function(
       },
       error = function(e) {
         log4r::error(.le$logger, paste("Footnotes scripts failed:", e$message))
-        stop(
-          "build_report stopped: Failed to add footnotes due to an error in add_footnotes.",
-          call. = FALSE
-        )
+        stop(paste0("build_report stopped: ", e$message), call. = FALSE)
       }
     )
   }

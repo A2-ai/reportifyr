@@ -128,94 +128,34 @@ get_packages <- function() {
 }
 
 
-#' /.cargo/bin post v0.5.0 to /.local/bin
+#' Find the reportifyr project root directory
 #'
-#' @param quite boolean to suppress log message
+#' Searches upward from `start_path` for a reportifyr init file
+#' (e.g., `.report_init.json`). Returns the directory containing
+#' the init file, or `NULL` if none is found.
 #'
-#' @return path to uv
+#' @param start_path Path to start searching from.
+#'   Defaults to the current working directory.
 #'
-#' @keywords internal
-#' @noRd
-get_uv_path <- function(quiet = FALSE) {
-  # First check if uv is available in PATH (cross-platform)
-  # Only check PATH if it's not empty (for test isolation)
-  path_env <- Sys.getenv("PATH")
-  uv_in_path <- if (nzchar(path_env)) Sys.which("uv") else ""
-
-  # Get home directory - respect HOME env var for test isolation
-  home_env <- Sys.getenv("HOME")
-  if (nzchar(home_env)) {
-    # Use HOME env var (for tests or Unix)
-    home_dir <- home_env
-  } else {
-    # Use default expansion
-    home_dir <- path.expand("~")
-  }
-
-  if (.Platform$OS.type == "windows") {
-    # Windows paths
-    uv_paths <- c(
-      file.path(home_dir, ".local", "bin", "uv.exe"),
-      file.path(home_dir, ".local", "bin", "uv"),      # for tests without .exe
-      file.path(home_dir, ".cargo", "bin", "uv.exe"),
-      file.path(home_dir, ".cargo", "bin", "uv")       # for tests without .exe
-    )
-  } else {
-    # Unix paths
-    uv_paths <- c(
-      file.path(home_dir, ".local", "bin", "uv"),
-      file.path(home_dir, ".cargo", "bin", "uv")
-    )
-  }
-
-  # Combine PATH result with known locations (prefer PATH version)
-  if (nzchar(uv_in_path)) {
-    uv_paths <- c(uv_in_path, uv_paths)
-  }
-
-  # Find the first existing path
-  uv_paths <- uv_paths[nzchar(uv_paths) & file.exists(uv_paths)]
-
-  uv_path <- if (length(uv_paths)) normalizePath(uv_paths[[1]]) else NULL
-
-  if (!quiet) {
-    if (is.null(uv_path)) {
-      log4r::warn(
-        .le$logger,
-        "uv not found. Please install with initialize_python"
-      )
-    }
-  }
-  uv_path
-}
-
-#' Gets the version of uv
+#' @return Absolute path to the project root directory,
+#'   or `NULL` if no init file is found.
 #'
-#' @param uv_path path to uv
-#' @keywords internal
-#' @noRd
-get_uv_version <- function(uv_path) {
-  result <- processx::run(uv_path, "--version")
-  # output should be "uv version (commit date)"
-  uv_version <- trimws(strsplit(result$stdout, " ")[[1]][2])
-
-  uv_version
-}
-
-#' Find the project root directory by looking for *_init.json files
+#' @export
 #'
-#' @param start_path Path to start searching from. Defaults to current directory.
-#'
-#' @return Path to project root directory, or NULL if not found
-#'
-#' @keywords internal
-#' @noRd
+#' @examples \dontrun{
+#' find_project_root()
+#' }
 find_project_root <- function(start_path = getwd()) {
   current_path <- normalizePath(start_path)
 
   while (TRUE) {
     # Look for any .*_init.json file (e.g., .report_init.json, .custom_init.json)
-    init_files <- list.files(current_path, pattern = "^\\.[^.]*_init\\.json$", full.names = TRUE, all.files = TRUE)
+    init_files <- list.files(
+      current_path,
+      pattern = "^\\.[^.]*_init\\.json$",
+      full.names = TRUE,
+      all.files = TRUE
+    )
     if (length(init_files) > 0) {
       return(current_path)
     }
@@ -235,13 +175,139 @@ find_project_root <- function(start_path = getwd()) {
   return(NULL)
 }
 
+#' Detect the source script path
+#'
+#' Checks for a Quarto render context first, then falls back
+#' to \code{this.path::this.path()}.
+#'
+#' @return Absolute path to the source script,
+#'   or \code{"SOURCE_PATH_NOT_DETECTED"} if detection fails.
+#'
+#' @keywords internal
+#' @noRd
+get_source_path <- function() {
+  tryCatch(
+    {
+      qmd_path <- detect_quarto_render()
+      if (!is.null(qmd_path)) {
+        log4r::info(
+          .le$logger,
+          paste0("Detected Quarto render; using .qmd file: ", qmd_path)
+        )
+        qmd_path
+      } else if (requireNamespace("this.path", quietly = TRUE)) {
+        sp <- this.path::this.path()
+        if (!is.null(sp) && nzchar(sp)) {
+          sp <- normalizePath(sp)
+          log4r::info(
+            .le$logger,
+            paste0("Source path detected via this.path: ", sp)
+          )
+          sp
+        } else {
+          log4r::warn(
+            .le$logger,
+            "this.path did not return a valid script path"
+          )
+          "SOURCE_PATH_NOT_DETECTED"
+        }
+      } else {
+        log4r::warn(
+          .le$logger,
+          paste0(
+            "Unable to detect source path via Quarto",
+            " or this.path(); setting placeholder"
+          )
+        )
+        "SOURCE_PATH_NOT_DETECTED"
+      }
+    },
+    error = function(e) {
+      log4r::warn(
+        .le$logger,
+        paste0("Error detecting source path: ", e$message)
+      )
+      "SOURCE_PATH_NOT_DETECTED"
+    }
+  )
+}
+
+#' Run a Python script via uv, forwarding to pyro with reportifyr's
+#' py-log stderr callback
+#'
+#' Thin wrapper over `pyro::run_python_script()` that resolves the uv and
+#' venv paths via `pyro::get_venv_uv_paths()` and supplies reportifyr's
+#' `PYTHONPATH` (`inst/python/`) and a stderr callback that mirrors every
+#' Python log line into the rpfy session log file while filtering console
+#' output by `RPFY_VERBOSE`.
+#'
+#' @param args Arguments to pass to uv
+#' @param script_name Name of the script for logging purposes
+#'
+#' @return The result from `pyro::run_python_script()`
+#'
+#' @keywords internal
+#' @noRd
+run_python_script <- function(args, script_name) {
+  paths <- pyro::get_venv_uv_paths()
+  log_file <- .le$log_file
+  no_log <- getOption("rpfy.no_log", FALSE)
+
+  py_levels <- c(
+    "DEBUG" = 1, "INFO" = 2, "WARNING" = 3, "ERROR" = 4, "CRITICAL" = 5
+  )
+  r_levels <- c(
+    "DEBUG" = 1, "INFO" = 2, "WARN" = 3, "ERROR" = 4, "FATAL" = 5
+  )
+  threshold <- r_levels[[Sys.getenv("RPFY_VERBOSE", unset = "WARN")]]
+
+  py_callback <- function(chunk, proc) {
+    lines <- strsplit(chunk, "\n")[[1]]
+    for (line in lines) {
+      line <- trimws(line)
+      if (nchar(line) == 0) next
+
+      if (!is.null(log_file) && !no_log) {
+        cat(line, "\n", file = log_file, append = TRUE)
+      }
+
+      show <- TRUE
+      level_match <- regmatches(
+        line, regexpr("\\[(DEBUG|INFO|WARNING|ERROR|CRITICAL)\\]", line)
+      )
+      if (length(level_match) == 1) {
+        level <- gsub("\\[|\\]", "", level_match)
+        show <- py_levels[[level]] >= threshold
+      }
+      if (show) cat(line, "\n")
+    }
+  }
+
+  pyro::run_python_script(
+    uv_path = paths$uv,
+    args = args,
+    venv_path = paths$venv,
+    script_name = script_name,
+    pythonpath = system.file("python", package = "reportifyr"),
+    stderr_callback = py_callback,
+    verbose_env = "RPFY_VERBOSE"
+  )
+}
+
 detect_quarto_render <- function() {
   log4r::debug(.le$logger, "Starting detect_quarto_render()")
 
   # --- Detect Quarto context ---
-  quarto_vars <- Sys.getenv(c("QUARTO_PROJECT_ROOT", "QUARTO_BIN_PATH", "QUARTO_RENDER_TOKEN"))
+  quarto_vars <- Sys.getenv(c(
+    "QUARTO_PROJECT_ROOT",
+    "QUARTO_BIN_PATH",
+    "QUARTO_RENDER_TOKEN"
+  ))
   is_quarto <- any(quarto_vars != "")
-  log4r::debug(.le$logger, paste0("Quarto environment vars detected: ", is_quarto))
+  log4r::debug(
+    .le$logger,
+    paste0("Quarto environment vars detected: ", is_quarto)
+  )
 
   if (!is_quarto) {
     log4r::debug(.le$logger, "Not running in a Quarto context, returning NULL")
@@ -250,11 +316,23 @@ detect_quarto_render <- function() {
 
   # --- Get current input ---
   current <- tryCatch(knitr::current_input(), error = function(e) NULL)
-  log4r::debug(.le$logger, paste0("knitr::current_input() returned: ", ifelse(is.null(current), "NULL", current)))
+  log4r::debug(
+    .le$logger,
+    paste0(
+      "knitr::current_input() returned: ",
+      ifelse(is.null(current), "NULL", current)
+    )
+  )
 
   # --- Validate current file pattern ---
-  if (is.null(current) || !grepl("\\.(Rmd|rmarkdown)$", current, ignore.case = TRUE)) {
-    log4r::debug(.le$logger, "Current input is NULL or not an .Rmd/.rmarkdown file, returning NULL")
+  if (
+    is.null(current) ||
+      !grepl("\\.(Rmd|rmarkdown)$", current, ignore.case = TRUE)
+  ) {
+    log4r::debug(
+      .le$logger,
+      "Current input is NULL or not an .Rmd/.rmarkdown file, returning NULL"
+    )
     return(NULL)
   }
 
@@ -265,17 +343,59 @@ detect_quarto_render <- function() {
   log4r::debug(.le$logger, paste0("Candidate .qmd path: ", qmd_path))
 
   if (file.exists(qmd_path)) {
-    log4r::info(.le$logger, paste0(
-      "Detected Quarto render: .Rmd intermediate '", current,
-      "' mapped to existing .qmd: ", qmd_path
-    ))
+    log4r::info(
+      .le$logger,
+      paste0(
+        "Detected Quarto render: .Rmd intermediate '",
+        current,
+        "' mapped to existing .qmd: ",
+        qmd_path
+      )
+    )
     return(normalizePath(qmd_path))
   } else {
-    log4r::warn(.le$logger, paste0(
-      "Quarto environment detected, but .qmd not found at: ", qmd_path,
-      ", returning NULL"
-    ))
+    log4r::warn(
+      .le$logger,
+      paste0(
+        "Quarto environment detected, but .qmd not found at: ",
+        qmd_path,
+        ", returning NULL"
+      )
+    )
     return(NULL)
   }
 }
 
+#' Resolve a relative path within an artifact directory
+#'
+#' @param artifact_dir The artifact directory (figures/tables) to resolve within
+#' @param relative_path The relative path to resolve
+#' @return The resolved absolute path
+#'
+#' @keywords internal
+#' @noRd
+safe_resolve <- function(artifact_dir, relative_path) {
+  boundary <- as.character(fs::path_norm(
+    normalizePath(artifact_dir, mustWork = TRUE)
+  ))
+  resolved <- as.character(
+    fs::path_norm(file.path(boundary, relative_path))
+  )
+  sep <- .Platform$file.sep
+  outside <- resolved != boundary &&
+    !startsWith(resolved, paste0(boundary, sep))
+  if (outside) {
+    log4r::error(
+      .le$logger,
+      paste0(
+        "Path '", relative_path,
+        "' resolves outside of '", artifact_dir, "'"
+      )
+    )
+    stop(
+      "Path '", relative_path,
+      "' resolves outside of '", artifact_dir, "'"
+    )
+  }
+  resolved
+}

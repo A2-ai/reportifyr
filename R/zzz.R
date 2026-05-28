@@ -1,5 +1,14 @@
 .onLoad <- function(libname, pkgname) {
-  toggle_logger(quiet = TRUE)
+  # Set up log file path (lazy — file created on first write)
+  project_root <- find_project_root()
+  if (is.null(project_root)) {
+    project_root <- here::here()
+  }
+  log_dir <- file.path(project_root, ".rpfy-logs")
+  prune_rpfy_logs(log_dir)
+  session_timestamp <- format(Sys.time(), "%Y-%m-%d-%H-%M-%S")
+  log_file <- file.path(log_dir, paste0(session_timestamp, "-rpfy.log"))
+  toggle_logger(quiet = TRUE, log_file = log_file, lazy_file = TRUE)
 }
 
 .onAttach <- function(libname, pkgname) {
@@ -35,14 +44,14 @@ reportifyr_options_message <- function() {
   # NICE TO HAVES
   uvversion <- getOption("uv.version")
   if (is.null(uvversion)) {
-    uv_path <- get_uv_path(quiet = TRUE)
+    uv_path <- pyro::get_uv_path(quiet = TRUE)
     if (is.null(uv_path)) {
       optional_options <- c(
         optional_options,
-        "Using uv version 0.7.8, set options('uv.version') to change"
+        "uv not installed; initialize_python() will install a default version"
       )
     } else {
-      uv_version <- get_uv_version(uv_path)
+      uv_version <- pyro::get_uv_version(uv_path)
       set_options <- c(
         set_options,
         paste0("Using installed uv version ", uv_version)
@@ -50,46 +59,6 @@ reportifyr_options_message <- function() {
     }
   } else {
     set_options <- c(set_options, paste("uv.version:", uvversion))
-  }
-
-  pyversion <- getOption("python.version")
-  if (is.null(pyversion)) {
-    optional_options <- c(
-      optional_options,
-      "Using system python version, set options('python.version') to change"
-    )
-  } else {
-    set_options <- c(set_options, paste("python.version:", pyversion))
-  }
-
-  docx_vers <- getOption("python-docx.version")
-  if (is.null(docx_vers)) {
-    optional_options <- c(
-      optional_options,
-      "Using python-docx version 1.1.2, set options('python-docx.version') to change"
-    )
-  } else {
-    set_options <- c(set_options, paste("python-docx.version:", docx_vers))
-  }
-
-  pyyaml_vers <- getOption("pyyaml.version")
-  if (is.null(pyyaml_vers)) {
-    optional_options <- c(
-      optional_options,
-      "Using pyyaml version 6.0.2, set options('pyyaml.version') to change"
-    )
-  } else {
-    set_options <- c(set_options, paste("pyyaml.version:", pyyaml_vers))
-  }
-
-  pillow_vers <- getOption("pillow.version")
-  if (is.null(pillow_vers)) {
-    optional_options <- c(
-      optional_options,
-      "Using pillow v11.1.0, set options('pillow.version') to change"
-    )
-  } else {
-    set_options <- c(set_options, paste("pillow.version:", pillow_vers))
   }
 
   # format .onAttach message

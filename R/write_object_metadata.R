@@ -6,6 +6,10 @@
 #' @param meta_notes A string or vector of strings representing notes to include in the metadata. Default is `NULL`.
 #' @param meta_abbrevs A string or vector of strings representing abbreviations to include in the metadata. Default is `NULL`.
 #' @param table1_format A boolean indicating whether table1 formatting is used for `add_tables()`. Default is `FALSE`.
+#' @param context An `rpfy_context` built via [rpfy_context()]. When
+#'   `NULL` (default) an ephemeral context is constructed with all
+#'   defaults. Passing an existing context avoids recomputing
+#'   session-level fields on every artifact.
 #'
 #' @export
 #'
@@ -21,7 +25,8 @@ write_object_metadata <- function(
   meta_equations = NULL,
   meta_notes = NULL,
   meta_abbrevs = NULL,
-  table1_format = FALSE
+  table1_format = FALSE,
+  context = NULL
 ) {
   log4r::debug(.le$logger, "Starting write_object_metadata function")
 
@@ -36,89 +41,35 @@ write_object_metadata <- function(
 
   log4r::info(.le$logger, paste0("File exists: ", object_file))
 
-  # Collect vars
-  timestamp <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
-  rvers <- R.version$version.string
-  platform <- R.version$platform
+  context <- resolve_context(context)
 
-  log4r::info(
-    .le$logger,
-    paste0("Collected system metadata: ", list(timestamp, rvers, platform))
-  )
+  project_root <- context$project_root
+  if (is.null(project_root)) {
+    log4r::error(
+      .le$logger,
+      "Could not find project root directory (no *_init.json file found)"
+    )
+    stop(
+      "Could not find project root directory. Make sure you're in a reportifyr project (run initialize_report_project() first)"
+    )
+  }
+
+  timestamp <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
 
   hash <- digest::digest(file = object_file, algo = "blake3")
   log4r::info(.le$logger, paste0("Generated file hash: ", hash))
 
-  source_path <- tryCatch({
-    qmd_path <- detect_quarto_render()
-    if (!is.null(qmd_path)) {
-      log4r::info(.le$logger,
-                  paste0("Detected Quarto render; using .qmd file: ", qmd_path))
-      qmd_path
-    } else if (requireNamespace("this.path", quietly = TRUE)) {
-      sp <- this.path::this.path()
-      if (!is.null(sp) && nzchar(sp)) {
-        sp <- normalizePath(sp)
-        log4r::info(.le$logger,
-                    paste0("Source path detected via this.path: ", sp))
-        sp
-      } else {
-        log4r::warn(.le$logger,
-                    "this.path did not return a valid script path; setting placeholder")
-        "SOURCE_PATH_NOT_DETECTED"
-      }
-    } else {
-      log4r::warn(.le$logger,
-                  "Unable to detect source path via Quarto or this.path(); setting placeholder")
-      "SOURCE_PATH_NOT_DETECTED"
-    }
-  },
-  error = function(e) {
-    log4r::warn(.le$logger,
-                paste0("Error detecting source path: ", e$message))
-    "SOURCE_PATH_NOT_DETECTED"
-  })
-
-  # Find project root directory (containing .*_init.json)
-  project_root <- find_project_root()
-
-  if (is.null(project_root)) {
-    log4r::error(.le$logger, "Could not find project root directory (no *_init.json file found)")
-    stop("Could not find project root directory. Make sure you're in a reportifyr project (run initialize_report_project() first)")
-  }
-
-  # Convert source path to relative path from project root
-  source_path_relative <- fs::path_rel(source_path, project_root)
-  log4r::info(.le$logger, paste0("Source file path (relative): ", source_path_relative))
-
-  # Convert object path to relative path from project root
   object_path_relative <- fs::path_rel(normalizePath(object_file), project_root)
-  log4r::info(.le$logger, paste0("Object file path (relative): ", object_path_relative))
-
-  source_path_git_info <- get_git_info(source_path)
   log4r::info(
     .le$logger,
-    paste0("Fetched git info for source file: ", source_path_git_info)
+    paste0("Object file path (relative): ", object_path_relative)
   )
 
-  # Combine into expected structure
   data_to_save <- list(
-    system_meta = list(
-      platform = platform,
-      software = list(
-        version = as.character(rvers),
-        packages_used = get_packages()
-      )
-    ),
-    source_meta = list(
-      creation_author = source_path_git_info$creation_author,
-      latest_author = source_path_git_info$latest_author,
-      path = source_path_relative,
-      creation_time = source_path_git_info$creation_time,
-      latest_time = source_path_git_info$latest_time
-    ),
+    system_meta = context$system_meta,
+    source_meta = to_list(context$source_meta),
     object_meta = list(
-      author = get_git_config_author(),
+      author = context$author,
       path = object_path_relative,
       creation_time = as.character(timestamp),
       file_type = tools::file_ext(object_file),
@@ -132,6 +83,8 @@ write_object_metadata <- function(
       )
     )
   )
+
+  data_to_save$addl_meta <- context$addl_metadata %||% list()
 
   log4r::debug(.le$logger, "Assembled data for saving as JSON")
 

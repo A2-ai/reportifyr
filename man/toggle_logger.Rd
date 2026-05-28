@@ -2,15 +2,27 @@
 % Please edit documentation in R/toggle_logger.R
 \name{toggle_logger}
 \alias{toggle_logger}
-\title{Updates the logging level for functions. Default is set to WARN}
+\title{Updates the logging level for console output. Default is set to WARN.
+File logging is always at DEBUG level when log_file is provided. Set
+\code{options(rpfy.no_log = TRUE)} to suppress file logging for the
+session (console output is unaffected).}
 \usage{
-toggle_logger(quiet = FALSE)
+toggle_logger(quiet = FALSE, log_file = get_log_file(), lazy_file = FALSE)
 }
 \arguments{
 \item{quiet}{suppresses messaging about log level.}
+
+\item{log_file}{path to log file. Defaults to the current session log file
+set on package load. Use \code{get_log_file()} to retrieve the current
+path. Pass a custom path to write to a different file.}
+
+\item{lazy_file}{if TRUE, delay log file creation until first log write.}
 }
 \description{
-Updates the logging level for functions. Default is set to WARN
+Updates the logging level for console output. Default is set to WARN.
+File logging is always at DEBUG level when log_file is provided. Set
+\code{options(rpfy.no_log = TRUE)} to suppress file logging for the
+session (console output is unaffected).
 }
 \examples{
 \dontrun{

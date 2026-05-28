@@ -12,4 +12,5 @@ docs
 report
 *_init.json
 
-inst/scripts/__pycache__
+inst/python/*/__pycache__
+.rpfy-logs

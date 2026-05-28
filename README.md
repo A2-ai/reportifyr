@@ -61,8 +61,10 @@ two of `reportifyr`’s wrapper functions:
 # ------------------------------------------------------------------------------
 # Retrieve standardized parameters to ease footnote insertion
 # ------------------------------------------------------------------------------
-meta_abbrevs <- get_meta_abbrevs(path_to_footnotes_yaml = here::here("report", "standard_footnotes.yaml"))
-meta_type <- get_meta_type(path_to_footnotes_yaml = here::here("report", "standard_footnotes.yaml"))
+config_yaml <- here::here("report", "config.yaml")
+standard_footnotes_yaml <- here::here("report", "standard_footnotes.yaml")
+meta_abbrevs <- get_meta_abbrevs(path_to_footnotes_yaml = standard_footnotes_yaml)
+meta_type <- get_meta_type(path_to_footnotes_yaml = standard_footnotes_yaml)
 
 # ------------------------------------------------------------------------------
 # Construct and save a simple ggplot
@@ -81,22 +83,23 @@ plot_file_name <- "01-12345-pk-timecourse1.png"
 
 ggsave_with_metadata(
   filename = file.path(figures_path, plot_file_name),
-  meta_type = meta_type$conc-time-trajectories,
-  meta_abbrevs = c(meta_abbrevs$CMAXA)
+  meta_type = meta_type$`conc-time-trajectories`,
+  meta_abbrevs = c(meta_abbrevs$AUC),
+  config_yaml = config_yaml
 )
 
 # Alternatively you could call `ggplot2::ggsave()` and then call `write_object_metadata()`
 ggplot2::ggsave(
   filename = file.path(figures_path, plot_file_name),
-  plot = p,
+  plot = g,
   width = 6,
   height = 4
 )
 
 write_object_metadata(
   object_file = file.path(figures_path, plot_file_name),
-  meta_type = meta_type$conc-time-trajectories,
-  meta_abbrevs = c(meta_abbrevs$CMAXA)
+  meta_type = meta_type$`conc-time-trajectories`,
+  meta_abbrevs = c(meta_abbrevs$AUC)
 )
 ```
 
@@ -110,17 +113,18 @@ out_name <- "01-12345-pk-theoph.csv"
 write_csv_with_metadata(
   object = Theoph,
   file = file.path(tables_path, out_name),
-  row_names = FALSE
+  config_yaml = config_yaml,
+  row.names = FALSE
 )
 
 # Alternatively you could call `write.csv()` and then call `write_object_metadata()`.
 write.csv(
-  x = Theoph, 
-  file = file.path(tables_path, out_name), 
+  x = Theoph,
+  file = file.path(tables_path, out_name),
   row.names = FALSE
 )
 
-write_object_metadata(object = file.path(tables_path, out_name))
+write_object_metadata(object_file = file.path(tables_path, out_name))
 ```
 
 ## Steps at the Report Drafting Stage
@@ -137,6 +141,7 @@ doc_dirs <- make_doc_dirs(docx_in = docx_in)
 figures_path <- here::here("OUTPUTS", "figures")
 tables_path <- here::here("OUTPUTS", "tables")
 standard_footnotes_yaml <- here::here("report", "standard_footnotes.yaml")
+config_yaml <- here::here("report", "config.yaml")
 
 # ------------------------------------------------------------------------------
 # Step 1.
@@ -145,7 +150,8 @@ standard_footnotes_yaml <- here::here("report", "standard_footnotes.yaml")
 add_tables(
   docx_in = doc_dirs$doc_in,
   docx_out = doc_dirs$doc_tables,
-  tables_path = tables_path
+  tables_path = tables_path,
+  config_yaml = config_yaml
 )
 
 # ------------------------------------------------------------------------------
@@ -155,7 +161,8 @@ add_tables(
 add_plots(
   docx_in = doc_dirs$doc_tables,
   docx_out = doc_dirs$doc_tabs_figs,
-  figures_path = figures_path
+  figures_path = figures_path,
+  config_yaml = config_yaml
 )
 
 # ------------------------------------------------------------------------------
@@ -168,6 +175,7 @@ add_footnotes(
   figures_path = figures_path,
   tables_path = tables_path,
   standard_footnotes_yaml = standard_footnotes_yaml,
+  config_yaml = config_yaml,
   include_object_path = FALSE,
   footnotes_fail_on_missing_metadata = TRUE
 )
@@ -180,7 +188,8 @@ add_footnotes(
 # ---------------------------------------------------------------------------
 finalize_document(
   docx_in = doc_dirs$doc_draft,
-  docx_out = doc_dirs$doc_final
+  docx_out = doc_dirs$doc_final,
+  config_yaml = config_yaml
 )
 ```
 
@@ -196,6 +205,7 @@ doc_dirs <- make_doc_dirs(docx_in = docx_in)
 figures_path <- here::here("OUTPUTS", "figures")
 tables_path <- here::here("OUTPUTS", "tables")
 standard_footnotes_yaml <- here::here("report", "standard_footnotes.yaml")
+config_yaml <- here::here("report", "config.yaml")
 
 # ---------------------------------------------------------------------------
 # Step 1.
@@ -207,6 +217,9 @@ build_report(
   docx_out = doc_dirs$doc_draft,
   figures_path = figures_path,
   tables_path = tables_path,
-  standard_footnotes_yaml = standard_footnotes_yaml
+  standard_footnotes_yaml = standard_footnotes_yaml,
+  config_yaml = config_yaml,
+  include_object_path = FALSE,
+  footnotes_fail_on_missing_metadata = TRUE
 )
 ```

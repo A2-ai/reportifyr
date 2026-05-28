@@ -38,7 +38,7 @@ build_report(
   docx_out = doc_dirs$doc_draft,
   figures_path = figures_path,
   tables_path = tables_path,
-  standard_footnotes_yaml = standard_footnote_yaml
+  standard_footnotes_yaml = standard_footnotes_yaml
 )
 
 # ---------------------------------------------------------------------------

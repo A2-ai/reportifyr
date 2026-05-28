@@ -1,3 +1,100 @@
+# reportifyr 0.4.0
+## New Features
+
+* `rpfy_context()` captures session-level metadata (system info, source attribution, author, project root, caller-supplied tags) once and reuses it across many `*_with_metadata()` calls. A new `context` argument has been added to `ggsave_with_metadata()`, `save_rds_with_metadata()`, `write_csv_with_metadata()`, and `write_object_metadata()`. When `context = NULL` (default) an ephemeral context is built per call, so existing code is unaffected.
+  * Example:
+    ```{r}
+    ctx <- rpfy_context(
+      origin = shiny_source("myapp", app_version = "1.2.0"),
+      addl_metadata = list(analyst = "usr", study = "PK-001")
+    )
+
+    ggsave_with_metadata(
+      filename = "OUTPUTS/figures/pk.png",
+      context = ctx,
+      meta_type = "efficacy"
+    )
+    ```
+
+* `shiny_source()` and `script_source()` build typed `rpfy_source_meta` objects used as the `origin` argument to `rpfy_context()`. The class is the source of truth for the source type, written into `_metadata.json` as `source_meta.type` at serialization time. When `origin = NULL` the script case is auto-detected from `this.path` and the git history of the calling script. `validate_shiny_source()` and `validate_script_source()` are exported for callers that build sources programmatically.
+
+* `addl_metadata` on `rpfy_context()` accepts a named list of scalar character, numeric, or logical values. These are written to `_metadata.json` under a top-level `addl_meta` key for traceability of analyst/run identifiers, and are never rendered into the report footer. 
+
+* `skip_unchanged` in config.yaml (default `true`) enables hash-based artifact caching across rebuilds. Artifacts whose source files have not changed are preserved in place during `build_report()` instead of being removed and re-inserted, dramatically reducing rebuild time and preserving any Word-side formatting adjustments (column widths, cell shading, etc.) on unchanged content. Hashes are embedded in the alt text of each figure and table on insertion, and `skip_unchanged` consults those alt-text hashes at removal time to decide whether an artifact can be left in place.
+  * Hashes embedded in alt text on insertion:
+    * `[hash:...]` (figures and tables) is the BLAKE3 hash of the source artifact loaded from `_metadata.json`.
+    * `[content_hash:...]` (**tables only**) is the SHA-256 of normalized table body cell text; it detects edits made to table values directly in Word after insertion.
+    * `[grid:...]` (**tables only**) is a gzip+base64 snapshot of the original table cell text at insertion time, used as the reference for cell-by-cell reconciliation.
+  * For tables, removal evaluates three pathways:
+    1. **Fully unchanged** (object hash match + content hash match): the table is skipped entirely.
+    2. **Source unchanged, content edited** (object hash match, content hash mismatch): cell-by-cell reconciliation updates only the changed cells, preserving Word formatting. Alt text hashes are rewritten after reconciliation.
+    3. **Source changed or grid dimensions changed**: full removal and re-insertion.
+  * For figures, an object hash match preserves the figure and its footnote in place; a mismatch falls back to full removal and re-insertion.
+  * Footnote removal also respects `skip_unchanged`: footnotes belonging to unchanged artifacts are preserved by matching bookmark names against the unchanged artifact set.
+
+* Magic strings inside table cells are now processed end-to-end by the full reportifyr pipeline: validation, insertion, alt text, footnotes, removal, and finalization. Cell-level figures within a single table share one combined footnote paragraph placed after the table element, with Source/Notes/Abbreviations deduplicated across figures in the table. Merged cells are deduplicated via `_tc` identity. Previously, magic strings placed in table cells were silently ignored.
+
+* `add_tables()` now respects pre-formatted flextables passed through `save_rds_with_metadata()`. If the deserialized object inherits from `flextable`, the default `format_flextable()` pass is skipped and the user's formatting flows through unchanged.
+  * Example:
+    ```{r}
+    ft <- flextable::flextable(my_data) |>
+      flextable::bg(j = "Subject", bg = "lightgray") |>
+      flextable::width(j = "Time", width = 1.2)
+
+    save_rds_with_metadata(
+      object = ft,
+      file = "OUTPUTS/tables/01-pk-summary.RDS"
+    )
+    # build_report() inserts `ft` verbatim; gray background and 1.2" width are preserved.
+    ```
+
+* `initialize_report_project()` re-initialization (when the init file already exists) now validates and restores the full project structure. The report directory and its subdirectories (`draft/`, `final/`, `scripts/`, `shell/`), `config.yaml`, `standard_footnotes.yaml`, and the outputs directory subdirectories (`figures/`, `tables/`, `listings/`) are all checked and recreated if missing. Directory names are resolved from the init file when not supplied, falling back to defaults (`report`, `OUTPUTS`). Previously, re-initialization only checked whether the `.venv` directory existed.
+
+### Architecture
+* The Python code that drives docx manipulation has been consolidated from loose scripts under `inst/scripts/` into a proper `reportipyr` Python package at `inst/python/reportipyr/`. The package exposes a single CLI entry point (`uv run -m reportipyr.cli <subcommand>`); every R caller now invokes the CLI rather than shelling out to individual scripts. Modules are split by responsibility: `alt_text.py`, `config.py`, `docx_utils.py`, `figures.py`, `footnotes.py`, `logging.py`, `magic.py`, `tables.py`, `util.py`, `validate.py`, plus `cli.py` as the dispatcher.
+
+* `validate_docx()` now performs its checks via the aforementioned Python CLI using `python-docx` rather than R-side `officer`. Error messages have been reformatted to flow through the unified logging pipeline, and the duplicate-table warning was retuned to surface affected magic strings more clearly. Validation runs under the same `RPFY_VERBOSE` filtering as the rest of the build pipeline.
+
+* The R to Python logging pipeline now writes a unified session log file to `.rpfy-logs/<timestamp>-rpfy.log`. Every Python log line emitted on stderr by the bundled `reportipyr` CLI is captured by an R-side callback that (a) appends the line to the session log file and (b) prints it to the console filtered by `RPFY_VERBOSE` (default `WARN`). The log file itself always records at `DEBUG` regardless of console verbosity. R-side log lines emitted via `log4r` land in the same file with a `[R]` prefix, so the file is the single authoritative trace of a build for after-the-fact debugging. Session log files in `.rpfy-logs/` are pruned automatically on package load to keep the directory from growing unbounded over time. `prune_rpfy_logs()` deletes session logs older than 30 days and caps the directory at 500 files (oldest first).
+
+* The uv/Python bootstrap (downloading uv, resolving paths, writing version metadata, pinning python-docx/pillow/pyyaml) has been factored out into the standalone `pyro` package. reportifyr now declares `pyro` as a dependency and calls `pyro::initialize_python(groups = "reportifyr")` at init and sync time. The reportifyr-specific Python pins are written into the project `pyproject.toml` under `[tool.pyro.groups.reportifyr]` by `pyro::write_group_to_pyproject("reportifyr")`.
+  * `initialize_python()` is now a deprecated wrapper that forwards to `pyro::initialize_python()`.
+  * `sync_report_project()` now defers Python environment reconciliation to `pyro::initialize_python()` rather than tracking pinned versions itself. The `python_versions` block has been removed from `_init.json` and uv's lockfile is now the single source of truth for installed Python dependencies.
+  * `inst/extdata/uv_setup.sh` and `inst/extdata/uv_setup.ps1` were removed, along with `get_py_version()` and `get_uv_path()` and their tests.
+  * The package-load (`.onAttach`) message no longer enumerates `python.version`, `python-docx.version`, `pyyaml.version`, and `pillow.version` options — these are owned by `pyro` and surfaced through its own startup messaging. The reportifyr message now shows only `venv_dir` and the installed uv version.
+  * `DESCRIPTION` adds `pyro` to `Imports`.
+
+### Build Pipeline
+* `build_report()` calls each removal step independently (`remove-footnotes`, `remove-tables`, `remove-figures`) instead of the combined `remove_tables_figures_footnotes()`. Footnote removal is now conditional on the `add_footnotes` parameter. When `false`, footnotes are preserved and the document is copied as-is. Each removal step receives the relevant `figures_path` / `tables_path` and `config_yaml` arguments so it can apply the hash-based `skip_unchanged` logic consistently.
+
+### Configurable Toggles
+* `add_hash_to_footnotes` in config.yaml (default `false`) adds a `Hash: <blake3>` line to footnotes showing the object hash read from the artifact's `_metadata.json` file, ordered by the new `Hash` entry in `footnote_order`.
+* `add_path_overlay` in config.yaml (default `false`) stamps the source script path onto PNG figures saved through `ggsave_with_metadata()`. The overlay is rendered before metadata capture so the recorded artifact hash reflects the final image.
+* `keep_caption_next` in config.yaml (default `true`) controls whether the "keep with next" paragraph property is applied to captions before artifact insertion. When `false`, the caption formatting step is skipped and the input document is copied directly to the intermediate path.
+* `add_alt_text` in config.yaml (default `true`) controls whether alt text is embedded in figures and tables after insertion. When `false`, the alt text step is skipped and the intermediate document is copied directly to the output path.
+* `abbreviation_delimiter` in config.yaml (default `","`) controls the character used to join abbreviation entries in footnotes. Previously hard-coded.
+  * Before: `AUC: area under the curve. CL: clearance.`
+  * After (with default `,`): `AUC: area under the curve, CL: clearance.`
+
+### Footnote Updates
+* Bookmark names for footnotes are safe for artifacts with long file paths. Word enforces a 40-character limit on bookmark names; names that would exceed this are replaced with `fp_{md5hash}` (35 characters), and short names retain the readable `fp_{name}` format. Previously, deeply nested artifact paths could produce bookmark names that Word silently dropped, breaking the footnote anchor.
+* Footnote source rendering on the Python side now dispatches through a handler registry keyed by `source_meta.type`. A legacy handler is retained so `_metadata.json` files written by earlier reportifyr versions still render correctly.
+* Footnote font rendering now sets `w:hAnsi` and `w:cs` in addition to `w:ascii`, ensuring correct rendering for non-ASCII and complex script characters.
+
+## Minor Improvements
+* `find_project_root()` is now exported. It walks upward from the working directory looking for a `*_init.json` file and returns the project root path. Useful for scripts that need to resolve paths relative to the project root the same way reportifyr does internally; `rpfy_context()` uses it under the hood.
+* Artifact paths resolved from magic strings are now validated through a `safe_resolve()` helper that rejects paths outside the supplied `figures_path` / `tables_path`. A magic string like `{rpfy}:../../etc/passwd` will now error instead of silently reaching outside the artifact tree. Previously-valid relative paths that pointed outside the artifact directory will surface as errors and need to be moved into the artifact tree.
+* `remove_tables_figures_footnotes()`, `add_plots_alt_text()`, and `add_tables_alt_text()` accept `figures_path` and/or `tables_path` arguments for hash-based skip of unchanged artifacts and for embedding artifact hashes in alt text.
+* `footnote_order` in config.yaml supports a `Hash` entry for controlling placement of the hash footnote line.
+* `set_table_alt_text()` updates an existing `w:tblDescription` element instead of always appending a new one, preventing duplicate alt text on rebuilds.
+* `check_drawing_alt_text()` and `check_table_alt_text()` strip `[hash:...]`, `[content_hash:...]`, and `[grid:...]` suffixes before comparison, preventing false positive mismatch warnings.
+* `load_yaml()` returns `{}` instead of `None` for empty YAML files, preventing downstream `NoneType` errors.
+* `load_metadata()` catches `json.JSONDecodeError` in addition to `FileNotFoundError`, returning `None` with a warning instead of propagating an unhandled exception.
+
+## Bug Fixes
+* Fixed `validate_config()` reporting the wrong field name in `default_fig_width` validation, which previously said `"footnotes_font_size should be integer/double"`.
+* Fixed an incorrect log message in `add_plots()` that said `"Deleting intermediate tabs document"` from the figure insertion path; it now correctly says `"Deleting intermediate figs document"`.
+
 # reportifyr 0.3.4
 ## Bug Fixes
 

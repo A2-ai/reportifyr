@@ -18,6 +18,7 @@ test_that("validate_config returns TRUE for valid config ", {
     default_fig_width = 6.5,
     use_embedded_dimensions = FALSE,
     label_multi_figures = TRUE,
+    add_path_overlay = "source",
     strict = FALSE
   )
   config_path <- make_config_file(config)
@@ -65,6 +66,28 @@ test_that("validate_config returns FALSE for invalid default_fig_width", {
   config_path <- make_config_file(config)
 
   expect_false(validate_config(config_path))
+})
+
+test_that("validate_config returns FALSE for invalid add_path_overlay", {
+  config <- list(add_path_overlay = "yes")
+  config_path <- make_config_file(config)
+
+  expect_false(validate_config(config_path))
+})
+
+test_that("validate_config returns FALSE for logical add_path_overlay", {
+  config <- list(add_path_overlay = TRUE)
+  config_path <- make_config_file(config)
+
+  expect_false(validate_config(config_path))
+})
+
+test_that("validate_config accepts all add_path_overlay enum values", {
+  for (value in c("none", "source", "object")) {
+    config <- list(add_path_overlay = value)
+    config_path <- make_config_file(config)
+    expect_true(validate_config(config_path))
+  }
 })
 
 test_that("validate_config returns FALSE for multiple invalid fields", {

@@ -1,6 +1,6 @@
 Package: reportifyr
 Title: Reproducible Reporting Made Simple with R
-Version: 0.3.4
+Version: 0.4.0
 Authors@R: c(
     person("Jacob", "Dumbleton", , "jacob@a2-ai.com", role = c("aut", "cre")),
     person("Matthew", "Smith", , "matthews@a2-ai.com", role = "aut"),
@@ -20,16 +20,17 @@ Description: Create reproducible reports with Microsoft Word and R.
 License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Depends: 
-    R (>= 2.10)
-Imports: 
+    R (>= 4.1.0)
+Imports:
     assertthat,
     cli,
     digest,
     dplyr,
     flextable,
     fs,
+    pyro,
     gert,
     ggplot2,
     here,
@@ -41,6 +42,7 @@ Imports:
     rlang,
     this.path,
     tictoc,
+    xml2,
     yaml
 Suggests: 
     knitr,

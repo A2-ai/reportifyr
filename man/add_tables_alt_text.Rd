@@ -4,12 +4,14 @@
 \alias{add_tables_alt_text}
 \title{Inserts alt text for tables within a Microsoft Word file.}
 \usage{
-add_tables_alt_text(docx_in, docx_out, debug = FALSE)
+add_tables_alt_text(docx_in, docx_out, tables_path = NULL, debug = FALSE)
 }
 \arguments{
 \item{docx_in}{The file path to the input \code{.docx} file.}
 
 \item{docx_out}{The file path to the output \code{.docx} file to save to.}
+
+\item{tables_path}{The file path to the tables directory. Used to embed artifact hashes in alt text. Default is \code{NULL}.}
 
 \item{debug}{Debug.}
 }
