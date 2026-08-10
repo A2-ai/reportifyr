@@ -55,35 +55,29 @@ preview_metadata_files <- function(file_dir) {
     }
     log4r::info(.le$logger, paste0("Extracted meta_type: ", meta_type))
 
-    # If these fields are lists, join them into a single string, if empty make them "N/A"
-    meta_equations <- if (
-      length(json_content$object_meta$footnotes$equations) == 0
-    ) {
+    footnotes <- json_content$object_meta$footnotes
+
+    # fromJSON() returns these as a list (named arrays) or an atomic vector
+    # (unnamed arrays), so collapse on length rather than on type. Each field
+    # must end up length 1 or as.data.frame() below recycles it into extra rows.
+    meta_equations <- if (length(footnotes$equations) == 0) {
       "N/A"
-    } else if (is.list(json_content$object_meta$footnotes$equations)) {
-      paste(json_content$object_meta$footnotes$equations, collapse = ", ")
     } else {
-      json_content$object_meta$footnotes$equations
+      paste(unlist(footnotes$equations, use.names = FALSE), collapse = ", ")
     }
     log4r::info(.le$logger, paste0("Extracted equations: ", meta_equations))
 
-    meta_notes <- if (length(json_content$object_meta$footnotes$notes) == 0) {
+    meta_notes <- if (length(footnotes$notes) == 0) {
       "N/A"
-    } else if (is.list(json_content$object_meta$footnotes$notes)) {
-      paste(json_content$object_meta$footnotes$notes, collapse = ", ")
     } else {
-      json_content$object_meta$footnotes$notes
+      paste(unlist(footnotes$notes, use.names = FALSE), collapse = ", ")
     }
     log4r::info(.le$logger, paste0("Extracted notes: ", meta_notes))
 
-    meta_abbrevs <- if (
-      length(json_content$object_meta$footnotes$abbreviations) == 0
-    ) {
+    meta_abbrevs <- if (length(footnotes$abbreviations) == 0) {
       "N/A"
-    } else if (is.list(json_content$object_meta$footnotes$abbreviations)) {
-      paste(json_content$object_meta$footnotes$abbreviations, collapse = ", ")
     } else {
-      json_content$object_meta$footnotes$abbreviations
+      paste(unlist(footnotes$abbreviations, use.names = FALSE), collapse = ", ")
     }
     log4r::info(.le$logger, paste0("Extracted abbreviations: ", meta_abbrevs))
 
