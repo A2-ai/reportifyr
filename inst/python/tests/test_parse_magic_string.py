@@ -1,4 +1,8 @@
-from reportipyr.magic import parse_magic_string, get_magic_pattern
+from reportipyr.magic import (
+    build_magic_string,
+    parse_magic_string,
+    get_magic_pattern,
+)
 
 
 def test_parse_magic_string_single():
@@ -45,3 +49,29 @@ def test_parse_magic_string_mixed_extensions():
 def test_magic_pattern_matches():
     pattern = get_magic_pattern()
     assert pattern.search("{rpfy}:table.csv") is not None
+
+
+def test_build_magic_string_format():
+    # Single entry: no brackets
+    assert (
+        build_magic_string({"a.png": {"width": "4.0", "height": "5.0"}})
+        == "{rpfy}:a.png<width: 4.0, height: 5.0>"
+    )
+    # Empty args still emit an empty <>
+    assert build_magic_string({"a.png": {}}) == "{rpfy}:a.png<>"
+    # More than one entry: bracketed, joined with ", "
+    assert (
+        build_magic_string({"a.png": {"width": "4.0"}, "b.png": {}})
+        == "{rpfy}:[a.png<width: 4.0>, b.png<>]"
+    )
+
+
+def test_build_magic_string_round_trips_through_parse():
+    cases = [
+        {"a.png": {"width": "4.0", "height": "5.0"}},
+        {"a.png": {}},
+        {"a.png": {"width": "4.0", "height": "5.0"}, "b.png": {"width": "2.0"}},
+        {"a.png": {"width": "4.0"}, "b.png": {}, "table.csv": {}},
+    ]
+    for figure_args in cases:
+        assert parse_magic_string(build_magic_string(figure_args)) == figure_args
