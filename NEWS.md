@@ -1,3 +1,8 @@
+# reportifyr 0.4.1
+## Bug Fixes
+
+* Fixed an issue where a figure's magic string kept stale `<width: ..., height: ...>` values after the figure was resized in Word. When `skip_unchanged` kept an unchanged figure in place, `remove_figures()` skipped the dimension sync along with the removal. Dimensions are now synced whether or not the figure is removed.
+
 # reportifyr 0.4.0
 ## New Features
 
