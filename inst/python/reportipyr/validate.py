@@ -4,7 +4,7 @@ from docx import Document
 from .docx_utils import iter_cell_paragraphs
 from .magic import parse_magic_entries
 
-SUPPORTED_EXTENSIONS = {"csv", "rds", "png"}
+SUPPORTED_EXTENSIONS = {"csv", "rds", "xml", "png"}
 
 
 def validate_docx(docx_in: str, strict: bool = True) -> dict:
@@ -74,7 +74,7 @@ def validate_docx(docx_in: str, strict: bool = True) -> dict:
             result["errors"].append(message)
             result["errors"].append(
                 "Fix artifact extensions to continue. "
-                "Currently .csv, .RDS are accepted for tables "
+                "Currently .csv, .RDS, .xml are accepted for tables "
                 "and .png is accepted for figures."
             )
         else:

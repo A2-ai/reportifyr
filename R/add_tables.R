@@ -115,7 +115,7 @@ add_tables <- function(
     table_name <- gsub("\\{rpfy\\}:", "", doc_summary$text[[i]]) |> trimws()
     table_file <- safe_resolve(tables_path, table_name)
     # check extension is valid
-    if (tolower(tools::file_ext(table_file)) %in% c("rds", "csv")) {
+    if (tolower(tools::file_ext(table_file)) %in% c("rds", "csv", "xml")) {
       # Check if the file exists
       if (file.exists(table_file)) {
         if (!(table_file %in% processed_files)) {
@@ -183,6 +183,30 @@ process_table_file <- function(
     paste0("Processing table file: ", table_file)
   )
 
+  document <- officer::cursor_reach(
+    document,
+    paste0("\\{rpfy\\}:", table_name)
+  )
+
+  magic_par <- officer::docx_current_block_xml(document)
+
+  # Check if table already exists after the magic string (skip_unchanged kept it)
+  next_block <- xml2::xml_find_first(magic_par, "following-sibling::*[1]")
+  if (identical(xml2::xml_name(next_block), "tbl")) {
+    log4r::info(
+      .le$logger,
+      paste0("Table already present, skipping insertion for: ", table_name)
+    )
+    return(document)
+  }
+
+  # pre-exported WML (e.g. from tblkit): inserted as is, whatever the engine
+  if (tolower(tools::file_ext(table_file)) == "xml") {
+    insert_wml_table(document, magic_par, table_file)
+    log4r::info(.le$logger, paste0("Inserted WML table for: ", table_file))
+    return(document)
+  }
+
   # Load the table data
   data_in <- switch(
     tolower(tools::file_ext(table_file)),
@@ -236,23 +260,6 @@ process_table_file <- function(
       )
       flextable <- data_in
     }
-  }
-
-  document <- officer::cursor_reach(
-    document,
-    paste0("\\{rpfy\\}:", table_name)
-  )
-
-  magic_par <- officer::docx_current_block_xml(document)
-
-  # Check if table already exists after the magic string (skip_unchanged kept it)
-  next_block <- xml2::xml_find_first(magic_par, "following-sibling::*[1]")
-  if (identical(xml2::xml_name(next_block), "tbl")) {
-    log4r::info(
-      .le$logger,
-      paste0("Table already present, skipping insertion for: ", table_name)
-    )
-    return(document)
   }
 
   if (identical(table_engine, "tblkit")) {
@@ -316,12 +323,41 @@ insert_tblkit_table <- function(document, magic_par, ft, repo) {
   wml_file <- tblkit::tbl_wml(artifact, out = tempfile(fileext = ".xml"))
   on.exit(unlink(wml_file), add = TRUE)
 
-  tbl <- xml2::read_xml(wml_file)
-  set_normal_style_id(tbl, document)
+  insert_wml_table(document, magic_par, wml_file)
+}
 
+# Places the w:tbl in `wml_file` directly after the magic string paragraph.
+insert_wml_table <- function(document, magic_par, wml_file) {
+  tbl <- xml2::read_xml(wml_file)
+  if (xml2::xml_name(tbl) != "tbl") {
+    log4r::error(.le$logger, paste0("WML file does not hold a w:tbl: ", wml_file))
+    stop("WML file does not hold a w:tbl: ", wml_file)
+  }
+
+  # saved WML was sized for some page; say so if it does not fit this one
+  grid_w <- xml2::xml_attr(
+    xml2::xml_find_all(tbl, "w:tblGrid/w:gridCol", ns = c(w = W_NS)),
+    "w:w",
+    ns = c(w = W_NS)
+  )
+  table_width <- sum(as.numeric(grid_w), na.rm = TRUE) / 1440
+  text_width <- docx_text_width(document)
+  if (table_width > text_width + 1e-6) {
+    log4r::warn(
+      .le$logger,
+      sprintf(
+        "Table %s is %.2f in wide but the page text width is %.2f in",
+        basename(wml_file), table_width, text_width
+      )
+    )
+  }
+
+  set_normal_style_id(tbl, document)
   xml2::xml_add_sibling(magic_par, tbl, .where = "after")
   invisible(document)
 }
+
+W_NS <- "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 
 # Usable text width of the document's default section, in inches.
 docx_text_width <- function(document) {
@@ -343,7 +379,7 @@ set_normal_style_id <- function(tbl, document) {
   nodes <- xml2::xml_find_all(
     tbl,
     ".//w:pStyle[@w:val='Normal']",
-    ns = c(w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main")
+    ns = c(w = W_NS)
   )
   xml2::xml_set_attr(nodes, "w:val", normal_id[[1]])
   invisible(tbl)
