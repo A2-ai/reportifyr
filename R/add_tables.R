@@ -56,6 +56,19 @@ add_tables <- function(
 
   config <- yaml::read_yaml(config_yaml)
 
+  table_engine <- config$table_engine %||% "officer"
+  tblkit_repo <- NULL
+  if (identical(table_engine, "tblkit")) {
+    if (!requireNamespace("tblkit", quietly = TRUE)) {
+      log4r::error(.le$logger, "table_engine is 'tblkit' but tblkit is not installed")
+      stop("table_engine is 'tblkit' but tblkit is not installed")
+    }
+    # throwaway artifact repository; artifacts only live for this call
+    tblkit_repo <- tempfile("rpfy-tblkit-")
+    on.exit(unlink(tblkit_repo, recursive = TRUE), add = TRUE)
+  }
+  log4r::info(.le$logger, paste0("Table engine: ", table_engine))
+
   intermediate_docx <- gsub(".docx", "-int.docx", docx_out)
   log4r::info(
     .le$logger,
@@ -109,7 +122,9 @@ add_tables <- function(
           document <- process_table_file(
             table_file,
             document,
-            table_name
+            table_name,
+            table_engine = table_engine,
+            tblkit_repo = tblkit_repo
           )
           processed_files <- c(processed_files, table_file)
         } else {
@@ -156,7 +171,13 @@ add_tables <- function(
 }
 
 ### New function for processing #####
-process_table_file <- function(table_file, document, table_name) {
+process_table_file <- function(
+  table_file,
+  document,
+  table_name,
+  table_engine = "officer",
+  tblkit_repo = NULL
+) {
   log4r::info(
     .le$logger,
     paste0("Processing table file: ", table_file)
@@ -222,35 +243,39 @@ process_table_file <- function(table_file, document, table_name) {
     paste0("\\{rpfy\\}:", table_name)
   )
 
+  magic_par <- officer::docx_current_block_xml(document)
+
   # Check if table already exists after the magic string (skip_unchanged kept it)
-  # Access the XML body directly via officer's internal structure
-  body_node <- xml2::xml_find_first(
-    document$doc_obj$get(),
-    "//w:body",
-    ns = c(w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main")
-  )
-  body_children <- xml2::xml_children(body_node)
-  for (ci in seq_along(body_children)) {
-    child <- body_children[[ci]]
-    if (xml2::xml_name(child) == "p") {
-      child_text <- xml2::xml_text(child)
-      if (grepl(table_name, child_text, fixed = TRUE)) {
-        # Check if next sibling is a table
-        if (ci < length(body_children)) {
-          next_child <- body_children[[ci + 1]]
-          if (xml2::xml_name(next_child) == "tbl") {
-            log4r::info(
-              .le$logger,
-              paste0(
-                "Table already present, skipping insertion for: ",
-                table_name
-              )
-            )
-            return(document)
-          }
-        }
-        break
+  next_block <- xml2::xml_find_first(magic_par, "following-sibling::*[1]")
+  if (identical(xml2::xml_name(next_block), "tbl")) {
+    log4r::info(
+      .le$logger,
+      paste0("Table already present, skipping insertion for: ", table_name)
+    )
+    return(document)
+  }
+
+  if (identical(table_engine, "tblkit")) {
+    inserted <- tryCatch(
+      {
+        insert_tblkit_table(document, magic_par, flextable, tblkit_repo)
+        TRUE
+      },
+      tblkit_error = function(e) {
+        log4r::warn(
+          .le$logger,
+          paste0(
+            "tblkit could not insert ", table_name, " (",
+            if (is.null(e$code)) class(e)[[1]] else e$code, "): ",
+            conditionMessage(e), "; falling back to officer"
+          )
+        )
+        FALSE
       }
+    )
+    if (inserted) {
+      log4r::info(.le$logger, paste0("Inserted table with tblkit for: ", table_file))
+      return(document)
     }
   }
 
@@ -266,4 +291,60 @@ process_table_file <- function(table_file, document, table_name) {
   log4r::info(.le$logger, paste0("Inserted table for: ", table_file))
   # save to tmp docx file for next iteration
   document
+}
+
+# tblkit insertion -------------------------------------------------------------
+
+# Exports `ft` through tblkit (verified, fixed-width WML) and places the table
+# directly after the magic string paragraph `magic_par`. Signals a tblkit_error
+# when tblkit refuses the table (e.g. WIDTH_OVERFLOW, UNSUPPORTED_DEPENDENCY).
+insert_tblkit_table <- function(document, magic_par, ft, repo) {
+  # match the officer path's body_add_flextable(align, split, keepnext) arguments
+  ft$properties$align <- "center"
+  ft$properties$opts_word$split <- FALSE
+  ft$properties$opts_word$keep_with_next <- FALSE
+
+  width_inches <- docx_text_width(document)
+  log4r::debug(.le$logger, paste0("tblkit width ceiling (in): ", width_inches))
+
+  artifact <- tblkit::tbl_from_flextable(
+    ft,
+    width_inches = width_inches,
+    repo = repo,
+    check_refresh = FALSE
+  )
+  wml_file <- tblkit::tbl_wml(artifact, out = tempfile(fileext = ".xml"))
+  on.exit(unlink(wml_file), add = TRUE)
+
+  tbl <- xml2::read_xml(wml_file)
+  set_normal_style_id(tbl, document)
+
+  xml2::xml_add_sibling(magic_par, tbl, .where = "after")
+  invisible(document)
+}
+
+# Usable text width of the document's default section, in inches.
+docx_text_width <- function(document) {
+  dims <- officer::docx_dim(document)
+  unname(dims$page[["width"]] - dims$margins[["left"]] - dims$margins[["right"]])
+}
+
+# tblkit spells the paragraph style as the style *name* "Normal"; Word needs the
+# template's style *id*, which differs in localized templates.
+set_normal_style_id <- function(tbl, document) {
+  styles <- officer::styles_info(document, type = "paragraph")
+  normal_id <- styles$style_id[styles$style_name == "Normal"]
+  if (!length(normal_id)) {
+    normal_id <- styles$style_id[styles$is_default]
+  }
+  if (!length(normal_id) || identical(normal_id[[1]], "Normal")) {
+    return(invisible(tbl))
+  }
+  nodes <- xml2::xml_find_all(
+    tbl,
+    ".//w:pStyle[@w:val='Normal']",
+    ns = c(w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main")
+  )
+  xml2::xml_set_attr(nodes, "w:val", normal_id[[1]])
+  invisible(tbl)
 }

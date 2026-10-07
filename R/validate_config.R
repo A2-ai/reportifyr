@@ -191,6 +191,21 @@ validate_config <- function(path_to_config_yaml) {
     }
   }
 
+  log4r::debug(.le$logger, "Checking table_engine now")
+  if (!is.null(config$table_engine)) {
+    if (!identical(length(config$table_engine), 1L) ||
+      !(config$table_engine %in% c("officer", "tblkit"))) {
+      log4r::error(
+        .le$logger,
+        paste0(
+          "table_engine should be one of 'officer' or 'tblkit', not: ",
+          paste(config$table_engine, collapse = ", ")
+        )
+      )
+      valid <- FALSE
+    }
+  }
+
   log4r::debug(.le$logger, "Checking fig_alignment now")
   if (!is.null(config$fig_alignment)) {
     alignment <- c("center", "left", "right")
