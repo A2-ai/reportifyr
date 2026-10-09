@@ -11,7 +11,7 @@ repositories = [
 
 dependencies = [
 	{ name = "reportifyr", path = ".", install_suggestions = true },
-	{ name = "tblkit", git = "https://github.com/a2-ai-scientific-software/tblkit", branch = "dev", directory = "rpkg" },
+	{ name = "tblkit", git = "https://github.com/a2-ai-scientific-software/tblkit", branch = "producer-markers", directory = "rpkg" },
 	{ name = "pyro", git = "https://github.com/a2-ai/pyro", branch = "dev" },
 	{ name = "gdtools", repository = "CRAN" },
 	"devtools",

@@ -26,6 +26,9 @@ footnote_order:
 save_table_rtf: FALSE
 # Table insertion engine: "officer" (flextable::body_add_flextable) or "tblkit" (experimental)
 table_engine: "officer"
+# tblkit only: limit on the document's word/document.xml, in bytes (tblkit's own default
+# is 64 MiB; large reports need more, and memory use grows with it)
+tblkit_max_story_bytes: 536870912
 
 # Caption options
 keep_caption_next: TRUE

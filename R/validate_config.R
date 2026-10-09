@@ -206,6 +206,22 @@ validate_config <- function(path_to_config_yaml) {
     }
   }
 
+  log4r::debug(.le$logger, "Checking tblkit_max_story_bytes now")
+  if (!is.null(config$tblkit_max_story_bytes)) {
+    v <- config$tblkit_max_story_bytes
+    if (!is.numeric(v) || !identical(length(v), 1L) || is.na(v) ||
+      v < 1048576 || v > 1073741824 || v != round(v)) {
+      log4r::error(
+        .le$logger,
+        paste0(
+          "tblkit_max_story_bytes should be a whole number of bytes from 1048576 to ",
+          "1073741824, not: ", paste(v, collapse = ", ")
+        )
+      )
+      valid <- FALSE
+    }
+  }
+
   log4r::debug(.le$logger, "Checking fig_alignment now")
   if (!is.null(config$fig_alignment)) {
     alignment <- c("center", "left", "right")
