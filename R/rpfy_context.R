@@ -43,6 +43,10 @@ rpfy_context <- function(
   origin = NULL,
   addl_metadata = NULL
 ) {
+  build_rpfy_context(origin, addl_metadata, find_project_root())
+}
+
+build_rpfy_context <- function(origin, addl_metadata, project_root) {
   log4r::debug(.le$logger, "Building rpfy_context")
 
   if (!is.null(origin) && !inherits(origin, "rpfy_source_meta")) {
@@ -53,8 +57,6 @@ rpfy_context <- function(
       call. = FALSE
     )
   }
-
-  project_root <- find_project_root()
 
   addl_metadata <- validate_addl_metadata(addl_metadata)
 
@@ -75,11 +77,11 @@ rpfy_context <- function(
   author <- get_git_config_author()
 
   context <- new_rpfy_context(
-    system_meta   = system_meta,
-    source_meta   = source_meta,
+    system_meta = system_meta,
+    source_meta = source_meta,
     addl_metadata = addl_metadata,
-    author        = author,
-    project_root  = project_root
+    author = author,
+    project_root = project_root
   )
 
   validate_rpfy_context(context)
@@ -112,11 +114,11 @@ new_rpfy_context <- function(
 ) {
   structure(
     list(
-      system_meta   = system_meta,
-      source_meta   = source_meta,
+      system_meta = system_meta,
+      source_meta = source_meta,
       addl_metadata = addl_metadata,
-      author        = author,
-      project_root  = project_root
+      author = author,
+      project_root = project_root
     ),
     class = "rpfy_context"
   )
@@ -218,10 +220,8 @@ validate_rpfy_context <- function(context) {
   }
 
   if (
-    !(
-      inherits(context$source_meta, "rpfy_source_meta") ||
-        identical(context$source_meta, list())
-    )
+    !(inherits(context$source_meta, "rpfy_source_meta") ||
+      identical(context$source_meta, list()))
   ) {
     stop(
       "`context$source_meta` must be an `rpfy_source_meta` object or `list()`.",
@@ -255,22 +255,63 @@ validate_rpfy_context <- function(context) {
   invisible(context)
 }
 
-#' Coerce a caller-supplied `context` argument
-#'
-#' Used by the `*_with_metadata()` wrappers. If `context` is `NULL`,
-#' constructs a default one via [rpfy_context()]. Otherwise runs
-#' [validate_rpfy_context()] and returns the object. Errors for any
-#' other input type.
-#'
-#' @param context `NULL` or an `rpfy_context`.
-#'
-#' @return An `rpfy_context`.
-#'
-#' @keywords internal
-#' @noRd
-resolve_context <- function(context) {
-  if (is.null(context)) {
+resolve_context <- function(context, destination = NULL) {
+  if (!is.null(context)) {
+    validate_rpfy_context(context)
+    if (is.null(destination) || !is.null(context$project_root)) {
+      return(context)
+    }
+  } else if (is.null(destination)) {
     return(rpfy_context())
+  }
+
+  if (
+    !is.character(destination) ||
+      length(destination) != 1L ||
+      is.na(destination) ||
+      !nzchar(destination)
+  ) {
+    stop(
+      "The output file must be a single, non-empty file path.",
+      call. = FALSE
+    )
+  }
+
+  destination <- fs::path_abs(destination)
+  search_dir <- dirname(destination)
+  while (!dir.exists(search_dir)) {
+    parent <- dirname(search_dir)
+    if (identical(parent, search_dir)) {
+      break
+    }
+    search_dir <- parent
+  }
+
+  project_root <- find_project_root(search_dir)
+  if (is.null(project_root)) {
+    project_root <- find_project_root()
+  }
+  if (is.null(project_root)) {
+    stop(
+      "Could not find a reportifyr project for output: ",
+      destination,
+      "\nSearched the output directory and its ancestors, then the working ",
+      "directory and its ancestors: ",
+      fs::path_abs(getwd()),
+      "\nSave inside an initialized reportifyr project, run ",
+      "initialize_report_project() in the intended project directory, ",
+      "or supply a context with a valid project_root.",
+      "\nNothing was saved.",
+      call. = FALSE
+    )
+  }
+
+  if (is.null(context)) {
+    return(build_rpfy_context(NULL, NULL, project_root))
+  }
+  context$project_root <- project_root
+  if (identical(context$source_meta, list())) {
+    context$source_meta <- detect_script_source_meta(project_root)
   }
   validate_rpfy_context(context)
   context

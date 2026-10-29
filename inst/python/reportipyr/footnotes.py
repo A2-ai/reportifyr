@@ -3,6 +3,7 @@ import os
 import re
 import json
 import logging
+import math
 from typing import Optional
 
 from docx import Document
@@ -80,6 +81,21 @@ _SOURCE_HANDLERS = {
 }
 
 
+def _footnote_values(value):
+    """Normalize optional metadata, ignoring JSON null and R missing markers."""
+    values = value if isinstance(value, list) else [value]
+    result = []
+    for item in values:
+        if item is None or (isinstance(item, float) and math.isnan(item)):
+            continue
+        if isinstance(item, str):
+            item = item.strip()
+            if not item or item.upper() in {"NA", "NULL"}:
+                continue
+        result.append(item)
+    return result
+
+
 def create_meta_text_lines(
     footnotes: dict,
     metadata: dict,
@@ -112,20 +128,19 @@ def create_meta_text_lines(
 
     # Add notes metadata
     notes_text = ""
-    meta_type = metadata["object_meta"]["meta_type"]
-    notes_list = metadata["object_meta"]["footnotes"][
-        "notes"
-    ]  # If empty this might be a list -- should be ok because len will still work.
+    meta_type_values = _footnote_values(obj.get("meta_type"))
+    meta_type = meta_type_values[0] if meta_type_values else None
+    object_footnotes = obj.get("footnotes") or {}
+    notes_list = _footnote_values(object_footnotes.get("notes"))
 
-    if isinstance(meta_type, str) and meta_type != "NA":
+    if isinstance(meta_type, str):
         footnote_section = footnotes.get(f"{artifact_type}_footnotes", {})
         if meta_type not in footnote_section:
             raise KeyError(
                 f"meta_type '{meta_type}' not found in "
                 f"{artifact_type}_footnotes section of footnotes YAML"
             )
-        n = footnote_section[meta_type]
-        if n:
+        for n in _footnote_values(footnote_section[meta_type]):
             if n.endswith("."):
                 notes_text += f"{n} "
             else:
@@ -138,15 +153,13 @@ def create_meta_text_lines(
             else:
                 notes_text += f"{note}. "
 
-    if notes_text == "":
-        notes_text += "N/A"
-
-    meta_text_lines["Notes"] = notes_text
+    if notes_text:
+        meta_text_lines["Notes"] = notes_text
 
     # Add abbreviations metadata
     abbrev_text = ""
     abbrev_delimiter = config.get("abbreviation_delimiter", ",")
-    abbrev_list = metadata["object_meta"]["footnotes"]["abbreviations"]
+    abbrev_list = _footnote_values(object_footnotes.get("abbreviations"))
     if len(abbrev_list) > 0:
         abbrev_section = footnotes.get("abbreviations", {})
         abbrev_parts = []
@@ -156,12 +169,11 @@ def create_meta_text_lines(
                     f"Abbreviation '{abbrev}' not found in "
                     f"abbreviations section of footnotes YAML"
                 )
-            full_form = abbrev_section[abbrev].rstrip(".")
-            abbrev_parts.append(f"{abbrev}: {full_form}")
-        abbrev_text = f"{abbrev_delimiter} ".join(abbrev_parts) + "."
-    else:
-        abbrev_text += "N/A"
-    meta_text_lines["Abbreviations"] = abbrev_text
+            for full_form in _footnote_values(abbrev_section[abbrev]):
+                abbrev_parts.append(f"{abbrev}: {full_form.rstrip('.')}")
+        if abbrev_parts:
+            abbrev_text = f"{abbrev_delimiter} ".join(abbrev_parts) + "."
+            meta_text_lines["Abbreviations"] = abbrev_text
 
     if config.get("add_hash_to_footnotes", False):
         obj_hash = metadata["object_meta"].get("hash", "")

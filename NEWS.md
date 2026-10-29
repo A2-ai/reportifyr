@@ -1,4 +1,14 @@
 # reportifyr 0.4.0
+## Bug fixes
+
+* Quarto source detection now resolves nested `.qmd` documents beside their intermediate input, so metadata and save wrappers retain the original source path even when a same-named document exists at the project root (PR #21).
+
+* Report footnotes now omit empty Notes and Abbreviations sections instead of printing `N/A`. Null values, blank strings, and `NA`/`NULL` markers are ignored, while valid standard notes and abbreviations are retained.
+
+* `ggsave_with_metadata()` and `save_rds_with_metadata()` now discover the reportifyr project from the output destination before falling back to the working directory, honor existing context roots, and stop before writing if no project can be found. Plot metadata and overlays also respect `ggsave(path = ...)`.
+
+* `write_object_metadata()` now also resolves the project from the object file's location when called directly, rather than relying on the working directory.
+
 ## New Features
 
 * `rpfy_context()` captures session-level metadata (system info, source attribution, author, project root, caller-supplied tags) once and reuses it across many `*_with_metadata()` calls. A new `context` argument has been added to `ggsave_with_metadata()`, `save_rds_with_metadata()`, `write_csv_with_metadata()`, and `write_object_metadata()`. When `context = NULL` (default) an ephemeral context is built per call, so existing code is unaffected.

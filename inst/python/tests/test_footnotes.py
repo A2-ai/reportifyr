@@ -156,8 +156,88 @@ def test_create_meta_text_lines_no_notes():
 
     result = create_meta_text_lines(footnotes, metadata, False, "figure", config)
 
-    assert result["Notes"] == "N/A"
-    assert result["Abbreviations"] == "N/A"
+    assert "Notes" not in result
+    assert "Abbreviations" not in result
+
+
+@pytest.mark.parametrize("artifact_type", ["figure", "table"])
+@pytest.mark.parametrize(
+    "missing",
+    [None, [], [None], "", "  ", "NA", "NULL", ["NA", None, "NULL", ""],
+     [float("nan")]],
+)
+def test_missing_footnotes_are_omitted(missing, artifact_type):
+    metadata = _make_metadata(meta_type=None)
+    # Assign directly so the fixture does not convert null values to empty lists.
+    metadata["object_meta"]["footnotes"] = {
+        "notes": missing, "abbreviations": missing
+    }
+    result = create_meta_text_lines(
+        _make_footnotes(), metadata, False, artifact_type, _default_config()
+    )
+    assert "Notes" not in result
+    assert "Abbreviations" not in result
+    paragraph = create_footnote_paragraph(result, "artifact", 1, _default_config())
+    text = "".join(t.text for t in paragraph.findall(f".//{qn('w:t')}") if t.text)
+    assert "Notes:" not in text
+    assert "Abbreviations:" not in text
+    assert not paragraph.findall(f".//{qn('w:br')}")
+
+
+@pytest.mark.parametrize("meta_type", [None, "NA", "NULL", "", "  "])
+def test_missing_meta_type_does_not_add_notes(meta_type):
+    result = create_meta_text_lines(
+        _make_footnotes(), _make_metadata(meta_type=meta_type),
+        False, "figure", _default_config()
+    )
+    assert "Notes" not in result
+
+
+def test_missing_values_are_removed_without_losing_valid_content():
+    metadata = _make_metadata(
+        notes=[None, "NA", " Keep this note ", "NULL", ""],
+        abbreviations=[None, "NA", " PK ", "NULL", "", "CI"],
+    )
+    result = create_meta_text_lines(
+        _make_footnotes(), metadata, False, "figure", _default_config()
+    )
+    assert result["Notes"] == "Efficacy population. Keep this note. "
+    assert result["Abbreviations"] == "PK: pharmacokinetics, CI: confidence interval."
+
+
+def test_standard_notes_are_preserved_when_custom_notes_are_null():
+    metadata = _make_metadata()
+    metadata["object_meta"]["footnotes"]["notes"] = None
+    result = create_meta_text_lines(
+        _make_footnotes(), metadata, False, "table", _default_config()
+    )
+    assert result["Notes"] == "Efficacy population. "
+
+
+@pytest.mark.parametrize("missing", [None, "", "  ", "NA", "NULL"])
+def test_missing_yaml_definitions_do_not_create_empty_sections(missing):
+    footnotes = _make_footnotes()
+    footnotes["figure_footnotes"]["efficacy"] = missing
+    footnotes["abbreviations"]["PK"] = missing
+    result = create_meta_text_lines(
+        footnotes, _make_metadata(abbreviations=["PK"]),
+        False, "figure", _default_config()
+    )
+    assert "Notes" not in result
+    assert "Abbreviations" not in result
+
+
+@pytest.mark.parametrize("field", ["meta_type", "abbreviations"])
+def test_unknown_nonmissing_footnote_keys_still_raise(field):
+    metadata = _make_metadata()
+    if field == "meta_type":
+        metadata["object_meta"]["meta_type"] = "unknown"
+    else:
+        metadata["object_meta"]["footnotes"]["abbreviations"] = ["unknown"]
+    with pytest.raises(KeyError, match="not found"):
+        create_meta_text_lines(
+            _make_footnotes(), metadata, False, "figure", _default_config()
+        )
 
 
 def test_create_meta_text_lines_table_type():

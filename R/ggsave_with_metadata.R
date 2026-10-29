@@ -53,14 +53,20 @@ ggsave_with_metadata <- function(
 ) {
   log4r::debug(.le$logger, "Starting ggsave_with_metadata function")
 
-  context <- resolve_context(context)
+  output_path <- list(...)[["path", exact = TRUE]]
+  output_file <- if (is.null(output_path)) {
+    filename
+  } else {
+    file.path(output_path, filename)
+  }
+  context <- resolve_context(context, destination = output_file)
 
   ggplot2::ggsave(
     filename = filename,
     plot = plot,
     ...
   )
-  log4r::info(.le$logger, paste0("Plot saved to file: ", filename))
+  log4r::info(.le$logger, paste0("Plot saved to file: ", output_file))
 
   # Overlay runs before metadata so the hash reflects the final image
   if (!is.null(config_yaml)) {
@@ -69,13 +75,13 @@ ggsave_with_metadata <- function(
     if (
       !is.null(overlay) &&
         overlay %in% c("source", "object") &&
-        grepl("\\.png$", filename, ignore.case = TRUE)
+        grepl("\\.png$", output_file, ignore.case = TRUE)
     ) {
       overlay_text <- if (overlay == "source") {
         context$source_meta$path
       } else if (!is.null(context$project_root)) {
         as.character(
-          fs::path_rel(normalizePath(filename), context$project_root)
+          fs::path_rel(normalizePath(output_file), context$project_root)
         )
       } else {
         NULL
@@ -86,9 +92,12 @@ ggsave_with_metadata <- function(
           "-m",
           "reportipyr.cli",
           "add-path-overlay",
-          "-i", normalizePath(filename),
-          "-s", overlay_text,
-          "-k", overlay
+          "-i",
+          normalizePath(output_file),
+          "-s",
+          overlay_text,
+          "-k",
+          overlay
         )
         run_python_script(
           args,
@@ -96,7 +105,7 @@ ggsave_with_metadata <- function(
         )
         log4r::info(
           .le$logger,
-          paste0(overlay, " path overlay added to: ", filename)
+          paste0(overlay, " path overlay added to: ", output_file)
         )
       } else {
         log4r::warn(
@@ -112,7 +121,7 @@ ggsave_with_metadata <- function(
   }
 
   write_object_metadata(
-    filename,
+    output_file,
     meta_type = meta_type,
     meta_equations = meta_equations,
     meta_notes = meta_notes,
