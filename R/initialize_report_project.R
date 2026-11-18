@@ -53,7 +53,9 @@ initialize_report_project <- function(
     create_init_file(project_dir, report_dir, outputs_dir)
   } else {
     message(
-      "reportifyr has already been initialized. Syncing with config file now."
+      "reportifyr has already been initialized in ",
+      normalizePath(project_dir),
+      ". Syncing with config file now."
     )
 
     # Resolve report and outputs dir paths
@@ -240,7 +242,11 @@ copy_footnotes <- function(report_dir) {
       .le$logger,
       paste0("copied standard_footnotes.yaml into ", report_dir)
     )
-    message(paste("copied standard_footnotes.yaml into", report_dir))
+    # Relative to the project root pyro prints, when the file is under it
+    shown <- normalizePath(file.path(report_dir, "standard_footnotes.yaml"))
+    root <- normalizePath(pyro::get_proj_dir())
+    if (fs::path_has_parent(shown, root)) shown <- fs::path_rel(shown, root)
+    message("Created ", shown, " from reportifyr's default")
   }
 }
 
@@ -290,7 +296,11 @@ copy_config <- function(report_dir, report_dir_name, outputs_dir_name) {
       .le$logger,
       paste0("copied config.yaml into ", report_dir)
     )
-    message(paste("copied config.yaml into", report_dir))
+    # Relative to the project root pyro prints, when the file is under it
+    shown <- normalizePath(file.path(report_dir, "config.yaml"))
+    root <- normalizePath(pyro::get_proj_dir())
+    if (fs::path_has_parent(shown, root)) shown <- fs::path_rel(shown, root)
+    message("Created ", shown, " from reportifyr's default")
   }
 }
 
