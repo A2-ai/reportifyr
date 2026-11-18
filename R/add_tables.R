@@ -224,33 +224,19 @@ process_table_file <- function(table_file, document, table_name) {
 
   # Check if table already exists after the magic string (skip_unchanged kept it)
   # Access the XML body directly via officer's internal structure
-  body_node <- xml2::xml_find_first(
-    document$doc_obj$get(),
-    "//w:body",
-    ns = c(w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main")
-  )
-  body_children <- xml2::xml_children(body_node)
-  for (ci in seq_along(body_children)) {
-    child <- body_children[[ci]]
-    if (xml2::xml_name(child) == "p") {
-      child_text <- xml2::xml_text(child)
-      if (grepl(table_name, child_text, fixed = TRUE)) {
-        # Check if next sibling is a table
-        if (ci < length(body_children)) {
-          next_child <- body_children[[ci + 1]]
-          if (xml2::xml_name(next_child) == "tbl") {
-            log4r::info(
-              .le$logger,
-              paste0(
-                "Table already present, skipping insertion for: ",
-                table_name
-              )
-            )
-            return(document)
-          }
-        }
-        break
-      }
+  doc_xml <- document$doc_obj$get()
+  magic_node <- find_table_magic_paragraph(doc_xml, table_name)
+  if (!is.null(magic_node)) {
+    existing <- table_after_magic(magic_node)
+    if (!is.null(existing$tbl)) {
+      log4r::info(
+        .le$logger,
+        paste0(
+          "Table already present, skipping insertion for: ",
+          table_name
+        )
+      )
+      return(document)
     }
   }
 
@@ -263,7 +249,124 @@ process_table_file <- function(table_file, document, table_name) {
     keepnext = FALSE
   )
 
+  # A flextable caption (set_caption()) is written as its own paragraph
+  # between the magic string and the table. Bookmark it so the Python
+  # pipeline can tell it apart from user text and walk past it.
+  if (!is.null(flextable$caption$value) && !is.null(magic_node)) {
+    tag_inserted_caption(doc_xml, magic_node, table_name)
+  }
+
   log4r::info(.le$logger, paste0("Inserted table for: ", table_file))
   # save to tmp docx file for next iteration
   document
+}
+
+# Bookmark prefix for flextable captions inserted by add_tables(). Keep in
+# sync with CAPTION_BOOKMARK_PREFIX in inst/python/reportipyr/docx_utils.py.
+caption_bookmark_prefix <- "rpcap_"
+
+w_ns <- c(w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main")
+
+# First body-level paragraph whose text contains `{rpfy}:<table_name>`, or NULL.
+find_table_magic_paragraph <- function(doc_xml, table_name) {
+  magic <- paste0("{rpfy}:", table_name)
+  paragraphs <- xml2::xml_find_all(doc_xml, "/w:document/w:body/w:p", ns = w_ns)
+  hits <- grepl(magic, xml2::xml_text(paragraphs), fixed = TRUE)
+  if (!any(hits)) {
+    return(NULL)
+  }
+  paragraphs[[which(hits)[1]]]
+}
+
+is_inserted_caption <- function(node) {
+  !inherits(node, "xml_missing") &&
+    xml2::xml_name(node) == "p" &&
+    !inherits(
+      xml2::xml_find_first(
+        node,
+        paste0(
+          ".//w:bookmarkStart[starts-with(@w:name, '",
+          caption_bookmark_prefix,
+          "')]"
+        ),
+        ns = w_ns
+      ),
+      "xml_missing"
+    )
+}
+
+# R mirror of artifact_after_magic() in docx_utils.py: the table directly after
+# the magic string, allowing one rpcap_-bookmarked caption paragraph between.
+table_after_magic <- function(magic_node) {
+  nxt <- xml2::xml_find_first(magic_node, "following-sibling::*[1]")
+  caption <- NULL
+  if (is_inserted_caption(nxt)) {
+    caption <- nxt
+    nxt <- xml2::xml_find_first(nxt, "following-sibling::*[1]")
+  }
+  tbl <- if (!inherits(nxt, "xml_missing") && xml2::xml_name(nxt) == "tbl") {
+    nxt
+  } else {
+    NULL
+  }
+  list(caption = caption, tbl = tbl)
+}
+
+# Wrap the caption paragraph that body_add_flextable() just wrote between
+# `magic_node` and its table in an rpcap_<md5(table_name)> bookmark.
+tag_inserted_caption <- function(doc_xml, magic_node, table_name) {
+  caption <- xml2::xml_find_first(magic_node, "following-sibling::*[1]")
+  after <- xml2::xml_find_first(caption, "following-sibling::*[1]")
+  if (
+    inherits(caption, "xml_missing") ||
+      xml2::xml_name(caption) != "p" ||
+      inherits(after, "xml_missing") ||
+      xml2::xml_name(after) != "tbl"
+  ) {
+    log4r::warn(
+      .le$logger,
+      paste0(
+        "Could not locate the inserted flextable caption for: ",
+        table_name,
+        ". Removal, footnotes and alt text may not find this table."
+      )
+    )
+    return(invisible(NULL))
+  }
+
+  # Integer w:id unique in the document. officer writes UUID ids, which are
+  # skipped here; start high so ids stay clear of the paragraph-index ids
+  # used for fp_ footnote bookmarks.
+  ids <- suppressWarnings(as.numeric(xml2::xml_attr(
+    xml2::xml_find_all(doc_xml, "//w:bookmarkStart", ns = w_ns),
+    "w:id",
+    ns = w_ns
+  )))
+  ids <- ids[!is.na(ids)]
+  bm_id <- format(max(c(ids, 899999999)) + 1, scientific = FALSE)
+  bm_name <- paste0(
+    caption_bookmark_prefix,
+    digest::digest(table_name, algo = "md5", serialize = FALSE)
+  )
+
+  # bookmarkStart goes after w:pPr (or first, if there is none). Attributes
+  # are set with xml_set_attr(ns = ) so they are real w: attributes in memory;
+  # passing them to xml_add_child() leaves them un-namespaced until reparse,
+  # and the existing-table check could not see them on a later iteration.
+  ppr <- xml2::xml_find_first(caption, "w:pPr", ns = w_ns)
+  bm_start <- if (inherits(ppr, "xml_missing")) {
+    xml2::xml_add_child(caption, "w:bookmarkStart", .where = 0)
+  } else {
+    xml2::xml_add_sibling(ppr, "w:bookmarkStart", .where = "after")
+  }
+  xml2::xml_set_attr(bm_start, "w:id", bm_id, ns = w_ns)
+  xml2::xml_set_attr(bm_start, "w:name", bm_name, ns = w_ns)
+  bm_end <- xml2::xml_add_child(caption, "w:bookmarkEnd")
+  xml2::xml_set_attr(bm_end, "w:id", bm_id, ns = w_ns)
+
+  log4r::debug(
+    .le$logger,
+    paste0("Bookmarked inserted caption ", bm_name, " for: ", table_name)
+  )
+  invisible(NULL)
 }

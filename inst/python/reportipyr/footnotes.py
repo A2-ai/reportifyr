@@ -11,7 +11,7 @@ from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
 from .alt_text import extract_artifact_hashes, load_artifact_hash
-from .docx_utils import iter_cell_paragraphs
+from .docx_utils import artifact_after_magic, iter_cell_paragraphs
 
 def _make_bookmark_name(name: str) -> str:
     """Create a bookmark name from a deterministic md5 hash of the name.
@@ -700,14 +700,10 @@ def add_table_footnotes(
                 )
 
             if add_footnote:
-                # this gets xml index rather than paragraph index
-                current_p = par._p
-                body_elements = list(document.element.body)
-                p_index = body_elements.index(current_p)
-
-                # w:tbl is directly after matching magic string
-                table = body_elements[p_index + 1]
-                if table.tag == qn("w:tbl"):
+                # w:tbl follows the magic string, possibly after an
+                # inserted flextable caption
+                _caption, table = artifact_after_magic(par._p)
+                if table is not None:
                     new_paragraph = create_footnote_paragraph(
                         meta_text_dict, table_name, i, config
                     )

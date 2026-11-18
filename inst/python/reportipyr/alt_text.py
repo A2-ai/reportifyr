@@ -9,7 +9,11 @@ from docx import Document
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
-from .docx_utils import iter_cell_paragraphs
+from .docx_utils import (
+    artifact_after_magic,
+    iter_cell_paragraphs,
+    magic_before_table,
+)
 from .logging import setup_logger
 from .magic import get_magic_pattern, parse_magic_entries
 
@@ -428,9 +432,9 @@ def add_table_alt_text(docx_in: str, docx_out: str, artifact_dir: str | None = N
     for idx, el in enumerate(siblings):
         if not el.tag.endswith("}tbl"):
             continue
-        if idx == 0 or not siblings[idx - 1].tag.endswith("}p"):
+        para_el, _caption = magic_before_table(el)
+        if para_el is None:
             continue
-        para_el = siblings[idx - 1]
 
         texts = [t.text for t in para_el.xpath(".//w:t") if t.text]
         para_text = "".join(texts).strip()
@@ -504,9 +508,11 @@ def check_alt_text_magic_string(docx_in: str):
         para_text = "".join([t.text for t in text_elements if t.text])
 
         if magic_pattern.search(para_text) and idx + 1 < len(paragraphs):
-            # check for drawing and tbl
+            # check for drawing and tbl (the tbl may follow an inserted caption)
             check_drawing_alt_text(logger, paragraphs[idx + 1], para_text)
-            check_table_alt_text(logger, tbl_map.get(paragraphs[idx + 1]), para_text)
+            _caption, tbl_el = artifact_after_magic(para)
+            if tbl_el is not None:
+                check_table_alt_text(logger, tbl_map.get(tbl_el), para_text)
 
     # Check alt text for figures inside table cells
     for cell_par, cell, _tbl_el in iter_cell_paragraphs(doc):
@@ -612,10 +618,11 @@ def extract_artifact_hashes(docx_in: str) -> dict[str, str]:
                                     )
                     drawing_offset += 1
 
-        # Check tables: magic paragraph before table element
-        if el.tag.endswith("}tbl") and idx > 0:
-            prev_el = siblings[idx - 1]
-            if prev_el.tag.endswith("}p"):
+        # Check tables: magic paragraph before table element (possibly
+        # with an inserted caption in between)
+        if el.tag.endswith("}tbl"):
+            prev_el, _caption = magic_before_table(el)
+            if prev_el is not None:
                 texts = [t.text for t in prev_el.xpath(".//w:t") if t.text]
                 prev_text = "".join(texts).strip()
                 if magic_pattern.search(prev_text):
