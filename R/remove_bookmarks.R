@@ -53,6 +53,8 @@ remove_bookmarks <- function(docx_in, docx_out) {
     continue <- readline(
       "This will remove the bookmarks in the document. This severs the link between the document and reportifyr. Are you sure you want to continue? [Y/n]\n"
     )
+    # Blank answer takes the default shown by [Y/n]
+    if (trimws(continue) == "") continue <- "Y"
   } else {
     continue <- "Y" # Automatically proceed in non-interactive environments
     log4r::info(
