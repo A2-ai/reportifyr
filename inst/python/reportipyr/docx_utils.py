@@ -1,5 +1,4 @@
 from docx import Document
-from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
 from .magic import get_magic_pattern
@@ -83,8 +82,8 @@ def keep_caption_next(docx_in, docx_out):
     """Add keepNext to reportifyr blocks only.
 
     Every body-level magic string gets keepNext. A template caption directly
-    above it (``Caption`` style or a ``SEQ Table`` / ``SEQ Figure`` field) gets
-    keepNext too:
+    above it (``Caption`` style, or a ``SEQ Table`` / ``SEQ Figure`` field,
+    complex or simple) gets keepNext too:
 
         CAPTION*        STRING*
         STRING*         CAPTION   <- flextable caption; flextable writes keepNext
@@ -99,14 +98,17 @@ def keep_caption_next(docx_in, docx_out):
     magic_pattern = get_magic_pattern()
 
     def set_keep_next(p_el):
-        pPr = p_el.get_or_add_pPr()
-        if not pPr.xpath("./w:keepNext"):
-            pPr.append(OxmlElement("w:keepNext"))
+        # get_or_add_keepNext inserts in schema order (after pStyle, before
+        # keepLines/jc/rPr) and never adds a second one.
+        p_el.get_or_add_pPr().get_or_add_keepNext()
 
     def is_caption(p) -> bool:
+        # SEQ field as a complex field (w:instrText, what Word and officer
+        # write) or a simple field (w:fldSimple/@w:instr).
+        instrs = [instr.text or "" for instr in p._element.xpath(".//w:instrText")]
+        instrs += p._element.xpath(".//w:fldSimple/@w:instr")
         return bool(p.style and p.style.name == CAPTION_STYLE) or any(
-            ("SEQ Table" in instr.text or "SEQ Figure" in instr.text)
-            for instr in p._element.xpath(".//w:instrText")
+            ("SEQ Table" in instr or "SEQ Figure" in instr) for instr in instrs
         )
 
     for i, p in enumerate(paras):

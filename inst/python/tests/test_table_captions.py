@@ -503,6 +503,56 @@ def test_keep_next_caption_above_table_is_not_above_string(tmp_path):
     ]
 
 
+def _fldsimple_caption_p(text="Table 1. Simple-field caption"):
+    """A template caption whose SEQ field is a simple field (w:fldSimple)."""
+    p = OxmlElement("w:p")
+    fld = OxmlElement("w:fldSimple")
+    fld.set(qn("w:instr"), " SEQ Table \\* ARABIC ")
+    p.append(fld)
+    r = OxmlElement("w:r")
+    t = OxmlElement("w:t")
+    t.text = text
+    r.append(t)
+    p.append(r)
+    return p
+
+
+def test_keep_next_simple_field_caption(tmp_path):
+    # A fldSimple SEQ caption counts as a caption above a string (this used
+    # to be handled by remove_magic_strings at finalize, for every caption).
+    result = _keep_next_by_text(tmp_path, [
+        _fldsimple_caption_p(),
+        _text_p(MAGIC),
+        "TBL",
+        _fldsimple_caption_p("Table 9. Static"),
+        "TBL",
+    ])
+    assert result == [
+        ("Table 1. Simple-field caption", True),
+        (MAGIC, True),
+        ("Table 9. Static", False),
+    ]
+
+
+def test_keep_next_inserted_in_schema_order(tmp_path):
+    # CT_PPr order: pStyle, keepNext, keepLines, ..., jc, ..., rPr
+    cap = _seq_caption_p()
+    ppr = OxmlElement("w:pPr")
+    for tag in ("w:keepLines", "w:jc", "w:rPr"):
+        el = OxmlElement(tag)
+        if tag == "w:jc":
+            el.set(qn("w:val"), "center")
+        ppr.append(el)
+    cap.insert(0, ppr)
+
+    out = tmp_path / "kn-order.docx"
+    keep_caption_next(str(_body_doc(tmp_path, [cap, _text_p(MAGIC), "TBL"])), str(out))
+
+    first_p = next(Document(out).element.body.iterchildren(qn("w:p")))
+    order = [c.tag.split("}")[1] for c in first_p.find(qn("w:pPr"))]
+    assert order == ["keepNext", "keepLines", "jc", "rPr"]
+
+
 def test_keep_next_is_idempotent(tmp_path):
     first = tmp_path / "kn-1.docx"
     second = tmp_path / "kn-2.docx"
