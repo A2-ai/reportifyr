@@ -11,7 +11,7 @@ from PIL import Image, ImageDraw, ImageFont
 from .alt_text import is_artifact_unchanged
 from .config import load_yaml
 from .docx_utils import iter_cell_paragraphs
-from .magic import get_magic_pattern, parse_magic_string
+from .magic import build_magic_string, get_magic_pattern, parse_magic_string
 from .logging import setup_logger
 from .util import check_duplicates, create_label, safe_resolve
 
@@ -463,6 +463,42 @@ def add_label_to_image(image_path: str, index: int, logger) -> str:
     return temp_path
 
 
+def _figures_unchanged(
+    paragraphs: list,
+    idx: int,
+    figure_args: dict[str, dict[str, str]],
+    figure_dir: str,
+) -> bool:
+    """
+    Check whether every figure following the magic string paragraph at
+    ``idx`` still carries alt text matching its artifact's stored hash.
+
+    ``paragraphs`` is the list the magic string lives in — the document
+    body paragraphs or a cell's paragraphs.
+    """
+    all_unchanged = True
+    for j, fig_name in enumerate(figure_args.keys()):
+        draw_idx = idx + j + 1
+        if draw_idx < len(paragraphs):
+            next_par = paragraphs[draw_idx]
+            drawings = next_par._element.xpath(".//w:drawing")
+            if drawings:
+                for d in drawings:
+                    for inline in d.xpath(".//wp:inline"):
+                        for dp in inline.xpath(".//wp:docPr"):
+                            alt = dp.get("descr", "")
+                            if not is_artifact_unchanged(
+                                alt, figure_dir, fig_name
+                            ):
+                                all_unchanged = False
+            else:
+                all_unchanged = False
+        else:
+            all_unchanged = False
+
+    return all_unchanged
+
+
 def remove_figures(
     docx_in: str,
     docx_out: str,
@@ -487,42 +523,16 @@ def remove_figures(
             figure_args = parse_magic_string(text)
 
             # Check alt text hashes for skip_unchanged
+            all_unchanged = False
             if skip_unchanged and figure_dir:
-                # Check next paragraphs for drawings with alt text
-                all_unchanged = True
-                for j, fig_name in enumerate(figure_args.keys()):
-                    if i + j + 1 < len(paragraphs):
-                        next_par = paragraphs[i + j + 1]
-                        drawings = next_par._element.xpath(
-                            ".//w:drawing"
-                        )
-                        if drawings:
-                            for d in drawings:
-                                for inline in d.xpath(
-                                    ".//wp:inline"
-                                ):
-                                    for dp in inline.xpath(
-                                        ".//wp:docPr"
-                                    ):
-                                        alt = dp.get("descr", "")
-                                        if not is_artifact_unchanged(
-                                            alt, figure_dir, fig_name
-                                        ):
-                                            all_unchanged = False
-                        else:
-                            all_unchanged = False
-                    else:
-                        all_unchanged = False
-
-                if all_unchanged:
-                    logger.info(
-                        f"Skipping removal of unchanged figures: "
-                        f"{list(figure_args.keys())}"
-                    )
-                    continue
+                all_unchanged = _figures_unchanged(
+                    paragraphs, i, figure_args, figure_dir
+                )
 
             update_magic_string = False
 
+            # Sync the drawings' real dimensions back into the magic
+            # string whether or not the figures are being replaced.
             paragraphs_to_remove = []
             for j, args in enumerate(figure_args.values()):
                 if i + j + 1 < len(paragraphs):
@@ -535,37 +545,29 @@ def remove_figures(
                             dimensions = get_figure_dimensions(next_par)
                             # set width and height from emu to Inches
                             if dimensions.get("width"):
-                                args["width"] = str(
+                                width = str(
                                     round(dimensions["width"] / 914400, 2)
                                 )
-                                update_magic_string = True
+                                if args.get("width") != width:
+                                    args["width"] = width
+                                    update_magic_string = True
                             if dimensions.get("height"):
-                                args["height"] = str(
+                                height = str(
                                     round(dimensions["height"] / 914400, 2)
                                 )
-                                update_magic_string = True
+                                if args.get("height") != height:
+                                    args["height"] = height
+                                    update_magic_string = True
 
             if update_magic_string:
-                new_magic_string = "{rpfy}:"
-                if len(figure_args) > 1:
-                    new_magic_string += "["
-                    ending_string = "]"
-                else:
-                    ending_string = ""
-                for fig_idx, (fig, arg) in enumerate(figure_args.items()):
-                    arg_string = "<"
-                    for p_idx, (prop, val) in enumerate(arg.items()):
-                        arg_string += f"{prop}: {val}"
-                        if p_idx + 1 != len(arg):
-                            arg_string += ", "
-                    arg_string += ">"
+                paragraph.text = build_magic_string(figure_args)
 
-                    new_magic_string += f"{fig}{arg_string}"
-                    if fig_idx + 1 != len(figure_args):
-                        new_magic_string += ", "
-
-                new_magic_string += ending_string
-                paragraph.text = new_magic_string
+            if all_unchanged:
+                logger.info(
+                    f"Skipping removal of unchanged figures: "
+                    f"{list(figure_args.keys())}"
+                )
+                continue
 
             for _, par in reversed(paragraphs_to_remove):
                 par._element.getparent().remove(par._element)
@@ -578,45 +580,6 @@ def remove_figures(
 
         figure_args = parse_magic_string(text)
 
-        # Check skip_unchanged for cell figures
-        if skip_unchanged and figure_dir:
-            cell_paras = cell.paragraphs
-            cell_par_idx = None
-            for ci, cp in enumerate(cell_paras):
-                if cp._element is cell_par._element:
-                    cell_par_idx = ci
-                    break
-
-            if cell_par_idx is not None:
-                all_unchanged = True
-                for j, fig_name in enumerate(figure_args.keys()):
-                    draw_idx = cell_par_idx + j + 1
-                    if draw_idx < len(cell_paras):
-                        next_par = cell_paras[draw_idx]
-                        drawings = next_par._element.xpath(".//w:drawing")
-                        if drawings:
-                            for d in drawings:
-                                for inline in d.xpath(".//wp:inline"):
-                                    for dp in inline.xpath(".//wp:docPr"):
-                                        alt = dp.get("descr", "")
-                                        if not is_artifact_unchanged(
-                                            alt, figure_dir, fig_name
-                                        ):
-                                            all_unchanged = False
-                        else:
-                            all_unchanged = False
-                    else:
-                        all_unchanged = False
-
-                if all_unchanged:
-                    logger.info(
-                        f"Skipping removal of unchanged cell figures: "
-                        f"{list(figure_args.keys())}"
-                    )
-                    continue
-
-        update_magic_string = False
-
         cell_paras = cell.paragraphs
         cell_par_idx = None
         for ci, cp in enumerate(cell_paras):
@@ -626,6 +589,17 @@ def remove_figures(
         if cell_par_idx is None:
             continue
 
+        # Check skip_unchanged for cell figures
+        all_unchanged = False
+        if skip_unchanged and figure_dir:
+            all_unchanged = _figures_unchanged(
+                cell_paras, cell_par_idx, figure_args, figure_dir
+            )
+
+        update_magic_string = False
+
+        # Sync the drawings' real dimensions back into the magic
+        # string whether or not the figures are being replaced.
         paragraphs_to_remove = []
         for j, args in enumerate(figure_args.values()):
             next_idx = cell_par_idx + j + 1
@@ -638,37 +612,29 @@ def remove_figures(
                     if config.get("use_embedded_dimensions", True):
                         dimensions = get_figure_dimensions(next_par)
                         if dimensions.get("width"):
-                            args["width"] = str(
+                            width = str(
                                 round(dimensions["width"] / 914400, 2)
                             )
-                            update_magic_string = True
+                            if args.get("width") != width:
+                                args["width"] = width
+                                update_magic_string = True
                         if dimensions.get("height"):
-                            args["height"] = str(
+                            height = str(
                                 round(dimensions["height"] / 914400, 2)
                             )
-                            update_magic_string = True
+                            if args.get("height") != height:
+                                args["height"] = height
+                                update_magic_string = True
 
         if update_magic_string:
-            new_magic_string = "{rpfy}:"
-            if len(figure_args) > 1:
-                new_magic_string += "["
-                ending_string = "]"
-            else:
-                ending_string = ""
-            for fig_idx, (fig, arg) in enumerate(figure_args.items()):
-                arg_string = "<"
-                for p_idx, (prop, val) in enumerate(arg.items()):
-                    arg_string += f"{prop}: {val}"
-                    if p_idx + 1 != len(arg):
-                        arg_string += ", "
-                arg_string += ">"
+            cell_par.text = build_magic_string(figure_args)
 
-                new_magic_string += f"{fig}{arg_string}"
-                if fig_idx + 1 != len(figure_args):
-                    new_magic_string += ", "
-
-            new_magic_string += ending_string
-            cell_par.text = new_magic_string
+        if all_unchanged:
+            logger.info(
+                f"Skipping removal of unchanged cell figures: "
+                f"{list(figure_args.keys())}"
+            )
+            continue
 
         for par in reversed(paragraphs_to_remove):
             # Keep at least one paragraph in the cell

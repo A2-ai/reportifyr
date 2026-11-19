@@ -250,38 +250,6 @@ get_source_path <- function() {
 #' @noRd
 run_python_script <- function(args, script_name) {
   paths <- pyro::get_venv_uv_paths()
-  log_file <- .le$log_file
-  no_log <- getOption("rpfy.no_log", FALSE)
-
-  py_levels <- c(
-    "DEBUG" = 1, "INFO" = 2, "WARNING" = 3, "ERROR" = 4, "CRITICAL" = 5
-  )
-  r_levels <- c(
-    "DEBUG" = 1, "INFO" = 2, "WARN" = 3, "ERROR" = 4, "FATAL" = 5
-  )
-  threshold <- r_levels[[Sys.getenv("RPFY_VERBOSE", unset = "WARN")]]
-
-  py_callback <- function(chunk, proc) {
-    lines <- strsplit(chunk, "\n")[[1]]
-    for (line in lines) {
-      line <- trimws(line)
-      if (nchar(line) == 0) next
-
-      if (!is.null(log_file) && !no_log) {
-        cat(line, "\n", file = log_file, append = TRUE)
-      }
-
-      show <- TRUE
-      level_match <- regmatches(
-        line, regexpr("\\[(DEBUG|INFO|WARNING|ERROR|CRITICAL)\\]", line)
-      )
-      if (length(level_match) == 1) {
-        level <- gsub("\\[|\\]", "", level_match)
-        show <- py_levels[[level]] >= threshold
-      }
-      if (show) cat(line, "\n")
-    }
-  }
 
   pyro::run_python_script(
     uv_path = paths$uv,
@@ -289,9 +257,65 @@ run_python_script <- function(args, script_name) {
     venv_path = paths$venv,
     script_name = script_name,
     pythonpath = system.file("python", package = "reportifyr"),
-    stderr_callback = py_callback,
+    stderr_callback = py_log_callback(
+      log_file = .le$log_file,
+      no_log = getOption("rpfy.no_log", FALSE),
+      verbosity = Sys.getenv("RPFY_VERBOSE", unset = "WARN")
+    ),
     verbose_env = "RPFY_VERBOSE"
   )
+}
+
+#' Build the stderr line callback for Python log output
+#'
+#' Mirrors every Python log line into the session log file and filters console
+#' output by verbosity. `pyro::run_python_script()` dispatches one complete
+#' line per call, so the `[LEVEL]` tag is always intact here; a line carrying
+#' no tag (traceback bodies, wrapped messages) inherits the visibility of the
+#' last tagged line rather than defaulting to visible.
+#'
+#' @param log_file Session log file, or NULL for no file logging.
+#' @param no_log If TRUE, skip file logging.
+#' @param verbosity Console threshold, as an R level name. Invalid values fall
+#'   back to `WARN`, matching [toggle_logger()].
+#'
+#' @return A `function(line, proc)` suitable for `stderr_callback`.
+#'
+#' @keywords internal
+#' @noRd
+py_log_callback <- function(log_file, no_log, verbosity) {
+  py_levels <- c(
+    "DEBUG" = 1, "INFO" = 2, "WARNING" = 3, "ERROR" = 4, "CRITICAL" = 5
+  )
+  r_levels <- c(
+    "DEBUG" = 1, "INFO" = 2, "WARN" = 3, "ERROR" = 4, "FATAL" = 5
+  )
+  if (!(verbosity %in% names(r_levels))) {
+    verbosity <- "WARN"
+  }
+  threshold <- r_levels[[verbosity]]
+  to_file <- !is.null(log_file) && !no_log
+  show <- TRUE
+
+  function(line, proc) {
+    line <- trimws(line)
+    if (!nzchar(line)) {
+      return(invisible(NULL))
+    }
+    if (to_file) {
+      cat(line, "\n", sep = "", file = log_file, append = TRUE)
+    }
+    level <- regmatches(
+      line,
+      regexpr("\\[(DEBUG|INFO|WARNING|ERROR|CRITICAL)\\]", line)
+    )
+    if (length(level) == 1) {
+      show <<- py_levels[[gsub("\\[|\\]", "", level)]] >= threshold
+    }
+    if (show) cat(line, "\n", sep = "")
+
+    invisible(NULL)
+  }
 }
 
 detect_quarto_render <- function() {

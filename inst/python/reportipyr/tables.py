@@ -15,6 +15,7 @@ from .alt_text import (
     is_table_unchanged,
 )
 from .config import load_yaml
+from .docx_utils import artifact_after_magic
 from .logging import setup_logger
 
 
@@ -157,6 +158,41 @@ def reconcile_table_cells(
     return True
 
 
+def _keep_table(tbl, table_name, table_dir, logger) -> bool:
+    """Decide whether skip_unchanged keeps an existing table.
+
+    Returns True when the table should stay: either it is fully unchanged
+    (1a) or its source is unchanged and the edited cells were reconciled (1b).
+    Returns False when it must be removed and re-inserted (1c or no alt text).
+    """
+    tbl_pr = tbl.find(qn("w:tblPr"))
+    if tbl_pr is None:
+        return False
+    desc = tbl_pr.find(qn("w:tblDescription"))
+    if desc is None:
+        return False
+    alt = desc.get(qn("w:val"), "")
+
+    # 1a: fully unchanged — skip
+    if is_table_unchanged(alt, tbl, table_dir, table_name):
+        logger.info(f"Skipping removal of unchanged table: {table_name}")
+        return True
+
+    # Source unchanged but content edited — try reconciliation
+    if is_artifact_unchanged(alt, table_dir, table_name):
+        source_grid = extract_body_grid_from_alt_text(alt)
+        if source_grid is not None:
+            if reconcile_table_cells(tbl, source_grid, logger):
+                # 1b: reconciled — update alt text hashes
+                _update_alt_text_after_reconcile(tbl, alt)
+                logger.info(f"Reconciled cells for: {table_name}")
+                return True
+            # 1c: grid changed
+            logger.info(f"Grid changed, full reset for: {table_name}")
+
+    return False
+
+
 def remove_tables(docx_in, docx_out, config_yaml=None, table_dir=None):
     logger = setup_logger()
     doc = Document(docx_in)
@@ -169,81 +205,27 @@ def remove_tables(docx_in, docx_out, config_yaml=None, table_dir=None):
     skip_unchanged = config.get("skip_unchanged", False)
 
     for paragraph in doc.paragraphs:
-        if paragraph.text.startswith("{rpfy}:"):
-            table_name = paragraph.text.replace(
-                "{rpfy}:", ""
-            ).strip()
+        if not paragraph.text.startswith("{rpfy}:"):
+            continue
+        table_name = paragraph.text.replace("{rpfy}:", "").strip()
 
-            p_element = paragraph._element
-            for next_elem in p_element.itersiblings():
-                if next_elem.tag.endswith("tbl"):
-                    if skip_unchanged and table_dir:
-                        tbl_pr = next_elem.find(qn("w:tblPr"))
-                        if tbl_pr is not None:
-                            desc = tbl_pr.find(
-                                qn("w:tblDescription")
-                            )
-                            if desc is not None:
-                                alt = desc.get(
-                                    qn("w:val"), ""
-                                )
-                                # 1a: fully unchanged — skip
-                                if is_table_unchanged(
-                                    alt,
-                                    next_elem,
-                                    table_dir,
-                                    table_name,
-                                ):
-                                    logger.info(
-                                        f"Skipping removal of "
-                                        f"unchanged table: "
-                                        f"{table_name}"
-                                    )
-                                    break
+        # An inserted flextable caption (rpcap_ bookmark) may sit between
+        # the magic string and the table; it lives and dies with the table.
+        caption_p, tbl = artifact_after_magic(paragraph._element)
 
-                                # Source unchanged but content
-                                # edited — try reconciliation
-                                if is_artifact_unchanged(
-                                    alt,
-                                    table_dir,
-                                    table_name,
-                                ):
-                                    source_grid = (
-                                        extract_body_grid_from_alt_text(
-                                            alt
-                                        )
-                                    )
-                                    if source_grid is not None:
-                                        success = (
-                                            reconcile_table_cells(
-                                                next_elem,
-                                                source_grid,
-                                                logger,
-                                            )
-                                        )
-                                        if success:
-                                            # 1b: reconciled —
-                                            # update alt text hashes
-                                            _update_alt_text_after_reconcile(
-                                                next_elem, alt
-                                            )
-                                            logger.info(
-                                                f"Reconciled cells "
-                                                f"for: {table_name}"
-                                            )
-                                            break
-                                        else:
-                                            # 1c: grid changed
-                                            logger.info(
-                                                f"Grid changed, "
-                                                f"full reset for: "
-                                                f"{table_name}"
-                                            )
+        if tbl is None:
+            if caption_p is not None:
+                logger.info(f"Removing orphaned table caption for: {table_name}")
+                caption_p.getparent().remove(caption_p)
+            continue
 
-                    # 2 or 1c: remove table
-                    next_elem.getparent().remove(next_elem)
-                    break
-                elif next_elem.tag.endswith("p"):
-                    break
+        if skip_unchanged and table_dir:
+            if _keep_table(tbl, table_name, table_dir, logger):
+                continue
+
+        # 2 or 1c: remove table (and its caption)
+        tbl.getparent().remove(tbl)
+        if caption_p is not None:
+            caption_p.getparent().remove(caption_p)
 
     doc.save(docx_out)

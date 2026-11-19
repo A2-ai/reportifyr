@@ -3,6 +3,8 @@ import logging
 
 import pytest
 
+from docx import Document
+from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
 from reportipyr.footnotes import (
@@ -13,6 +15,8 @@ from reportipyr.footnotes import (
     create_formatted_run,
     create_formatted_runs,
     create_footnote_paragraph,
+    remove_footnotes,
+    _new_bookmark_ids,
 )
 
 
@@ -538,3 +542,65 @@ def test_make_bookmark_name_no_collision():
     name1 = "pk/theoph-pk-concentration-over-time.png"
     name2 = "pk/theoph-pk-exposure-over-time-long.png"
     assert _make_bookmark_name(name1) != _make_bookmark_name(name2)
+
+
+# ---------------------------------------------------------------------------
+# remove_footnotes
+# ---------------------------------------------------------------------------
+
+def _wrap_in_bookmark(paragraph, name, bookmark_id):
+    start = OxmlElement("w:bookmarkStart")
+    start.set(qn("w:id"), bookmark_id)
+    start.set(qn("w:name"), name)
+    end = OxmlElement("w:bookmarkEnd")
+    end.set(qn("w:id"), bookmark_id)
+    paragraph._p.insert(0, start)
+    paragraph._p.append(end)
+
+
+def test_remove_footnotes_shared_bookmark_id(tmp_path):
+    """An fp_ id equal to an earlier bookmark's id removes only the footnote.
+
+    fp_ ids are paragraph indices, so they can collide with Word's own
+    bookmarks (_Toc, _Ref) or any other bookmark in the document.
+    """
+    doc = Document()
+    heading = doc.add_paragraph("Template heading")
+    _wrap_in_bookmark(heading, "_Toc123", "3")
+    footnote = doc.add_paragraph("Footnote text")
+    _wrap_in_bookmark(footnote, _make_bookmark_name("figure1"), "3")
+    doc.add_paragraph("After")
+    docx_in = tmp_path / "in.docx"
+    docx_out = tmp_path / "out.docx"
+    doc.save(docx_in)
+
+    remove_footnotes(str(docx_in), str(docx_out))
+
+    out = Document(docx_out)
+    assert [p.text for p in out.paragraphs] == ["Template heading", "After"]
+    names = [
+        b.get(qn("w:name"))
+        for b in out.element.xpath("//w:bookmarkStart")
+    ]
+    assert names == ["_Toc123"]
+    assert len(out.element.xpath('//w:bookmarkEnd[@w:id="3"]')) == 1
+
+
+# ---------------------------------------------------------------------------
+# _new_bookmark_ids
+# ---------------------------------------------------------------------------
+
+def test_new_bookmark_ids_start_above_existing_ids():
+    doc = Document()
+    _wrap_in_bookmark(doc.add_paragraph("a"), "_Toc1", "0")
+    _wrap_in_bookmark(doc.add_paragraph("b"), "_Ref2", "7")
+    # officer writes UUID ids; they are not numbers and are skipped
+    _wrap_in_bookmark(
+        doc.add_paragraph("c"), "user", "5f0c2a8e-1b2c-4d3e-8f90-123456789abc"
+    )
+    ids = _new_bookmark_ids(doc)
+    assert [next(ids), next(ids)] == [8, 9]
+
+
+def test_new_bookmark_ids_empty_document_starts_at_zero():
+    assert next(_new_bookmark_ids(Document())) == 0

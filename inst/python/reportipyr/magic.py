@@ -2,7 +2,6 @@ import argparse
 import json
 import re
 from docx import Document
-from docx.oxml import OxmlElement
 
 MAGIC_PATTERN = re.compile(r"\{rpfy\}\:.*?\.[^.]+$")
 
@@ -77,6 +76,25 @@ def parse_magic_string(input_string: str) -> dict[str, dict[str, str]]:
     return result
 
 
+def build_magic_string(figure_args: dict[str, dict[str, str]]) -> str:
+    """
+    Reconstruct a {rpfy}: magic string from parsed filenames and args.
+
+    Inverse of parse_magic_string. Entries without args still emit an
+    empty <>, matching what parse_magic_string round-trips.
+    """
+    entries = []
+    for fig, args in figure_args.items():
+        arg_string = ", ".join(f"{prop}: {val}" for prop, val in args.items())
+        entries.append(f"{fig}<{arg_string}>")
+
+    joined = ", ".join(entries)
+    if len(figure_args) > 1:
+        joined = f"[{joined}]"
+
+    return f"{{rpfy}}:{joined}"
+
+
 def remove_magic_strings(docx_in, docx_out):
     sentinel = "{rpfy}:"  # Magic String
 
@@ -97,25 +115,6 @@ def remove_magic_strings(docx_in, docx_out):
                 # Remove the paragraph if it doesn't contain an image
                 p = para._element
                 p.getparent().remove(p)
-
-        else:
-            is_caption = False
-            fld_elements = para._element.xpath(".//w:fldSimple")
-            for fld in fld_elements:
-                # w:instr is in the WordprocessingML namespace
-                instr_value = fld.get(
-                    "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}instr"
-                )
-                if instr_value and (
-                    "SEQ Table" in instr_value or "SEQ Figure" in instr_value
-                ):
-                    is_caption = True
-                    break
-
-            if is_caption:
-                pPr = para._element.get_or_add_pPr()
-                keep_next = OxmlElement("w:keepNext")
-                pPr.append(keep_next)
 
     # Process magic strings inside table cells
     from .docx_utils import iter_cell_paragraphs
