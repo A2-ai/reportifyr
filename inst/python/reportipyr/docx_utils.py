@@ -1,4 +1,5 @@
 from docx import Document
+from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
 from .magic import get_magic_pattern
@@ -78,80 +79,49 @@ def iter_cell_paragraphs(doc):
                     yield para, cell, table._element
 
 
-def _set_keep_next(p_el):
-    # get_or_add_keepNext inserts in schema order (after pStyle, before
-    # spacing/jc/rPr); appending to the end of pPr is invalid OOXML.
-    p_el.get_or_add_pPr().get_or_add_keepNext()
-
-
-def _paragraph_text(p_el) -> str:
-    return "".join(t.text or "" for t in p_el.xpath(".//w:t"))
-
-
-def _is_blank_paragraph(p_el) -> bool:
-    """A <w:p> with no text and nothing else that takes up space or breaks the
-    page (drawing, picture, object, break, section break)."""
-    if _paragraph_text(p_el).strip():
-        return False
-    return not p_el.xpath(
-        ".//w:drawing | .//w:pict | .//w:object | .//w:br | ./w:pPr/w:sectPr"
-    )
-
-
 def keep_caption_next(docx_in, docx_out):
-    """Add keepNext to every caption and to the chain that leads from it to
-    its artifact.
+    """Add keepNext to reportifyr blocks only.
 
-    A caption is a paragraph styled ``Caption``, one with a ``SEQ Table`` /
-    ``SEQ Figure`` field, or a flextable caption that add_tables() tagged with
-    an ``rpcap_`` bookmark.
+    Every body-level magic string gets keepNext. A template caption directly
+    above it (``Caption`` style or a ``SEQ Table`` / ``SEQ Figure`` field) gets
+    keepNext too:
 
-    From each caption, the walk goes forward over body-level siblings. Each magic
-    string and each ``rpcap_`` caption gets keepNext, and so does every blank
-    paragraph between them. The walk stops at the first other element: a table,
-    an inserted image paragraph, text, or anything that isn't a paragraph.
-    Blank paragraphs after the last chain member are left alone, so the artifact
-    isn't glued to the text that follows it.
+        CAPTION*        STRING*
+        STRING*         CAPTION   <- flextable caption; flextable writes keepNext
+        TBL             TBL
 
-    So the template shape ``caption -> {rpfy}:t.rds -> rpcap_ caption -> tbl``
-    gets keepNext on all three paragraphs. A caption placed below its figure
-    gets keepNext itself, but the walk stops at the text after it instead of
-    running on to an unrelated magic string further down.
+    Captions that are not directly above a magic string are not reportifyr
+    content and are left alone.
     """
     doc = Document(docx_in)
+    paras = doc.paragraphs
+
     magic_pattern = get_magic_pattern()
 
+    def set_keep_next(p_el):
+        pPr = p_el.get_or_add_pPr()
+        if not pPr.xpath("./w:keepNext"):
+            pPr.append(OxmlElement("w:keepNext"))
+
     def is_caption(p) -> bool:
-        if p.style is not None and p.style.name == CAPTION_STYLE:
-            return True
-        if is_inserted_caption(p._element):
-            return True
-        return any(
-            ("SEQ Table" in (instr.text or "") or "SEQ Figure" in (instr.text or ""))
+        return bool(p.style and p.style.name == CAPTION_STYLE) or any(
+            ("SEQ Table" in instr.text or "SEQ Figure" in instr.text)
             for instr in p._element.xpath(".//w:instrText")
         )
 
-    for p in doc.paragraphs:
-        if not is_caption(p):
+    for i, p in enumerate(paras):
+        text = "".join(t.text for t in p._element.xpath(".//w:t"))
+        if not magic_pattern.search(text):
             continue
 
-        _set_keep_next(p._element)
+        set_keep_next(p._element)
 
-        pending_blanks = []
-        el = p._element.getnext()
-        while el is not None and el.tag == qn("w:p"):
-            if _is_blank_paragraph(el):
-                pending_blanks.append(el)
-            elif is_inserted_caption(el) or magic_pattern.search(
-                _paragraph_text(el)
-            ):
-                for blank in pending_blanks:
-                    _set_keep_next(blank)
-                pending_blanks = []
-                _set_keep_next(el)
-            else:
-                break
-            el = el.getnext()
+        # The caption must be the element directly above the string (a table
+        # in between means it isn't; doc.paragraphs skips tables).
+        if i > 0 and paras[i - 1]._element is p._element.getprevious():
+            above = paras[i - 1]
+            if is_caption(above):
+                set_keep_next(above._element)
 
     doc.save(docx_out)
 

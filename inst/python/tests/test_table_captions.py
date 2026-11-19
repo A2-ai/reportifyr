@@ -56,6 +56,8 @@ def _make_caption_p(text="Table 1. Caption", bm_id="900000000"):
     pstyle = OxmlElement("w:pStyle")
     pstyle.set(qn("w:val"), "TableCaption")
     ppr.append(pstyle)
+    # flextable always writes keepNext on a top caption (verified on 0.10.0)
+    ppr.append(OxmlElement("w:keepNext"))
     p.append(ppr)
 
     start = OxmlElement("w:bookmarkStart")
@@ -402,72 +404,102 @@ def _keep_next_by_text(tmp_path, elements):
     ]
 
 
-def test_keep_next_template_caption_through_rpcap_caption(tmp_path):
+def test_keep_next_caption_string_tbl(tmp_path):
+    # CAPTION -> STRING -> TBL (template caption)
     result = _keep_next_by_text(tmp_path, [
         _seq_caption_p(),
         _text_p(MAGIC),
-        _make_caption_p(),
         "TBL",
         _text_p("after text"),
     ])
     assert result == [
         ("Table 1. Template caption", True),
         (MAGIC, True),
-        ("Table 1. Caption", True),
         ("after text", False),
     ]
 
 
-def test_keep_next_rpcap_caption_does_not_reach_next_magic(tmp_path):
-    # A kept autonum flextable caption sits after its own magic string; the
-    # walk must stop at its table, not run on to t2's magic string.
+def test_keep_next_string_caption_tbl(tmp_path):
+    # STRING -> CAPTION -> TBL (flextable caption). The string gets keepNext;
+    # the caption already has it from flextable.
     result = _keep_next_by_text(tmp_path, [
         _text_p(MAGIC),
         _make_caption_p(),
         "TBL",
         _text_p("after text"),
-        _text_p("{rpfy}:t2.rds"),
+    ])
+    assert result == [
+        (MAGIC, True),
+        ("Table 1. Caption", True),
+        ("after text", False),
+    ]
+
+
+def test_keep_next_template_and_flextable_caption(tmp_path):
+    # CAPTION -> STRING -> CAPTION -> TBL (duplicate captions)
+    result = _keep_next_by_text(tmp_path, [
+        _seq_caption_p(),
+        _text_p(MAGIC),
+        _make_caption_p(),
         "TBL",
     ])
     assert result == [
-        (MAGIC, False),
+        ("Table 1. Template caption", True),
+        (MAGIC, True),
         ("Table 1. Caption", True),
-        ("after text", False),
-        ("{rpfy}:t2.rds", False),
     ]
 
 
-def test_keep_next_caption_below_figure_stops_at_text(tmp_path):
-    result = _keep_next_by_text(tmp_path, [
-        _text_p("{rpfy}:f1.png"),
-        _seq_caption_p("Figure 1. Below"),
-        _text_p("body text"),
-        _text_p("{rpfy}:f2.png"),
-    ])
-    assert result == [
-        ("{rpfy}:f1.png", False),
-        ("Figure 1. Below", True),
-        ("body text", False),
-        ("{rpfy}:f2.png", False),
-    ]
-
-
-def test_keep_next_blanks_only_between_chain_members(tmp_path):
+def test_keep_next_only_strings_and_captions_directly_above(tmp_path):
+    # Your template's shape: blanks between blocks are left alone, and each
+    # string gets keepNext on its own.
     result = _keep_next_by_text(tmp_path, [
         _seq_caption_p(),
+        _text_p(MAGIC),
         _text_p(""),
-        _text_p("{rpfy}:f1.png"),
-        _text_p("{rpfy}:f2.png"),
         _text_p(""),
-        _text_p("body text"),
+        _text_p("{rpfy}:t2.rds"),
+        _text_p(""),
     ])
     assert result == [
         ("Table 1. Template caption", True),
-        ("", True),
-        ("{rpfy}:f1.png", True),
-        ("{rpfy}:f2.png", True),
+        (MAGIC, True),
         ("", False),
+        ("", False),
+        ("{rpfy}:t2.rds", True),
+        ("", False),
+    ]
+
+
+def test_keep_next_leaves_captions_outside_reportifyr_blocks_alone(tmp_path):
+    # A Word caption on a table typed into the template (no magic string) and
+    # a caption below a string are not reportifyr blocks: untouched.
+    result = _keep_next_by_text(tmp_path, [
+        _seq_caption_p("Table 9. Revision history"),
+        "TBL",
+        _text_p("{rpfy}:f1.png"),
+        _seq_caption_p("Figure 1. Below"),
+        _text_p("body text"),
+    ])
+    assert result == [
+        ("Table 9. Revision history", False),
+        ("{rpfy}:f1.png", True),
+        ("Figure 1. Below", False),
         ("body text", False),
+    ]
+
+
+def test_keep_next_caption_above_table_is_not_above_string(tmp_path):
+    # CAPTION -> TBL -> STRING: the caption belongs to the static table, not
+    # to the string, even though doc.paragraphs puts them next to each other.
+    result = _keep_next_by_text(tmp_path, [
+        _seq_caption_p("Table 9. Static"),
+        "TBL",
+        _text_p(MAGIC),
+    ])
+    assert result == [
+        ("Table 9. Static", False),
+        (MAGIC, True),
     ]
 
 
