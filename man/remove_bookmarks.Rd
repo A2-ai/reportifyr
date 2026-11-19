@@ -12,7 +12,7 @@ remove_bookmarks(docx_in, docx_out)
 \item{docx_out}{The file path to the output \code{.docx} file to save to.}
 }
 \description{
-Reads in a \code{.docx} file and returns a new version with bookmarks removed from the document.
+Reads in a \code{.docx} file and returns a new version with the bookmarks reportifyr added (\code{fp_} footnote and \code{rpcap_} caption bookmarks) removed. Other bookmarks are kept.
 }
 \examples{
 \dontrun{

@@ -67,7 +67,8 @@ to see available abbreviations in standard_footnotes.yaml within report director
 figures, and footnotes associated with a magic string \{rpfy\}:object.ext
 \item \code{\link{remove_magic_strings}}: Removes all magic strings from a
 document cutting its tie to reportifyr but producing a final document.
-\item \code{\link{remove_bookmarks}}: Removes all bookmarks from document
+\item \code{\link{remove_bookmarks}}: Removes reportifyr's footnote and
+caption bookmarks from document
 }
 }
 

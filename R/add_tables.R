@@ -334,16 +334,15 @@ tag_inserted_caption <- function(doc_xml, magic_node, table_name) {
     return(invisible(NULL))
   }
 
-  # Integer w:id unique in the document. officer writes UUID ids, which are
-  # skipped here; start high so ids stay clear of the paragraph-index ids
-  # used for fp_ footnote bookmarks.
+  # w:id one above the highest numeric bookmark id (0 if there are none).
+  # UUID ids written by officer are skipped.
   ids <- suppressWarnings(as.numeric(xml2::xml_attr(
     xml2::xml_find_all(doc_xml, "//w:bookmarkStart", ns = w_ns),
     "w:id",
     ns = w_ns
   )))
   ids <- ids[!is.na(ids)]
-  bm_id <- format(max(c(ids, 899999999)) + 1, scientific = FALSE)
+  bm_id <- format(max(c(ids, -1)) + 1, scientific = FALSE)
   bm_name <- paste0(
     caption_bookmark_prefix,
     digest::digest(table_name, algo = "md5", serialize = FALSE)

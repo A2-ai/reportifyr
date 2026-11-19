@@ -1,6 +1,6 @@
 #' Removes Bookmarks from a Microsoft Word file
 #'
-#' @description Reads in a `.docx` file and returns a new version with bookmarks removed from the document.
+#' @description Reads in a `.docx` file and returns a new version with the bookmarks reportifyr added (`fp_` footnote and `rpcap_` caption bookmarks) removed. Other bookmarks are kept.
 #' @param docx_in The file path to the input `.docx` file.
 #' @param docx_out The file path to the output `.docx` file to save to.
 #'
