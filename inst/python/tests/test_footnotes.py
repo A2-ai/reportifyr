@@ -16,6 +16,7 @@ from reportipyr.footnotes import (
     create_formatted_runs,
     create_footnote_paragraph,
     remove_footnotes,
+    _new_bookmark_ids,
 )
 
 
@@ -583,3 +584,23 @@ def test_remove_footnotes_shared_bookmark_id(tmp_path):
     ]
     assert names == ["_Toc123"]
     assert len(out.element.xpath('//w:bookmarkEnd[@w:id="3"]')) == 1
+
+
+# ---------------------------------------------------------------------------
+# _new_bookmark_ids
+# ---------------------------------------------------------------------------
+
+def test_new_bookmark_ids_start_above_existing_ids():
+    doc = Document()
+    _wrap_in_bookmark(doc.add_paragraph("a"), "_Toc1", "0")
+    _wrap_in_bookmark(doc.add_paragraph("b"), "_Ref2", "7")
+    # officer writes UUID ids; they are not numbers and are skipped
+    _wrap_in_bookmark(
+        doc.add_paragraph("c"), "user", "5f0c2a8e-1b2c-4d3e-8f90-123456789abc"
+    )
+    ids = _new_bookmark_ids(doc)
+    assert [next(ids), next(ids)] == [8, 9]
+
+
+def test_new_bookmark_ids_empty_document_starts_at_zero():
+    assert next(_new_bookmark_ids(Document())) == 0

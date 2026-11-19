@@ -14,6 +14,7 @@ finds the table through the caption.
 import hashlib
 import json
 
+import pytest
 import yaml
 from docx import Document
 from docx.oxml import OxmlElement
@@ -305,6 +306,47 @@ def test_table_footnote_goes_after_table_not_caption(tmp_path):
     assert footnote.xpath(".//w:bookmarkStart[starts-with(@w:name, 'fp_')]")
 
 
+def _add_bookmark(p_el, name, bm_id):
+    """Wrap the contents of paragraph ``p_el`` in a bookmark."""
+    start = OxmlElement("w:bookmarkStart")
+    start.set(qn("w:id"), bm_id)
+    start.set(qn("w:name"), name)
+    end = OxmlElement("w:bookmarkEnd")
+    end.set(qn("w:id"), bm_id)
+    p_el.insert(0, start)
+    p_el.append(end)
+
+
+def test_table_footnote_id_does_not_reuse_template_bookmark_id(tmp_path):
+    # Word numbers template bookmarks 0, 1, 2, ... The magic string is
+    # paragraph 1, the id a paragraph-index footnote would have taken.
+    src = _build_doc(tmp_path)
+    doc = Document(src)
+    before = doc.paragraphs[0]._p
+    _add_bookmark(before, "_Toc100", "0")
+    _add_bookmark(before, "_Ref200", "1")
+    doc.save(src)
+
+    table_dir = _write_table_dir(tmp_path)
+    footnotes = _write_yaml(
+        tmp_path,
+        "footnotes.yaml",
+        {
+            "figure_footnotes": {"efficacy": "Efficacy population."},
+            "table_footnotes": {"efficacy": "Efficacy population."},
+            "abbreviations": {},
+        },
+    )
+    out = tmp_path / "out.docx"
+    add_table_footnotes(str(src), str(out), str(table_dir), str(footnotes), None)
+
+    starts = Document(out).element.xpath("//w:bookmarkStart")
+    names = [s.get(qn("w:name")) for s in starts]
+    assert any(n.startswith("fp_") for n in names)
+    ids = [s.get(qn("w:id")) for s in starts]
+    assert len(ids) == len(set(ids))
+
+
 # ── Alt text and hashes ────────────────────────────────────────────────────
 
 
@@ -337,6 +379,33 @@ def test_remove_bookmarks_strips_caption_bookmark_keeps_caption(tmp_path):
     assert doc.element.xpath('//w:bookmarkEnd[@w:id="900000000"]') == []
     caption = _magic_p(doc).getnext()
     assert _text(caption) == "Table 1. Caption"
+
+
+@pytest.mark.parametrize("prefix", ["fp_", CAPTION_BOOKMARK_PREFIX])
+@pytest.mark.parametrize("user_first", [True, False])
+def test_remove_bookmarks_shared_id_keeps_user_range(tmp_path, prefix, user_first):
+    # A draft built before footnote ids were allocated uniquely can have a
+    # reportifyr bookmark sharing its id with a user bookmark. Only the
+    # reportifyr range is removed; both ends of the user range survive.
+    doc = Document()
+    user_p = doc.add_paragraph("User text")._p
+    rpfy_p = doc.add_paragraph("reportifyr text")._p
+    if not user_first:
+        user_p.addprevious(rpfy_p)
+    _add_bookmark(user_p, "UserRef", "5")
+    _add_bookmark(rpfy_p, prefix + "a" * 32, "5")
+    src = tmp_path / "in.docx"
+    out = tmp_path / "out.docx"
+    doc.save(src)
+
+    remove_bookmarks(str(src), str(out))
+
+    body = Document(out).element.body
+    user_out = next(p for p in body.iterchildren(qn("w:p")) if _text(p) == "User text")
+    assert [s.get(qn("w:name")) for s in body.iter(qn("w:bookmarkStart"))] == ["UserRef"]
+    assert user_out.xpath("./w:bookmarkStart/@w:id") == ["5"]
+    assert user_out.xpath("./w:bookmarkEnd/@w:id") == ["5"]
+    assert len(body.xpath(".//w:bookmarkEnd")) == 1
 
 
 # ── keep_caption_next ──────────────────────────────────────────────────────
@@ -564,3 +633,46 @@ def test_keep_next_is_idempotent(tmp_path):
     doc = Document(second)
     for p in doc.element.body.iterchildren(qn("w:p")):
         assert len(p.xpath("./w:pPr/w:keepNext")) <= 1
+
+
+def _runs_p(*texts):
+    """A paragraph with one run per entry; ``None`` gives an empty <w:t/>."""
+    p = OxmlElement("w:p")
+    for text in texts:
+        r = OxmlElement("w:r")
+        t = OxmlElement("w:t")
+        if text is not None:
+            t.text = text
+        r.append(t)
+        p.append(r)
+    return p
+
+
+def test_keep_next_empty_text_node_without_captions(tmp_path):
+    # A stray empty <w:t/> anywhere in the body must not abort the scan.
+    result = _keep_next_by_text(tmp_path, [
+        _text_p("before"),
+        _runs_p(None),
+        _text_p("after"),
+    ])
+    assert result == [
+        ("before", False),
+        ("", False),
+        ("after", False),
+    ]
+
+
+def test_keep_next_empty_text_node_inside_magic_string(tmp_path):
+    # A magic string split across runs with an empty <w:t/> between them is
+    # still found, and its caption still gets keepNext.
+    result = _keep_next_by_text(tmp_path, [
+        _seq_caption_p(),
+        _runs_p("{rpfy}:", None, TABLE_NAME),
+        "TBL",
+        _runs_p(None),
+    ])
+    assert result == [
+        ("Table 1. Template caption", True),
+        (MAGIC, True),
+        ("", False),
+    ]

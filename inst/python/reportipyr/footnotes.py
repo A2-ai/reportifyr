@@ -1,4 +1,5 @@
 import hashlib
+import itertools
 import os
 import re
 import json
@@ -24,6 +25,22 @@ def _make_bookmark_name(name: str) -> str:
     """
     h = hashlib.md5(name.encode("utf-8")).hexdigest()
     return f"fp_{h}"  # fp_ + 32 hex chars = 35 chars
+
+
+def _new_bookmark_ids(document):
+    """Return an iterator of bookmark ``w:id`` values unused in ``document``.
+
+    Starts above the largest numeric id already present (Word's _Toc/_Ref
+    bookmarks, rpcap_ captions, earlier fp_ footnotes), so a new footnote never
+    shares an id with another bookmark. Non-numeric ids (officer writes UUIDs)
+    are skipped. Mirrors the rpcap_ allocation in R/add_tables.R.
+    """
+    ids = [
+        int(v)
+        for v in document.element.xpath("//w:bookmarkStart/@w:id")
+        if v.isdigit()
+    ]
+    return itertools.count(max(ids, default=-1) + 1)
 
 
 from .config import load_yaml
@@ -291,14 +308,17 @@ def create_formatted_runs(text: str, config: dict) -> list[run.CT_R]:
 
 
 def create_footnote_paragraph(
-    meta_text_dict: dict[str, list], name: str, paragraph_id: int, config: dict
+    meta_text_dict: dict[str, list], name: str, bookmark_id: int, config: dict
 ) -> paragraph.CT_P:
-    """Create a paragraph element containing formatted footnote text with bookmarks."""
+    """Create a paragraph element containing formatted footnote text with bookmarks.
+
+    ``bookmark_id`` must be unused in the document; see _new_bookmark_ids().
+    """
     new_paragraph = OxmlElement("w:p")
 
     # Create the bookmark start
     bookmark_start = OxmlElement("w:bookmarkStart")
-    bookmark_start.set(qn("w:id"), str(paragraph_id))
+    bookmark_start.set(qn("w:id"), str(bookmark_id))
     bookmark_start.set(qn("w:name"), _make_bookmark_name(name))
     new_paragraph.append(bookmark_start)
 
@@ -339,7 +359,7 @@ def create_footnote_paragraph(
 
     # Create the bookmark end
     bookmark_end = OxmlElement("w:bookmarkEnd")
-    bookmark_end.set(qn("w:id"), str(paragraph_id))
+    bookmark_end.set(qn("w:id"), str(bookmark_id))
     new_paragraph.append(bookmark_end)
 
     return new_paragraph
@@ -371,6 +391,7 @@ def add_figure_footnotes(
         config = {}
 
     document = Document(docx_in)
+    bookmark_ids = _new_bookmark_ids(document)
 
     magic_pattern = get_magic_pattern()
 
@@ -485,7 +506,10 @@ def add_figure_footnotes(
                         # Get the last figure paragraph found
                         _, fig_paragraph = figure_paragraphs[-1]
                         new_paragraph = create_footnote_paragraph(
-                            combined_footnotes, "".join(figure_args.keys()), i, config
+                            combined_footnotes,
+                            "".join(figure_args.keys()),
+                            next(bookmark_ids),
+                            config,
                         )
                         fig_paragraph._element.addnext(new_paragraph)
                         footnote_inserted = True
@@ -562,7 +586,6 @@ def add_figure_footnotes(
 
     # Build and insert one combined footnote paragraph per table
     abbrev_delimiter = config.get("abbreviation_delimiter", ",")
-    cell_paragraph_id = len(paragraphs)
     for tbl_idx, combined in table_footnotes.items():
         merged: dict[str, list[str]] = {}
         for key, values in combined.items():
@@ -607,9 +630,8 @@ def add_figure_footnotes(
             continue
 
         new_paragraph = create_footnote_paragraph(
-            merged, cell_bookmark_key, cell_paragraph_id, config
+            merged, cell_bookmark_key, next(bookmark_ids), config
         )
-        cell_paragraph_id += 1
         tbl_el.addnext(new_paragraph)
         logger.info(f"Inserted cell footnote for table figures: {fig_names}")
 
@@ -650,6 +672,7 @@ def add_table_footnotes(
         config = {}
 
     document = Document(docx_in)
+    bookmark_ids = _new_bookmark_ids(document)
 
     magic_pattern = get_magic_pattern()
     paragraphs = document.paragraphs
@@ -705,7 +728,7 @@ def add_table_footnotes(
                 _caption, table = artifact_after_magic(par._p)
                 if table is not None:
                     new_paragraph = create_footnote_paragraph(
-                        meta_text_dict, table_name, i, config
+                        meta_text_dict, table_name, next(bookmark_ids), config
                     )
                     document.element.body.insert(
                         document.element.body.index(table) + 1, new_paragraph
@@ -833,8 +856,8 @@ def remove_footnotes(
                     )
                     continue
             bookmark_id = bookmark.get(namespace + "id")
-            # Search forward from this start: fp_ ids are paragraph indices
-            # and can collide with other bookmarks' ids.
+            # Use the first matching end after this start, not any end with
+            # this id: older drafts can share an id with a user bookmark.
             end_bookmark = bookmark.xpath(
                 f'following::w:bookmarkEnd[@w:id="{bookmark_id}"][1]',
                 namespaces=doc.element.nsmap,

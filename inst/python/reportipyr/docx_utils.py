@@ -112,7 +112,8 @@ def keep_caption_next(docx_in, docx_out):
         )
 
     for i, p in enumerate(paras):
-        text = "".join(t.text for t in p._element.xpath(".//w:t"))
+        # An empty <w:t/> has .text None, which join rejects.
+        text = "".join(t.text for t in p._element.xpath(".//w:t") if t.text)
         if not magic_pattern.search(text):
             continue
 
@@ -131,8 +132,6 @@ def keep_caption_next(docx_in, docx_out):
 def remove_bookmarks(docx_in, docx_out):
     doc = Document(docx_in)
 
-    rpfy_bookmark_ids = set()
-
     for element in doc.element.findall(
         ".//w:bookmarkStart", namespaces=doc.element.nsmap
     ):
@@ -140,16 +139,12 @@ def remove_bookmarks(docx_in, docx_out):
         if bookmark_name and bookmark_name.startswith(
             ("fp_", CAPTION_BOOKMARK_PREFIX)
         ):
-            rpfy_bookmark_ids.add(element.get(qn("w:id")))
-            parent = element.getparent()
-            parent.remove(element)
-
-    for element in doc.element.findall(
-        ".//w:bookmarkEnd", namespaces=doc.element.nsmap
-    ):
-        bookmark_id = element.get(qn("w:id"))
-        if bookmark_id in rpfy_bookmark_ids:
-            parent = element.getparent()
-            parent.remove(element)
+            bookmark_id = element.get(qn("w:id"))
+            for end in element.xpath(
+                f'following::w:bookmarkEnd[@w:id="{bookmark_id}"][1]',
+                namespaces=doc.element.nsmap,
+            ):
+                end.getparent().remove(end)
+            element.getparent().remove(element)
 
     doc.save(docx_out)
