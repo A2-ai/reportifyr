@@ -27,6 +27,7 @@ from reportipyr.docx_utils import (
     CAPTION_BOOKMARK_PREFIX,
     artifact_after_magic,
     is_inserted_caption,
+    keep_caption_next,
     magic_before_table,
     remove_bookmarks,
 )
@@ -334,3 +335,150 @@ def test_remove_bookmarks_strips_caption_bookmark_keeps_caption(tmp_path):
     assert doc.element.xpath('//w:bookmarkEnd[@w:id="900000000"]') == []
     caption = _magic_p(doc).getnext()
     assert _text(caption) == "Table 1. Caption"
+
+
+# ── keep_caption_next ──────────────────────────────────────────────────────
+
+
+def _seq_caption_p(text="Table 1. Template caption"):
+    """A template caption paragraph identified by a complex SEQ Table field."""
+    p = OxmlElement("w:p")
+    for fld_type, instr in (("begin", None), (None, " SEQ Table \\* ARABIC "), ("end", None)):
+        r = OxmlElement("w:r")
+        if fld_type:
+            fc = OxmlElement("w:fldChar")
+            fc.set(qn("w:fldCharType"), fld_type)
+            r.append(fc)
+        else:
+            it = OxmlElement("w:instrText")
+            it.text = instr
+            r.append(it)
+        p.append(r)
+    r = OxmlElement("w:r")
+    t = OxmlElement("w:t")
+    t.text = text
+    r.append(t)
+    p.append(r)
+    return p
+
+
+def _text_p(text):
+    p = OxmlElement("w:p")
+    if text:
+        r = OxmlElement("w:r")
+        t = OxmlElement("w:t")
+        t.text = text
+        r.append(t)
+        p.append(r)
+    return p
+
+
+def _body_doc(tmp_path, elements, filename="kn-in.docx"):
+    """Write a docx whose body is exactly ``elements`` (``"TBL"`` -> a table)."""
+    doc = Document()
+    body = doc.element.body
+    for child in list(body):
+        if child.tag != qn("w:sectPr"):
+            body.remove(child)
+    sect = body.find(qn("w:sectPr"))
+    for el in elements:
+        if el == "TBL":
+            el = doc.add_table(rows=1, cols=1)._tbl
+            body.remove(el)
+        sect.addprevious(el)
+    path = tmp_path / filename
+    doc.save(path)
+    return path
+
+
+def _keep_next_by_text(tmp_path, elements):
+    """Run keep_caption_next and return [(text, has_keepNext)] for body paragraphs."""
+    out = tmp_path / "kn-out.docx"
+    keep_caption_next(str(_body_doc(tmp_path, elements)), str(out))
+    doc = Document(out)
+    return [
+        (_text(p), bool(p.xpath("./w:pPr/w:keepNext")))
+        for p in doc.element.body.iterchildren(qn("w:p"))
+    ]
+
+
+def test_keep_next_template_caption_through_rpcap_caption(tmp_path):
+    result = _keep_next_by_text(tmp_path, [
+        _seq_caption_p(),
+        _text_p(MAGIC),
+        _make_caption_p(),
+        "TBL",
+        _text_p("after text"),
+    ])
+    assert result == [
+        ("Table 1. Template caption", True),
+        (MAGIC, True),
+        ("Table 1. Caption", True),
+        ("after text", False),
+    ]
+
+
+def test_keep_next_rpcap_caption_does_not_reach_next_magic(tmp_path):
+    # A kept autonum flextable caption sits after its own magic string; the
+    # walk must stop at its table, not run on to t2's magic string.
+    result = _keep_next_by_text(tmp_path, [
+        _text_p(MAGIC),
+        _make_caption_p(),
+        "TBL",
+        _text_p("after text"),
+        _text_p("{rpfy}:t2.rds"),
+        "TBL",
+    ])
+    assert result == [
+        (MAGIC, False),
+        ("Table 1. Caption", True),
+        ("after text", False),
+        ("{rpfy}:t2.rds", False),
+    ]
+
+
+def test_keep_next_caption_below_figure_stops_at_text(tmp_path):
+    result = _keep_next_by_text(tmp_path, [
+        _text_p("{rpfy}:f1.png"),
+        _seq_caption_p("Figure 1. Below"),
+        _text_p("body text"),
+        _text_p("{rpfy}:f2.png"),
+    ])
+    assert result == [
+        ("{rpfy}:f1.png", False),
+        ("Figure 1. Below", True),
+        ("body text", False),
+        ("{rpfy}:f2.png", False),
+    ]
+
+
+def test_keep_next_blanks_only_between_chain_members(tmp_path):
+    result = _keep_next_by_text(tmp_path, [
+        _seq_caption_p(),
+        _text_p(""),
+        _text_p("{rpfy}:f1.png"),
+        _text_p("{rpfy}:f2.png"),
+        _text_p(""),
+        _text_p("body text"),
+    ])
+    assert result == [
+        ("Table 1. Template caption", True),
+        ("", True),
+        ("{rpfy}:f1.png", True),
+        ("{rpfy}:f2.png", True),
+        ("", False),
+        ("body text", False),
+    ]
+
+
+def test_keep_next_is_idempotent(tmp_path):
+    first = tmp_path / "kn-1.docx"
+    second = tmp_path / "kn-2.docx"
+    keep_caption_next(
+        str(_body_doc(tmp_path, [_seq_caption_p(), _text_p(MAGIC), _make_caption_p(), "TBL"])),
+        str(first),
+    )
+    keep_caption_next(str(first), str(second))
+    doc = Document(second)
+    for p in doc.element.body.iterchildren(qn("w:p")):
+        assert len(p.xpath("./w:pPr/w:keepNext")) <= 1
