@@ -53,6 +53,8 @@ remove_magic_strings <- function(docx_in, docx_out) {
     continue <- readline(
       "This will remove magic strings from the document. This severs link between the document and reportifyr. Are you sure you want to continue? [Y/n]\n"
     )
+    # Blank answer takes the default shown by [Y/n]
+    if (trimws(continue) == "") continue <- "Y"
   } else {
     continue <- "Y"
     log4r::info(
