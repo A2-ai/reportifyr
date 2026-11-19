@@ -836,7 +836,8 @@ def remove_footnotes(
             # Search forward from this start: fp_ ids are paragraph indices
             # and can collide with other bookmarks' ids.
             end_bookmark = bookmark.xpath(
-                f'following::w:bookmarkEnd[@w:id="{bookmark_id}"][1]'
+                f'following::w:bookmarkEnd[@w:id="{bookmark_id}"][1]',
+                namespaces=doc.element.nsmap,
             )[0]
 
             elements_to_remove = []
