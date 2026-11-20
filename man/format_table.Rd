@@ -16,14 +16,16 @@ A tblkit table (\code{tblkit_spec}).
 The tblkit counterpart of \code{\link[=format_flextable]{format_flextable()}}: gives a table
 the look \code{format_flextable()} gives a flextable. Arial Narrow 10 pt, a bold
 header, every cell left aligned, a 1 pt line on every cell edge, 1 pt
-padding above and below, and the table centered on the page. Column widths
-are measured from the content by tblkit. Numbers are not formatted: format
-them in the data, or with \code{\link[tblkit:tk_format]{tblkit::tk_format()}} on the result.
+padding above and below, and the table centered on the page. Numbers are not
+formatted: format them in the data, or with \code{\link[tblkit:tk_format]{tblkit::tk_format()}} on the
+result.
 
 A data frame becomes a \code{\link[tblkit:tk]{tblkit::tk()}} table with every column a plain
-column (no stub). A tblkit table keeps its own structure, formats and
-styles, and takes the look's theme. \code{add_tables()} calls this for every data
-frame it inserts.
+column (no stub), and its columns are measured from their content and
+scaled so the table is 6 inches wide with \code{\link[=fit_table_to_page]{fit_table_to_page()}}. A
+tblkit table keeps its own structure, formats, styles and column widths
+(set them with \code{\link[tblkit:tk_layout]{tblkit::tk_layout()}}), and takes the look's theme.
+\code{add_tables()} calls this for every data frame it inserts.
 }
 \examples{
 \dontrun{

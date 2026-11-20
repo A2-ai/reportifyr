@@ -38,3 +38,15 @@ test_that("format_table keeps a tblkit table's own formats", {
   expect_equal(result$spec$theme$font_family, "Arial Narrow")
   expect_true("70.26" %in% tblkit::tk_cells(result)$.text)
 })
+
+# widths
+test_that("format_table fits a data frame to the page but not a tblkit table", {
+  expect_equal(format_table(head(iris, 3))$spec$settings$layout$width_inches, 6)
+
+  d <- data.frame(stat = c("n", "Mean"), weight = c(12, 70.2))
+  x <- tblkit::tk(d, stub = "stat") |> tblkit::tk_layout(widths = c(.default = 1))
+  expect_equal(
+    format_table(x)$spec$settings$layout$widths,
+    x$spec$settings$layout$widths
+  )
+})

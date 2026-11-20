@@ -91,6 +91,7 @@ strings and bookmarks from document.
 \itemize{
 \item \code{\link{make_doc_dirs}}: FILL IN
 \item \code{\link{fit_flextable_to_page}}: FILL IN
+\item \code{\link{fit_table_to_page}}: Scales a tblkit table's column widths to the page width.
 \item \code{\link{validate_object}}: FILL IN
 \item \code{\link{validate_config}}: FILL IN
 }
