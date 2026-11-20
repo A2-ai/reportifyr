@@ -40,6 +40,7 @@ Imports:
     processx,
     purrr,
     rlang,
+    tblkit,
     this.path,
     tictoc,
     xml2,

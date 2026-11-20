@@ -45,7 +45,7 @@ test_that("validate_docx errors if file extension is invalid", {
       warnings = list(),
       errors = list(
         "Unsupported file types found in document: example.doc",
-        "Fix artifact extensions to continue. Currently .csv, .RDS are accepted for tables and .png is accepted for figures."
+        "Fix artifact extensions to continue. Currently .csv, .RDS, .xml are accepted for tables and .png is accepted for figures."
       )
     )))
   })

@@ -5,9 +5,10 @@ from .magic import get_magic_pattern
 
 CAPTION_STYLE = "Caption"
 
-# Bookmark prefix that add_tables() (R) wraps around a flextable caption it
-# inserts between a table magic string and its <w:tbl>. Keep in sync with
-# caption_bookmark_prefix in R/add_tables.R.
+# Bookmark prefix that add_tables() (R) wrapped around a flextable caption it
+# inserted between a table magic string and its <w:tbl>. add_tables() no longer
+# inserts captions (tables go in with tblkit); drafts built before that still
+# carry these bookmarks.
 CAPTION_BOOKMARK_PREFIX = "rpcap_"
 
 
