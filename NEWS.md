@@ -1,7 +1,49 @@
 # reportifyr 0.4.1
+## New Features
+
+* Flextable captions are now supported. Users can set a caption with `flextable::set_caption()`, save the flextable with `save_rds_with_metadata()`, and `add_tables()` will insert the caption along with the table.
+  * The resulting document after `build_report()` will look like the following:
+
+    {rpfy}:01-pk-summary.RDS<br>
+    Table 1: Summary of PK parameters<br>
+    [Table]<br>
+    [Footnote for Table]<br>
+
+  * The caption is tagged with an `rpcap_` bookmark so reportifyr can tell it apart from the rest of the document. Footnotes, alt text, `skip_unchanged`, and table removal all work through the caption, and the caption is removed along with its table when the report is rebuilt.
+
+## Minor Improvements
+
+* `keep_caption_next` now only applies "keep with next" to magic strings and the caption directly above them. Captions elsewhere in the document are no longer changed.
+
+* `finalize_document()` no longer adds "keep with next" to `SEQ Table`/`SEQ Figure` captions.
+
+* `remove_bookmarks()` now removes `rpcap_` caption bookmarks along with `fp_` footnote bookmarks. All other bookmarks in the document are left alone.
+
+* `remove_tables()` now only removes a table that directly follows its magic string (or its `rpcap_` caption).
+
+* The `[Y/n]` prompts in `remove_bookmarks()` and `remove_magic_strings()` now default to yes when left blank.
+
+* Python log messages are now processed line by line, so the `RPFY_VERBOSE` level is applied consistently. This requires `pyro (>= 0.1.2)`.
+
+* `initialize_report_project()` messaging has been updated to show paths relative to the project root:
+    ```
+    Created report/standard_footnotes.yaml from reportifyr's default
+    Created report/config.yaml from reportifyr's default
+    ```
+
 ## Bug Fixes
 
 * Fixed an issue where a figure's magic string kept stale `<width: ..., height: ...>` values after the figure was resized in Word. When `skip_unchanged` kept an unchanged figure in place, `remove_figures()` skipped the dimension sync along with the removal. Dimensions are now synced whether or not the figure is removed.
+
+* Fixed an issue where footnote bookmark ids could collide with other bookmarks in the document (e.g. Word's `_Toc`/`_Ref` bookmarks). New bookmarks are now numbered above the highest id in the document at the time of each build.
+
+* Fixed an issue where `remove_footnotes()` could error on documents with duplicate bookmark ids, and `finalize_document()` could remove the end of a user's bookmark.
+
+* Fixed an issue where `add_tables()` could insert a table a second time when another paragraph mentioned the table's file name. The check for an existing table now matches the full magic string.
+
+* Fixed an issue where `keep_caption_next` errored on paragraphs containing an empty text run.
+
+* Fixed an issue where `preview_metadata_files()` returned extra rows when notes, abbreviations, or equations had more than one entry.
 
 # reportifyr 0.4.0
 ## New Features
