@@ -24,9 +24,10 @@ Tables are inserted with \code{\link[tblkit:tk_report_build]{tblkit::tk_report_b
 directly after its \verb{\{rpfy\}:} magic string in one pass over the document, and
 the result is verified before it is written. An \code{.rds} holding a tblkit
 table (\code{\link[tblkit:tk]{tblkit::tk()}}) is inserted as authored, with no reportifyr
-formatting. Other \code{.csv} and \code{.rds} files are formatted as flextables first
-(an \code{.rds} that already holds a flextable is used as is); an \code{.xml} file
-holding a \code{w:tbl} is inserted as written.
+formatting. A data frame (a \code{.csv}, or an \code{.rds} holding one) is built with
+\code{\link[=format_table]{format_table()}}. An \code{.rds} holding
+a flextable is used as is; an \code{.xml} file holding a \code{w:tbl} is inserted as
+written.
 
 A magic string that already has a table directly after it (kept by
 \code{skip_unchanged}) is left alone. A table caption (\code{flextable::set_caption()},

@@ -105,6 +105,16 @@ test_that("a tblkit table saved as .rds is inserted as authored", {
   expect_true("70.26" %in% text)
 })
 
+test_that("a data frame from .rds or .csv is formatted with format_table()", {
+  dir <- withr::local_tempdir()
+  d <- data.frame(arm = c("Placebo", "Drug"), n = c(12L, 11L))
+  saveRDS(d, file.path(dir, "d.rds"))
+  utils::write.csv(d, file.path(dir, "d.csv"), row.names = FALSE)
+
+  expect_equal(read_table(file.path(dir, "d.rds")), format_table(d))
+  expect_equal(read_table(file.path(dir, "d.csv")), format_table(d))
+})
+
 test_that("save_rtf skips a tblkit table", {
   dir <- withr::local_tempdir()
   file <- file.path(dir, "t.rds")

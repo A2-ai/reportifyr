@@ -6,9 +6,10 @@
 #' directly after its `{rpfy}:` magic string in one pass over the document, and
 #' the result is verified before it is written. An `.rds` holding a tblkit
 #' table ([tblkit::tk()]) is inserted as authored, with no reportifyr
-#' formatting. Other `.csv` and `.rds` files are formatted as flextables first
-#' (an `.rds` that already holds a flextable is used as is); an `.xml` file
-#' holding a `w:tbl` is inserted as written.
+#' formatting. A data frame (a `.csv`, or an `.rds` holding one) is built with
+#' [format_table()]. An `.rds` holding
+#' a flextable is used as is; an `.xml` file holding a `w:tbl` is inserted as
+#' written.
 #'
 #' A magic string that already has a table directly after it (kept by
 #' `skip_unchanged`) is left alone. A table caption (`flextable::set_caption()`,
@@ -193,7 +194,7 @@ insert_tables_tblkit <- function(docx_in, docx_out, tables_path) {
     }
     table <- read_table(table_file)
     if (inherits(table, "tblkit_spec")) {
-      # A tk() table is inserted as authored: no reportifyr formatting.
+      # A tk() table: as authored, or a data frame from format_table().
       placements[[name]] <- tblkit_call(
         tblkit::tk_from_spec(table, repo = repo, check_refresh = FALSE)
       )
@@ -258,9 +259,8 @@ insert_tables_tblkit <- function(docx_in, docx_out, tables_path) {
   invisible(TRUE)
 }
 
-# Reads a table file (.csv or .rds). A tblkit table (tk()) is returned as is;
-# otherwise a flextable: a flextable as is, other data formatted with
-# format_flextable() and its metadata.
+# Reads a table file (.csv or .rds). A tblkit table (tk()) or a flextable is
+# returned as is; a data frame is formatted with format_table().
 read_table <- function(table_file) {
   data_in <- switch(
     tolower(tools::file_ext(table_file)),
@@ -293,14 +293,10 @@ read_table <- function(table_file) {
       .le$logger,
       paste0("Metadata file missing for table: ", table_file)
     )
-    if (!inherits(data_in, "flextable")) {
-      log4r::warn(
-        .le$logger,
-        paste0("Default formatting will be applied for ", table_file, ".")
-      )
-      return(format_flextable(data_in))
-    }
-    log4r::warn(
+  }
+
+  if (inherits(data_in, "flextable")) {
+    log4r::info(
       .le$logger,
       paste0(
         "Data is already a flextable so no formatting will be applied for ",
@@ -311,19 +307,18 @@ read_table <- function(table_file) {
     return(data_in)
   }
 
-  if (!inherits(data_in, "flextable")) {
-    metadata <- jsonlite::fromJSON(metadata_file)
-    return(format_flextable(data_in, metadata$object_meta$table1))
+  if (!is.data.frame(data_in)) {
+    stop(
+      "Table file must hold a data frame, a flextable or a tblkit table: ",
+      table_file,
+      call. = FALSE
+    )
   }
   log4r::info(
     .le$logger,
-    paste0(
-      "Data is already a flextable so no formatting will be applied for ",
-      table_file,
-      "."
-    )
+    paste0("Formatting with format_table() for ", table_file, ".")
   )
-  data_in
+  tblkit_call(format_table(data_in))
 }
 
 # Runs a tblkit call, sending its messages and warnings to the log. A tblkit

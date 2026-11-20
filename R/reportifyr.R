@@ -26,6 +26,8 @@
 #'   also creates metadata for tabular object and saves as rtf
 #'   \item \code{\link{format_flextable}}: Formats a tabular data object as a
 #'   flextable with simple formatting.
+#'   \item \code{\link{format_table}}: Formats a data frame or tblkit table
+#'   with \code{format_flextable}'s look; used by \code{add_tables}.
 #' }
 #'
 #' @section metadata interaction functions:
