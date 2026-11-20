@@ -86,6 +86,33 @@ test_that("an .xml table is inserted as written", {
   expect_equal(body_sequence(out), c("{rpfy}:iris.xml", "[tbl]", "End"))
 })
 
+test_that("a tblkit table saved as .rds is inserted as authored", {
+  dir <- withr::local_tempdir()
+  tables <- make_tables_dir(dir)
+  d <- data.frame(stat = c("n", "Mean", "SD"), weight = c(12, 70.256, 8.1))
+  spec <- tblkit::tk(d) |>
+    tblkit::tk_label(stat = "Statistic", weight = "Weight (kg)") |>
+    tblkit::tk_format(decimals = 2)
+  saveRDS(spec, file.path(tables, "iris-tk.rds"))
+
+  out <- file.path(dir, "out.docx")
+  insert_tables_tblkit(make_template(c("{rpfy}:iris-tk.rds", "End"), dir), out, tables)
+  expect_equal(body_sequence(out), c("{rpfy}:iris-tk.rds", "[tbl]", "End"))
+
+  # its own label and format, not format_flextable()'s
+  text <- officer::docx_summary(officer::read_docx(out))$text
+  expect_true("Weight (kg)" %in% text)
+  expect_true("70.26" %in% text)
+})
+
+test_that("save_rtf skips a tblkit table", {
+  dir <- withr::local_tempdir()
+  file <- file.path(dir, "t.rds")
+  d <- data.frame(stat = c("n", "Mean"), weight = c(12, 70.2))
+  expect_null(save_rtf(tblkit::tk(d), file, table1_format = FALSE))
+  expect_false(file.exists(file.path(dir, "t_rds.RTF")))
+})
+
 test_that("a document without magic strings is copied", {
   dir <- withr::local_tempdir()
   tables <- make_tables_dir(dir)

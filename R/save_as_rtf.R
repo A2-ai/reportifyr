@@ -16,6 +16,14 @@ save_rtf <- function(object, file, table1_format) {
   )
   log4r::info(.le$logger, paste0("RTF file path set: ", rtf_file))
 
+  if (inherits(object, "tblkit_spec")) {
+    log4r::info(
+      .le$logger,
+      "Object is a tblkit table; flextable cannot write it, so no RTF is saved"
+    )
+    return(invisible(NULL))
+  }
+
   if (!inherits(object, "flextable")) {
     log4r::info(
       .le$logger,

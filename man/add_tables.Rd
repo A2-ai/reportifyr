@@ -22,13 +22,16 @@ Reads in a \code{.docx} file and returns a new version with tables placed at app
 
 Tables are inserted with \code{\link[tblkit:tk_report_build]{tblkit::tk_report_build()}}: every table goes in
 directly after its \verb{\{rpfy\}:} magic string in one pass over the document, and
-the result is verified before it is written. \code{.csv} and \code{.rds} files are
-formatted as flextables first (an \code{.rds} that already holds a flextable is
-used as is); an \code{.xml} file holding a \code{w:tbl} is inserted as written.
+the result is verified before it is written. An \code{.rds} holding a tblkit
+table (\code{\link[tblkit:tk]{tblkit::tk()}}) is inserted as authored, with no reportifyr
+formatting. Other \code{.csv} and \code{.rds} files are formatted as flextables first
+(an \code{.rds} that already holds a flextable is used as is); an \code{.xml} file
+holding a \code{w:tbl} is inserted as written.
 
 A magic string that already has a table directly after it (kept by
-\code{skip_unchanged}) is left alone. A flextable caption (\code{flextable::set_caption()})
-is not inserted: put the caption in the template, above the magic string.
+\code{skip_unchanged}) is left alone. A table caption (\code{flextable::set_caption()},
+\code{\link[tblkit:tk_caption]{tblkit::tk_caption()}}) is not inserted: put the caption in the template,
+above the magic string.
 }
 \examples{
 \dontrun{

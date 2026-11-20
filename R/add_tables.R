@@ -4,13 +4,16 @@
 #'
 #' Tables are inserted with [tblkit::tk_report_build()]: every table goes in
 #' directly after its `{rpfy}:` magic string in one pass over the document, and
-#' the result is verified before it is written. `.csv` and `.rds` files are
-#' formatted as flextables first (an `.rds` that already holds a flextable is
-#' used as is); an `.xml` file holding a `w:tbl` is inserted as written.
+#' the result is verified before it is written. An `.rds` holding a tblkit
+#' table ([tblkit::tk()]) is inserted as authored, with no reportifyr
+#' formatting. Other `.csv` and `.rds` files are formatted as flextables first
+#' (an `.rds` that already holds a flextable is used as is); an `.xml` file
+#' holding a `w:tbl` is inserted as written.
 #'
 #' A magic string that already has a table directly after it (kept by
-#' `skip_unchanged`) is left alone. A flextable caption (`flextable::set_caption()`)
-#' is not inserted: put the caption in the template, above the magic string.
+#' `skip_unchanged`) is left alone. A table caption (`flextable::set_caption()`,
+#' [tblkit::tk_caption()]) is not inserted: put the caption in the template,
+#' above the magic string.
 #' @param docx_in The file path to the input `.docx` file.
 #' @param docx_out The file path to the output `.docx` file to save to.
 #' @param tables_path The file path to the tables and associated metadata directory.
@@ -188,7 +191,15 @@ insert_tables_tblkit <- function(docx_in, docx_out, tables_path) {
       placements[[name]] <- table_file
       next
     }
-    flextable <- read_table_flextable(table_file)
+    table <- read_table(table_file)
+    if (inherits(table, "tblkit_spec")) {
+      # A tk() table is inserted as authored: no reportifyr formatting.
+      placements[[name]] <- tblkit_call(
+        tblkit::tk_from_spec(table, repo = repo, check_refresh = FALSE)
+      )
+      next
+    }
+    flextable <- table
     # what body_add_flextable(align = "center", split = FALSE) set
     flextable$properties$align <- "center"
     flextable$properties$opts_word$split <- FALSE
@@ -247,15 +258,28 @@ insert_tables_tblkit <- function(docx_in, docx_out, tables_path) {
   invisible(TRUE)
 }
 
-# Reads a table file (.csv or .rds) as a flextable: a flextable as is, other
-# data formatted with format_flextable() and its metadata.
-read_table_flextable <- function(table_file) {
+# Reads a table file (.csv or .rds). A tblkit table (tk()) is returned as is;
+# otherwise a flextable: a flextable as is, other data formatted with
+# format_flextable() and its metadata.
+read_table <- function(table_file) {
   data_in <- switch(
     tolower(tools::file_ext(table_file)),
     "csv" = utils::read.csv(table_file),
     "rds" = readRDS(table_file),
     stop("Unsupported file type")
   )
+
+  if (inherits(data_in, "tblkit_spec")) {
+    log4r::info(
+      .le$logger,
+      paste0(
+        "Data is a tblkit table so no formatting will be applied for ",
+        table_file,
+        "."
+      )
+    )
+    return(data_in)
+  }
 
   metadata_file <- paste0(
     tools::file_path_sans_ext(table_file),
@@ -313,7 +337,7 @@ tblkit_call <- function(expr) {
         log4r::warn(
           .le$logger,
           paste0(
-            "Flextable caption not inserted for: ",
+            "Table caption not inserted for: ",
             paste0(m$tables, collapse = ", "),
             ". Put the caption in the template above the magic string."
           )
