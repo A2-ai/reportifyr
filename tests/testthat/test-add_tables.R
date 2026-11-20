@@ -115,11 +115,16 @@ test_that("a data frame from .rds or .csv is formatted with format_table()", {
   expect_equal(read_table(file.path(dir, "d.csv")), format_table(d))
 })
 
-test_that("save_rtf skips a tblkit table", {
+test_that("save_rtf skips tblkit tables", {
   dir <- withr::local_tempdir()
   file <- file.path(dir, "t.rds")
   d <- data.frame(stat = c("n", "Mean"), weight = c(12, 70.2))
   expect_null(save_rtf(tblkit::tk(d), file, table1_format = FALSE))
+  expect_false(file.exists(file.path(dir, "t_rds.RTF")))
+
+  # a stored tblkit table, as tk_from_spec() returns
+  artifact <- structure(list(), class = "tblkit_artifact")
+  expect_null(save_rtf(artifact, file, table1_format = FALSE))
   expect_false(file.exists(file.path(dir, "t_rds.RTF")))
 })
 
