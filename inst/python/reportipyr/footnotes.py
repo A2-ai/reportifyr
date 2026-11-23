@@ -159,6 +159,7 @@ def create_meta_text_lines(
     # Add abbreviations metadata
     abbrev_text = ""
     abbrev_delimiter = config.get("abbreviation_delimiter", ",")
+    abbrev_separator = config.get("abbreviation_separator", ": ")
     abbrev_list = _footnote_values(object_footnotes.get("abbreviations"))
     if len(abbrev_list) > 0:
         abbrev_section = footnotes.get("abbreviations", {})
@@ -170,7 +171,9 @@ def create_meta_text_lines(
                     f"abbreviations section of footnotes YAML"
                 )
             for full_form in _footnote_values(abbrev_section[abbrev]):
-                abbrev_parts.append(f"{abbrev}: {full_form.rstrip('.')}")
+                abbrev_parts.append(
+                    f"{abbrev}{abbrev_separator}{full_form.rstrip('.')}"
+                )
         if abbrev_parts:
             abbrev_text = f"{abbrev_delimiter} ".join(abbrev_parts) + "."
             meta_text_lines["Abbreviations"] = abbrev_text

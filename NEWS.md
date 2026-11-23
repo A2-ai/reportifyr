@@ -1,6 +1,8 @@
 # reportifyr 0.4.0
 ## Bug fixes
 
+* `abbreviation_separator` in config.yaml (default `": "`) controls the text between an abbreviation and its definition in footnotes, for example `" = "` gives `AUC = area under the curve`. Previously the colon was hard-coded.
+
 * Quarto source detection now resolves nested `.qmd` documents beside their intermediate input, so metadata and save wrappers retain the original source path even when a same-named document exists at the project root (PR #21).
 
 * Report footnotes now omit empty Notes and Abbreviations sections instead of printing `N/A`. Null values, blank strings, and `NA`/`NULL` markers are ignored, while valid standard notes and abbreviations are retained.

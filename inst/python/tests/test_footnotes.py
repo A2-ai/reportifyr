@@ -240,6 +240,32 @@ def test_unknown_nonmissing_footnote_keys_still_raise(field):
         )
 
 
+def test_abbreviation_separator_defaults_to_colon():
+    result = create_meta_text_lines(
+        _make_footnotes(),
+        _make_metadata(abbreviations=["PK"]),
+        False,
+        "figure",
+        _default_config(),
+    )
+    assert result["Abbreviations"] == "PK: pharmacokinetics."
+
+
+def test_abbreviation_separator_is_configurable():
+    config = {**_default_config(), "abbreviation_separator": " = "}
+    result = create_meta_text_lines(
+        _make_footnotes(),
+        _make_metadata(notes=["Note: keep colon"], abbreviations=["PK", "CI"]),
+        False,
+        "figure",
+        config,
+    )
+    assert result["Abbreviations"] == (
+        "PK = pharmacokinetics, CI = confidence interval."
+    )
+    assert "Note: keep colon." in result["Notes"]
+
+
 def test_create_meta_text_lines_table_type():
     metadata = _make_metadata(meta_type="efficacy")
     footnotes = _make_footnotes()
