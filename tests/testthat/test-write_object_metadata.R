@@ -10,19 +10,64 @@ test_that("write_object_metadata throws error for missing object file", {
 })
 
 test_that("write_object_metadata fails without initialized project", {
-  # Create a temporary directory without init file
-  temp_dir <- tempdir()
-  temp_object <- file.path(temp_dir, "test.txt")
+  paths <- local_save_fixture()
+  local_no_project()
+  temp_object <- file.path(paths$outside, "test.txt")
   writeLines("Temporary file content", temp_object)
 
-  # Set working directory to temp dir to ensure no project root is found
-  old_wd <- getwd()
-  on.exit(setwd(old_wd))
-  setwd(temp_dir)
-
-  expect_error(
+  error <- tryCatch(
     write_object_metadata(temp_object, meta_type = "table"),
-    regexp = "Could not find project root directory"
+    error = identity
+  )
+  expect_s3_class(error, "error")
+  expect_match(
+    conditionMessage(error),
+    "Could not find a reportifyr project",
+    fixed = TRUE
+  )
+  expect_identical(
+    file.exists(file.path(paths$outside, "test_txt_metadata.json")),
+    FALSE
+  )
+  expect_identical(readLines(temp_object), "Temporary file content")
+})
+
+test_that("write_object_metadata resolves the object's project independently of working directory", {
+  paths <- local_save_fixture()
+  object_file <- file.path(paths$project, "test.txt")
+  writeLines("Content", object_file)
+
+  for (working_directory in c(paths$outside, paths$other)) {
+    setwd(working_directory)
+    write_object_metadata(object_file, meta_type = "table")
+
+    metadata <- read_saved_metadata(object_file)
+    expect_equal(metadata$object_meta$path, "test.txt")
+    expect_equal(metadata$source_meta$path, "analysis.R")
+    expect_equal(
+      metadata$object_meta$hash,
+      digest::digest(file = object_file, algo = "blake3")
+    )
+  }
+})
+
+test_that("write_object_metadata normalizes explicit context roots", {
+  paths <- local_save_fixture()
+  object_file <- file.path(paths$project, "test.txt")
+  writeLines("Content", object_file)
+  context <- new_rpfy_context(
+    list(platform = "test", software = list()),
+    list(),
+    NULL,
+    "Test author",
+    paths$other
+  )
+
+  write_object_metadata(object_file, context = context)
+
+  expect_equal(
+    read_saved_metadata(object_file)$object_meta$path,
+    "../project/test.txt"
   )
 })
 
@@ -124,11 +169,11 @@ test_that("write_object_metadata writes source_meta from context", {
 
   ctx <- rpfy_context(
     origin = script_source(
-      path            = "scripts/foo.R",
+      path = "scripts/foo.R",
       creation_author = "jake",
-      latest_author   = "jake",
-      creation_time   = "2026-01-01 00:00:00",
-      latest_time     = "2026-04-20 12:00:00"
+      latest_author = "jake",
+      creation_time = "2026-01-01 00:00:00",
+      latest_time = "2026-04-20 12:00:00"
     )
   )
 

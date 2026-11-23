@@ -118,6 +118,25 @@ add_footnotes <- function(
   )
 
   if (!is.null(standard_footnotes_yaml)) {
+    if (
+      !is.character(standard_footnotes_yaml) ||
+        length(standard_footnotes_yaml) != 1L ||
+        is.na(standard_footnotes_yaml) ||
+        !nzchar(standard_footnotes_yaml) ||
+        !file.exists(standard_footnotes_yaml) ||
+        dir.exists(standard_footnotes_yaml)
+    ) {
+      stop(
+        "`standard_footnotes_yaml` must be a path to an existing file. ",
+        "No default footnotes file will be used when a value is supplied.",
+        call. = FALSE
+      )
+    }
+    standard_footnotes_yaml <- normalizePath(
+      standard_footnotes_yaml,
+      winslash = "/",
+      mustWork = TRUE
+    )
     log4r::info(
       .le$logger,
       paste0("Using provided footnotes file: ", standard_footnotes_yaml)

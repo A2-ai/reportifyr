@@ -113,6 +113,21 @@ validate_config <- function(path_to_config_yaml) {
     }
   }
 
+  log4r::debug(.le$logger, "Checking abbreviation_separator now")
+  if (!is.null(config$abbreviation_separator)) {
+    if (
+      typeof(config$abbreviation_separator) != "character" ||
+        length(config$abbreviation_separator) != 1L ||
+        is.na(config$abbreviation_separator)
+    ) {
+      log4r::error(
+        .le$logger,
+        "abbreviation_separator should be a single character string"
+      )
+      valid <- FALSE
+    }
+  }
+
   log4r::debug(.le$logger, "Checking footnote_order now")
   if (!is.null(config$footnote_order)) {
     footnotes <- c("Object", "Source", "Notes", "Abbreviations", "Hash")

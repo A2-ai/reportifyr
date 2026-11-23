@@ -54,6 +54,18 @@ test_that("validate_config returns FALSE for invalid footnote_order value", {
   expect_false(validate_config(config_path))
 })
 
+test_that("validate_config accepts and rejects abbreviation_separator", {
+  expect_true(validate_config(make_config_file(list(
+    abbreviation_separator = " = "
+  ))))
+  expect_false(validate_config(make_config_file(list(
+    abbreviation_separator = 1L
+  ))))
+  expect_false(validate_config(make_config_file(list(
+    abbreviation_separator = c(" = ", ": ")
+  ))))
+})
+
 test_that("validate_config returns FALSE for invalid fig_alignment value", {
   config <- list(fig_alignment = c("diagonal"))
   config_path <- make_config_file(config)

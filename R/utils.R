@@ -315,7 +315,9 @@ detect_quarto_render <- function() {
   }
 
   # --- Get current input ---
-  current <- tryCatch(knitr::current_input(), error = function(e) NULL)
+  current <- tryCatch(knitr::current_input(dir = TRUE), error = function(e) {
+    NULL
+  })
   log4r::debug(
     .le$logger,
     paste0(
@@ -337,9 +339,20 @@ detect_quarto_render <- function() {
   }
 
   # --- Attempt to resolve .qmd equivalent ---
-  qmd_candidate <- sub("\\.(rmd|rmarkdown)$", ".qmd", basename(current))
+  qmd_candidate <- sub(
+    "\\.(rmd|rmarkdown)$",
+    ".qmd",
+    current,
+    ignore.case = TRUE
+  )
   project_root <- Sys.getenv("QUARTO_PROJECT_ROOT", unset = getwd())
-  qmd_path <- file.path(project_root, qmd_candidate)
+  candidates <- unique(c(
+    qmd_candidate,
+    file.path(project_root, qmd_candidate),
+    file.path(project_root, basename(qmd_candidate))
+  ))
+  existing <- candidates[file.exists(candidates)]
+  qmd_path <- if (length(existing)) existing[[1]] else candidates[[1]]
   log4r::debug(.le$logger, paste0("Candidate .qmd path: ", qmd_path))
 
   if (file.exists(qmd_path)) {

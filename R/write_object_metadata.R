@@ -41,7 +41,7 @@ write_object_metadata <- function(
 
   log4r::info(.le$logger, paste0("File exists: ", object_file))
 
-  context <- resolve_context(context)
+  context <- resolve_context(context, destination = object_file)
 
   project_root <- context$project_root
   if (is.null(project_root)) {
@@ -59,7 +59,10 @@ write_object_metadata <- function(
   hash <- digest::digest(file = object_file, algo = "blake3")
   log4r::info(.le$logger, paste0("Generated file hash: ", hash))
 
-  object_path_relative <- fs::path_rel(normalizePath(object_file), project_root)
+  object_path_relative <- fs::path_rel(
+    normalizePath(object_file),
+    normalizePath(project_root)
+  )
   log4r::info(
     .le$logger,
     paste0("Object file path (relative): ", object_path_relative)
