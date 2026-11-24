@@ -22,9 +22,9 @@ jobs:
         config:
           - {os: macos-latest,   r: '4.5'}
           - {os: windows-latest, r: '4.5'}
+          - {os: ubuntu-latest,  r: '4.6'}
           - {os: ubuntu-latest,  r: '4.5'}
           - {os: ubuntu-latest,  r: '4.4'}
-          - {os: ubuntu-latest,  r: '4.3'}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -76,18 +76,14 @@ jobs:
         shell: cmd
         if: runner.os == 'Windows'
 
-      - name: rv-sysdeps-install (Linux)
+      - name: Install system dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
-          MISSING_DEPS=$(rv plan --json | jq -r '.installed[].sys_deps[]? | select(.status == "absent") | .name')
-          if [ -n "$MISSING_DEPS" ]; then
-            echo "Found missing system dependencies:"
-            echo "$MISSING_DEPS"
-            echo "Installing..."
-            echo "$MISSING_DEPS" | xargs sudo apt install
-          else
-            echo "All system dependencies are present"
-          fi
+          sudo apt-get update
+          sudo apt-get install -y \
+            libcurl4-openssl-dev libuv1-dev libgit2-dev libssl-dev libxml2-dev zlib1g-dev \
+            libfontconfig-dev libfreetype-dev libfribidi-dev libharfbuzz-dev \
+            libjpeg-dev libpng-dev libtiff-dev libwebp-dev
 
       - name: rv-sync
         run: rv sync
