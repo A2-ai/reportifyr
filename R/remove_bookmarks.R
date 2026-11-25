@@ -50,9 +50,11 @@ remove_bookmarks <- function(docx_in, docx_out) {
       .le$logger,
       "Prompting user for confirmation to remove bookmarks."
     )
-    continue <- readline(
-      "This will remove the bookmarks in the document. This severs the link between the document and reportifyr. Are you sure you want to continue? [Y/n]\n"
+    message(
+      "This will remove the bookmarks in the document.\n",
+      "This severs the link between the document and reportifyr."
     )
+    continue <- readline("Continue? [Y/n] ")
     # Blank answer takes the default shown by [Y/n]
     if (trimws(continue) == "") continue <- "Y"
   } else {
