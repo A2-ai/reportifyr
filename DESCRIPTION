@@ -1,6 +1,6 @@
 Package: reportifyr
 Title: Reproducible Reporting Made Simple with R
-Version: 0.4.0
+Version: 0.4.1
 Authors@R: c(
     person("Jacob", "Dumbleton", , "jacob@a2-ai.com", role = c("aut", "cre")),
     person("Matthew", "Smith", , "matthews@a2-ai.com", role = "aut"),
@@ -30,7 +30,7 @@ Imports:
     dplyr,
     flextable,
     fs,
-    pyro,
+    pyro (>= 0.1.2),
     gert,
     ggplot2,
     here,

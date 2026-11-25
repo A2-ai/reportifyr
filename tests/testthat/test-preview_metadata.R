@@ -57,6 +57,41 @@ test_that("preview_metadata returns correct filtered metadata for an existing ob
   file.remove(file_1, file_2, object_file_1, object_file_2)
 })
 
+test_that("preview_metadata returns a single row when footnote lengths differ", {
+  temp_dir <- tempfile()
+  dir.create(temp_dir)
+
+  # Plain character vectors written with auto_unbox produce the *unnamed* JSON
+  # arrays that write_object_metadata() writes, which fromJSON() reads back as
+  # atomic vectors rather than lists.
+  metadata <- list(
+    object_meta = list(
+      meta_type = "figure",
+      footnotes = list(
+        equations = c("E = mc^2", "F = ma"),
+        notes = c("Note one.", "Note two."),
+        abbreviations = c("PK", "PD", "AUC")
+      )
+    )
+  )
+
+  file_1 <- file.path(temp_dir, "myplot_png_metadata.json")
+  jsonlite::write_json(metadata, file_1, auto_unbox = TRUE)
+
+  object_file <- file.path(temp_dir, "myplot.png")
+  file.create(object_file)
+
+  result_df <- preview_metadata(object_file)
+
+  expect_equal(nrow(result_df), 1)
+  expect_equal(result_df$name, "myplot.png")
+  expect_equal(result_df$meta_equations, "E = mc^2, F = ma")
+  expect_equal(result_df$meta_notes, "Note one., Note two.")
+  expect_equal(result_df$meta_abbrevs, "PK, PD, AUC")
+
+  unlink(temp_dir, recursive = TRUE)
+})
+
 test_that("preview_metadata returns empty dataframe if object file not in metadata", {
   temp_dir <- tempdir()
 

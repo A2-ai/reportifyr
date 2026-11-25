@@ -1,6 +1,6 @@
 #' Removes Bookmarks from a Microsoft Word file
 #'
-#' @description Reads in a `.docx` file and returns a new version with bookmarks removed from the document.
+#' @description Reads in a `.docx` file and returns a new version with the bookmarks reportifyr added (`fp_` footnote and `rpcap_` caption bookmarks) removed. Other bookmarks are kept.
 #' @param docx_in The file path to the input `.docx` file.
 #' @param docx_out The file path to the output `.docx` file to save to.
 #'
@@ -50,9 +50,13 @@ remove_bookmarks <- function(docx_in, docx_out) {
       .le$logger,
       "Prompting user for confirmation to remove bookmarks."
     )
-    continue <- readline(
-      "This will remove the bookmarks in the document. This severs the link between the document and reportifyr. Are you sure you want to continue? [Y/n]\n"
+    message(
+      "This will remove the bookmarks in the document.\n",
+      "This severs the link between the document and reportifyr."
     )
+    continue <- readline("Continue? [Y/n] ")
+    # Blank answer takes the default shown by [Y/n]
+    if (trimws(continue) == "") continue <- "Y"
   } else {
     continue <- "Y" # Automatically proceed in non-interactive environments
     log4r::info(

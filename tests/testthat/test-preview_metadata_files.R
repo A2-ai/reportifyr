@@ -87,3 +87,88 @@ test_that("preview_metadata_files processes metadata correctly", {
 
   unlink(temp_dir, recursive = TRUE)
 })
+
+test_that("preview_metadata_files collapses unnamed arrays to one row per file", {
+  temp_dir <- tempfile()
+  dir.create(temp_dir)
+
+  # Plain character vectors written with auto_unbox produce the *unnamed* JSON
+  # arrays that write_object_metadata() writes, which fromJSON() reads back as
+  # atomic vectors rather than lists. Footnote vectors of differing lengths
+  # previously recycled into extra rows (equal lengths) or errored outright
+  # (mismatched lengths).
+  metadata_mismatched <- list(
+    object_meta = list(
+      meta_type = "figure",
+      footnotes = list(
+        equations = NULL,
+        notes = c("Note one.", "Note two."),
+        abbreviations = c("PK", "PD", "AUC")
+      )
+    )
+  )
+
+  metadata_equal <- list(
+    object_meta = list(
+      meta_type = "figure",
+      footnotes = list(
+        equations = NULL,
+        notes = c("Note one.", "Note two."),
+        abbreviations = c("PK", "PD")
+      )
+    )
+  )
+
+  metadata_recycled <- list(
+    object_meta = list(
+      meta_type = "figure",
+      footnotes = list(
+        equations = NULL,
+        notes = "Only note.",
+        abbreviations = c("PK", "PD", "AUC")
+      )
+    )
+  )
+
+  jsonlite::write_json(
+    metadata_mismatched,
+    file.path(temp_dir, "mismatched_png_metadata.json"),
+    auto_unbox = TRUE
+  )
+  jsonlite::write_json(
+    metadata_equal,
+    file.path(temp_dir, "equal_png_metadata.json"),
+    auto_unbox = TRUE
+  )
+  jsonlite::write_json(
+    metadata_recycled,
+    file.path(temp_dir, "recycled_png_metadata.json"),
+    auto_unbox = TRUE
+  )
+
+  result_df <- preview_metadata_files(temp_dir)
+
+  # One row per file, not one row per footnote element
+  expect_equal(nrow(result_df), 3)
+  expect_setequal(
+    result_df$name,
+    c("mismatched.png", "equal.png", "recycled.png")
+  )
+
+  mismatched <- result_df[result_df$name == "mismatched.png", ]
+  expect_equal(nrow(mismatched), 1)
+  expect_equal(mismatched$meta_notes, "Note one., Note two.")
+  expect_equal(mismatched$meta_abbrevs, "PK, PD, AUC")
+  expect_equal(mismatched$meta_equations, "N/A")
+  expect_equal(mismatched$meta_type, "figure")
+
+  equal <- result_df[result_df$name == "equal.png", ]
+  expect_equal(equal$meta_notes, "Note one., Note two.")
+  expect_equal(equal$meta_abbrevs, "PK, PD")
+
+  recycled <- result_df[result_df$name == "recycled.png", ]
+  expect_equal(recycled$meta_notes, "Only note.")
+  expect_equal(recycled$meta_abbrevs, "PK, PD, AUC")
+
+  unlink(temp_dir, recursive = TRUE)
+})
